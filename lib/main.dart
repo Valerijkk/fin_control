@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'data/db.dart';
 
 void main() => runApp(const FinControlRoot());
 
@@ -52,20 +53,10 @@ class Expense {
 
 const kCategories = ['Еда', 'Транспорт', 'Дом', 'Досуг', 'Другое'];
 
-/// ==== Состояние приложения (единый источник правды) ====
+/// ==== Состояние приложения (с SQLite) ====
 class AppState extends ChangeNotifier {
-  final List<Expense> _items = [
-    Expense(id: 'e1', title: 'Продукты', amount: 750, category: 'Еда', date: DateTime.now()),
-    Expense(id: 'e2', title: 'Такси', amount: 320, category: 'Транспорт', date: DateTime.now()),
-    Expense(
-      id: 'e3',
-      title: 'Зарплата',
-      amount: 50000,
-      category: 'Другое',
-      isIncome: true,
-      date: DateTime.now(),
-    ),
-  ];
+  final List<Expense> _items = [];
+  final AppDatabase _db = AppDatabase();
 
   List<Expense> get items => List.unmodifiable(_items);
 
@@ -73,39 +64,82 @@ class AppState extends ChangeNotifier {
   Expense? _lastRemoved;
   int? _lastIndex;
 
-  void add(Expense e) {
-    _items.insert(0, e);
+  /// Загрузка при старте
+  Future<void> load() async {
+    _items.clear();
+    final rows = await _db.getAllRaw();
+    for (final r in rows) {
+      _items.add(
+        Expense(
+          id: (r['id'] as String),
+          title: (r['title'] as String),
+          amount: (r['amount'] as num).toDouble(),
+          category: (r['category'] as String),
+          date: DateTime.fromMillisecondsSinceEpoch((r['date'] as int)),
+          isIncome: ((r['is_income'] as int) == 1),
+        ),
+      );
+    }
     notifyListeners();
   }
 
-  void update(String id, Expense e) {
-    final i = _items.indexWhere((x) => x.id == id);
-    if (i != -1) {
-      _items[i] = e;
-      notifyListeners();
-    }
+  Future<void> add(Expense e) async {
+    _items.insert(0, e);
+    notifyListeners();
+    await _db.insertRaw({
+      'id': e.id,
+      'title': e.title,
+      'amount': e.amount,
+      'category': e.category,
+      'date': e.date.millisecondsSinceEpoch,
+      'is_income': e.isIncome ? 1 : 0,
+    });
   }
 
-  void removeAt(int index) {
+  Future<void> update(String id, Expense e) async {
+    final i = _items.indexWhere((x) => x.id == id);
+    if (i == -1) return;
+    _items[i] = e;
+    notifyListeners();
+    await _db.updateRaw(id, {
+      'id': e.id,
+      'title': e.title,
+      'amount': e.amount,
+      'category': e.category,
+      'date': e.date.millisecondsSinceEpoch,
+      'is_income': e.isIncome ? 1 : 0,
+    });
+  }
+
+  Future<void> removeAt(int index) async {
     if (index < 0 || index >= _items.length) return;
     _lastRemoved = _items.removeAt(index);
     _lastIndex = index;
     notifyListeners();
+    if (_lastRemoved != null) {
+      await _db.deleteById(_lastRemoved!.id);
+    }
   }
 
-  bool undoLastRemove() {
+  /// Возврат последнего удаления (из SnackBar)
+  Future<bool> undoLastRemove() async {
     if (_lastRemoved == null || _lastIndex == null) return false;
     final i = (_lastIndex!).clamp(0, _items.length);
-    _items.insert(i, _lastRemoved!);
+    final e = _lastRemoved!;
+    _items.insert(i, e);
     _lastRemoved = null;
     _lastIndex = null;
     notifyListeners();
+    await _db.insertRaw({
+      'id': e.id,
+      'title': e.title,
+      'amount': e.amount,
+      'category': e.category,
+      'date': e.date.millisecondsSinceEpoch,
+      'is_income': e.isIncome ? 1 : 0,
+    });
     return true;
   }
-
-  // Заглушки под будущий персист (№7–10)
-  Future<void> load() async {}
-  Future<void> save() async {}
 }
 
 /// ==== InheritedNotifier для доступа к состоянию ====
@@ -127,11 +161,25 @@ class FinControlRoot extends StatefulWidget {
 class _FinControlRootState extends State<FinControlRoot> {
   final _state = AppState();
   ThemeMode _mode = ThemeMode.light;
+  bool _loaded = false;
+
   void _toggleTheme() =>
       setState(() => _mode = _mode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light);
 
+  @override
+  void initState() {
+    super.initState();
+    _init();
+  }
+
+  Future<void> _init() async {
+    await _state.load(); // тянем из SQLite
+    if (mounted) setState(() => _loaded = true);
+  }
+
   Route<dynamic> _onGenerateRoute(RouteSettings s) {
-    switch (s.name) {
+    final name = s.name ?? Routes.welcome;
+    switch (name) {
       case Routes.welcome:
         return MaterialPageRoute(builder: (_) => const WelcomeScreen(), settings: s);
       case Routes.shell:
@@ -151,22 +199,34 @@ class _FinControlRootState extends State<FinControlRoot> {
 
   @override
   Widget build(BuildContext context) {
-    return AppScope(
-      notifier: _state,
-      child: _ThemeController(
-        mode: _mode,
-        toggle: _toggleTheme,
-        child: MaterialApp(
-          title: 'FinControl',
-          debugShowCheckedModeBanner: false,
-          themeMode: _mode,
-          theme: _buildLightTheme(),
-          darkTheme: _buildDarkTheme(),
-          navigatorObservers: [routeObserver],
-          onGenerateRoute: _onGenerateRoute,
-          initialRoute: Routes.welcome,
-        ),
-      ),
+    // провайдеры кладём через builder, чтобы быть над Navigator
+    return MaterialApp(
+      title: 'FinControl',
+      debugShowCheckedModeBanner: false,
+      themeMode: _mode,
+      theme: _buildLightTheme(),
+      darkTheme: _buildDarkTheme(),
+      navigatorObservers: [routeObserver],
+      onGenerateRoute: _onGenerateRoute,
+      initialRoute: Routes.welcome,
+      builder: (context, child) {
+        if (!_loaded) {
+          return Theme(
+            data: _buildLightTheme(),
+            child: const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            ),
+          );
+        }
+        return AppScope(
+          notifier: _state,
+          child: _ThemeController(
+            mode: _mode,
+            toggle: _toggleTheme,
+            child: child ?? const SizedBox.shrink(),
+          ),
+        );
+      },
     );
   }
 }
@@ -176,8 +236,13 @@ class _ThemeController extends InheritedWidget {
   final ThemeMode mode;
   final VoidCallback toggle;
   const _ThemeController({required this.mode, required this.toggle, required super.child});
-  static _ThemeController of(BuildContext c) =>
-      c.dependOnInheritedWidgetOfExactType<_ThemeController>()!;
+
+  static _ThemeController of(BuildContext c) {
+    final ctrl = c.dependOnInheritedWidgetOfExactType<_ThemeController>();
+    assert(ctrl != null, 'ThemeController not found above MaterialApp routes');
+    return ctrl!;
+  }
+
   @override
   bool updateShouldNotify(covariant _ThemeController old) => old.mode != mode;
 }
@@ -190,6 +255,28 @@ ThemeData _buildLightTheme() {
       titleMedium: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
       bodyLarge: const TextStyle(fontSize: 16),
       labelLarge: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+    ),
+    // ↓↓↓ ключевые фиксы
+    bottomSheetTheme: BottomSheetThemeData(
+      backgroundColor: base.colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: base.colorScheme.surfaceVariant,
+      labelStyle: TextStyle(color: base.colorScheme.onSurface),
+      hintStyle: TextStyle(color: base.colorScheme.onSurfaceVariant),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: base.colorScheme.outlineVariant),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: base.colorScheme.primary, width: 2),
+      ),
     ),
   );
 }
@@ -207,11 +294,31 @@ ThemeData _buildDarkTheme() {
       bodyLarge: const TextStyle(fontSize: 16),
       labelLarge: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
     ),
+    bottomSheetTheme: BottomSheetThemeData(
+      backgroundColor: base.colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: base.colorScheme.surfaceVariant,
+      labelStyle: TextStyle(color: base.colorScheme.onSurface),
+      hintStyle: TextStyle(color: base.colorScheme.onSurfaceVariant),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: base.colorScheme.outlineVariant),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: base.colorScheme.primary, width: 2),
+      ),
+    ),
   );
 }
 
 /// ==== Экраны ====
-
 /// Welcome
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -302,7 +409,13 @@ class _HomeScreenState extends State<HomeScreen> {
     final res = await showModalBottomSheet<Expense>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Theme.of(context).colorScheme.surface, // контрастный фон для обеих тем
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
       builder: (ctx) {
+        final cs = Theme.of(ctx).colorScheme;
         return Padding(
           padding: EdgeInsets.only(
             left: 16,
@@ -313,7 +426,10 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Быстрая запись', style: Theme.of(ctx).textTheme.titleMedium),
+              Text(
+                'Быстрая запись',
+                style: Theme.of(ctx).textTheme.titleMedium?.copyWith(color: cs.onSurface),
+              ),
               const SizedBox(height: 12),
               TextField(
                 controller: amountCtrl,
@@ -360,7 +476,7 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       },
     );
-    if (res != null) s.add(res);
+    if (res != null) await s.add(res);
   }
 
   Future<bool> _confirmDelete(String title) async {
@@ -385,7 +501,12 @@ class _HomeScreenState extends State<HomeScreen> {
         content: Text('Удалено: ${removed.title}'),
         action: SnackBarAction(
           label: 'ОТМЕНА',
-          onPressed: () => s.undoLastRemove(),
+          onPressed: () async {
+            await s.undoLastRemove();
+            try {
+              await HapticFeedback.mediumImpact();
+            } catch (_) {}
+          },
         ),
       ),
     );
@@ -394,6 +515,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final s = AppScope.of(context);
+    final outline = Theme.of(context).colorScheme.outlineVariant;
 
     return Scaffold(
       appBar: _AppBarTitle(title: 'Мои расходы', actions: const [_ThemeAction(), _SettingsAction()]),
@@ -402,15 +524,17 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           FloatingActionButton.small(
             heroTag: 'quick',
+            tooltip: 'Быстрая запись',
             onPressed: () => _quickAddBottomSheet(s),
             child: const Icon(Icons.flash_on),
           ),
           const SizedBox(width: 12),
           FloatingActionButton(
             heroTag: 'main',
+            tooltip: 'Новая запись',
             onPressed: () async {
               final e = await Navigator.of(context).pushNamed(Routes.add) as Expense?;
-              if (e != null) s.add(e);
+              if (e != null) await s.add(e);
             },
             child: const Icon(Icons.add),
           ),
@@ -424,7 +548,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: _SummaryCard(total: _total(s)),
           ),
           const SizedBox(height: 8),
-          // Фильтр
+          // Фильтр по категориям
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -436,14 +560,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   onSelected: (_) => setState(() => _filter = null),
                 ),
                 const SizedBox(width: 8),
-                ...kCategories.map((c) => Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: ChoiceChip(
-                    label: Text(c),
-                    selected: _filter == c,
-                    onSelected: (_) => setState(() => _filter = c),
+                ...kCategories.map(
+                      (c) => Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      label: Text(c),
+                      selected: _filter == c,
+                      onSelected: (_) => setState(() => _filter = c),
+                    ),
                   ),
-                )),
+                ),
               ],
             ),
           ),
@@ -462,18 +588,18 @@ class _HomeScreenState extends State<HomeScreen> {
                   background: _dismissBg(left: true),
                   secondaryBackground: _dismissBg(left: false),
                   confirmDismiss: (_) async => await _confirmDelete(e.title),
-                  onDismissed: (_) {
+                  onDismissed: (_) async {
                     final removed = e;
-                    s.removeAt(realIndex);
+                    await s.removeAt(realIndex);
                     _showUndoSnack(s, removed: removed, index: realIndex);
                   },
                   child: InkWell(
                     onTap: () async {
                       final updated =
                       await Navigator.of(context).pushNamed(Routes.add, arguments: e) as Expense?;
-                      if (updated != null) s.update(e.id, updated);
+                      if (updated != null) await s.update(e.id, updated);
                     },
-                    child: _ExpenseTile(expense: e),
+                    child: _ExpenseTile(expense: e, outlineColor: outline),
                   ),
                 );
               },
@@ -654,7 +780,7 @@ class StatsScreen extends StatelessWidget {
               _BarRow(label: entry.key, value: entry.value, maxAbs: maxVal),
             const SizedBox(height: 16),
             Text(
-              'Всего расходов: ${_money(s.items.where((e) => !e.isIncome).fold(0.0, (s, e) => s + e.amount))}',
+              'Всего расходов: ${_money(s.items.where((e) => !e.isIncome).fold(0.0, (s2, e) => s2 + e.amount))}',
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
           ],
@@ -753,12 +879,13 @@ class _SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isOk = total <= 0;
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black12),
+        border: Border.all(color: cs.outlineVariant),
       ),
       child: Row(
         children: [
@@ -768,8 +895,10 @@ class _SummaryCard extends StatelessWidget {
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('Итоги сегодня', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 4),
-              Text((total > 0 ? '— ' : '+ ') + _money(total.abs()),
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: isOk ? Colors.green : Colors.red)),
+              Text(
+                (total > 0 ? '— ' : '+ ') + _money(total.abs()),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: isOk ? Colors.green : Colors.red),
+              ),
             ]),
           ),
         ],
@@ -780,14 +909,19 @@ class _SummaryCard extends StatelessWidget {
 
 class _ExpenseTile extends StatelessWidget {
   final Expense expense;
-  const _ExpenseTile({required this.expense});
+  final Color outlineColor;
+  const _ExpenseTile({required this.expense, required this.outlineColor});
   @override
   Widget build(BuildContext context) {
     final color = expense.isIncome ? Colors.green : Colors.red;
     final sign = expense.isIncome ? '+ ' : '- ';
+    final onSurfaceVar = Theme.of(context).colorScheme.onSurfaceVariant;
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.black12)),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: outlineColor),
+      ),
       child: Row(
         children: [
           CircleAvatar(
@@ -800,7 +934,7 @@ class _ExpenseTile extends StatelessWidget {
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(expense.title, style: const TextStyle(fontWeight: FontWeight.w600)),
               const SizedBox(height: 2),
-              Text(_formatDate(expense.date), style: const TextStyle(color: Colors.black54)),
+              Text(_formatDate(expense.date), style: TextStyle(color: onSurfaceVar)),
             ]),
           ),
           Text('$sign${_money(expense.amount)}', style: TextStyle(fontWeight: FontWeight.w700, color: color)),
@@ -812,20 +946,15 @@ class _ExpenseTile extends StatelessWidget {
 
 class _BarRow extends StatelessWidget {
   final String label;
-  final double value;   // сумма по категории (расходы положительные, доходы отрицательные)
-  final double maxAbs;  // максимальное |value| среди категорий, чтобы нормировать ширину
-
-  const _BarRow({
-    required this.label,
-    required this.value,
-    required this.maxAbs,
-  });
+  final double value;   // сумма по категории
+  final double maxAbs;  // для нормирования ширины
+  const _BarRow({required this.label, required this.value, required this.maxAbs});
 
   @override
   Widget build(BuildContext context) {
     final width = maxAbs == 0.0 ? 0.0 : (value.abs() / maxAbs);
-    final color = value >= 0 ? Colors.red : Colors.green; // расходы — красные, доходы — зелёные
-
+    final color = value >= 0 ? Colors.red : Colors.green;
+    final outlineVar = Theme.of(context).colorScheme.outlineVariant;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
@@ -836,7 +965,7 @@ class _BarRow extends StatelessWidget {
               height: 12,
               alignment: Alignment.centerLeft,
               decoration: BoxDecoration(
-                color: Colors.black12,
+                color: outlineVar.withOpacity(0.35),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: FractionallySizedBox(
@@ -851,18 +980,13 @@ class _BarRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          SizedBox(
-            width: 80,
-            child: Text(
-              _money(value.abs().toDouble()),
-              textAlign: TextAlign.right,
-            ),
-          ),
+          SizedBox(width: 80, child: Text(_money(value.abs().toDouble()), textAlign: TextAlign.right)),
         ],
       ),
     );
   }
 }
+
 /// ==== Утилиты ====
 String _money(double x) => '${x.toStringAsFixed(0)} ₽';
 String _formatDate(DateTime d) {
