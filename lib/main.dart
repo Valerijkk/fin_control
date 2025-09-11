@@ -1,25 +1,93 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
-void main() => runApp(const FinControlApp());
+void main() => runApp(const FinControlRoot());
 
-class FinControlApp extends StatelessWidget {
-  const FinControlApp({super.key});
+/// Корневой виджет с управлением темой (ThemeMode)
+class FinControlRoot extends StatefulWidget {
+  const FinControlRoot({super.key});
+  @override
+  State<FinControlRoot> createState() => _FinControlRootState();
+}
+
+class _FinControlRootState extends State<FinControlRoot> {
+  ThemeMode _mode = ThemeMode.light;
+
+  void _toggleTheme() {
+    setState(() {
+      _mode = _mode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'FinControl',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: const Color(0xFF6750A4),
-        brightness: Brightness.light,
+    return _ThemeController(
+      mode: _mode,
+      toggle: _toggleTheme,
+      child: MaterialApp(
+        title: 'FinControl',
+        debugShowCheckedModeBanner: false,
+        themeMode: _mode,
+        theme: _buildLightTheme(),
+        darkTheme: _buildDarkTheme(),
+        home: const WelcomeScreen(),
       ),
-      home: const WelcomeScreen(),
     );
   }
 }
 
+/// InheritedWidget, чтобы из любого места вызывать переключение темы
+class _ThemeController extends InheritedWidget {
+  final ThemeMode mode;
+  final VoidCallback toggle;
+  const _ThemeController({
+    required this.mode,
+    required this.toggle,
+    required super.child,
+  });
+
+  static _ThemeController of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<_ThemeController>()!;
+
+  @override
+  bool updateShouldNotify(covariant _ThemeController old) =>
+      old.mode != mode || old.toggle != toggle;
+}
+
+/// --------- Темы и типографика ---------
+ThemeData _buildLightTheme() {
+  final base = ThemeData(
+    useMaterial3: true,
+    colorSchemeSeed: const Color(0xFF6750A4),
+    brightness: Brightness.light,
+  );
+  return base.copyWith(
+    textTheme: base.textTheme.copyWith(
+      titleLarge: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
+      titleMedium: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+      bodyLarge: const TextStyle(fontSize: 16),
+      labelLarge: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+    ),
+  );
+}
+
+ThemeData _buildDarkTheme() {
+  final base = ThemeData(
+    useMaterial3: true,
+    colorSchemeSeed: const Color(0xFF6750A4),
+    brightness: Brightness.dark,
+  );
+  return base.copyWith(
+    textTheme: base.textTheme.copyWith(
+      titleLarge: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
+      titleMedium: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+      bodyLarge: const TextStyle(fontSize: 16),
+      labelLarge: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+    ),
+  );
+}
+
+/// --------- Модель данных ---------
 class Expense {
   final String id;
   final String title;
@@ -58,33 +126,35 @@ class Expense {
 
 const kCategories = ['Еда', 'Транспорт', 'Дом', 'Досуг', 'Другое'];
 
-/// ----------------- Welcome -----------------
+/// --------- Экран Welcome ---------
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: _AppBarTitle(
+        title: 'Добро пожаловать',
+        actions: const [_ThemeAction()],
+      ),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('FinControl',
-                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.w700)),
+              Text('FinControl', style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 8),
-              const Text('Калькулятор и учёт расходов',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16, color: Colors.black54)),
+              const Text(
+                'Калькулятор и учёт расходов',
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: 24),
-              FilledButton(
-                onPressed: () {
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (_) => const ShellScreen()),
-                  );
-                },
-                child: const Text('Начать'),
+              _PrimaryButton(
+                onPressed: () => Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (_) => const ShellScreen()),
+                ),
+                label: 'Начать',
               ),
             ],
           ),
@@ -94,10 +164,9 @@ class WelcomeScreen extends StatelessWidget {
   }
 }
 
-/// ----------------- Shell с вкладками (Home/Статистика) -----------------
+/// --------- Общая «оболочка» с табами ---------
 class ShellScreen extends StatefulWidget {
   const ShellScreen({super.key});
-
   @override
   State<ShellScreen> createState() => _ShellScreenState();
 }
@@ -105,7 +174,6 @@ class ShellScreen extends StatefulWidget {
 class _ShellScreenState extends State<ShellScreen> {
   int _index = 0;
 
-  // общие данные приложения
   final List<Expense> _items = [
     Expense(
         id: 'e1',
@@ -165,7 +233,7 @@ class _ShellScreenState extends State<ShellScreen> {
   }
 }
 
-/// ----------------- Home: список, фильтр, FAB -----------------
+/// --------- Главный экран: список + фильтр + FAB ---------
 class HomeScreen extends StatefulWidget {
   final List<Expense> items;
   final void Function(Expense e) onAdd;
@@ -185,7 +253,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  String? _filter; // категория
+  String? _filter;
 
   double get _total =>
       widget.items.fold(0.0, (s, e) => s + (e.isIncome ? -e.amount : e.amount));
@@ -197,7 +265,10 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Мои расходы')),
+      appBar: _AppBarTitle(
+        title: 'Мои расходы',
+        actions: const [_ThemeAction()],
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           final e = await Navigator.of(context).push<Expense>(
@@ -209,10 +280,12 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Column(
         children: [
+          const SizedBox(height: 12),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: _SummaryCard(total: _total),
           ),
+          const SizedBox(height: 8),
           // Фильтр по категориям
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
@@ -247,24 +320,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 final e = _visible.elementAt(i);
                 return Dismissible(
                   key: ValueKey(e.id),
-                  background: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.red.shade300,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    alignment: Alignment.centerLeft,
-                    padding: const EdgeInsets.only(left: 16),
-                    child: const Icon(Icons.delete, color: Colors.white),
-                  ),
-                  secondaryBackground: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.red.shade300,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.only(right: 16),
-                    child: const Icon(Icons.delete, color: Colors.white),
-                  ),
+                  background: _dismissBg(left: true),
+                  secondaryBackground: _dismissBg(left: false),
                   onDismissed: (_) {
                     widget.onRemove(e.id);
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -277,9 +334,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           .push<Expense>(MaterialPageRoute(
                         builder: (_) => AddEditScreen(initial: e),
                       ));
-                      if (updated != null) {
-                        widget.onUpdate(e.id, updated);
-                      }
+                      if (updated != null) widget.onUpdate(e.id, updated);
                     },
                     child: _ExpenseTile(expense: e),
                   ),
@@ -291,6 +346,303 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
+  }
+
+  Widget _dismissBg({required bool left}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.red.shade300,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      alignment: left ? Alignment.centerLeft : Alignment.centerRight,
+      padding: EdgeInsets.only(left: left ? 16 : 0, right: left ? 0 : 16),
+      child: const Icon(Icons.delete, color: Colors.white),
+    );
+  }
+}
+
+/// --------- Форма добавления/редактирования ---------
+class AddEditScreen extends StatefulWidget {
+  final Expense? initial;
+  const AddEditScreen({super.key, this.initial});
+
+  @override
+  State<AddEditScreen> createState() => _AddEditScreenState();
+}
+
+class _AddEditScreenState extends State<AddEditScreen> {
+  final _form = GlobalKey<FormState>();
+  final _title = TextEditingController();
+  final _amount = TextEditingController();
+  String _category = kCategories.first;
+  bool _isIncome = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final i = widget.initial;
+    if (i != null) {
+      _title.text = i.title;
+      _amount.text = i.amount.toStringAsFixed(0);
+      _category = i.category;
+      _isIncome = i.isIncome;
+    }
+  }
+
+  @override
+  void dispose() {
+    _title.dispose();
+    _amount.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    if (_form.currentState?.validate() != true) return;
+    final amount = double.tryParse(_amount.text.replaceAll(',', '.')) ?? 0.0;
+    final now = DateTime.now();
+
+    final e = (widget.initial ??
+        Expense(
+          id: 'e${now.microsecondsSinceEpoch}',
+          title: '',
+          amount: 0.0,
+          category: _category,
+          date: now,
+          isIncome: _isIncome,
+        ))
+        .copyWith(
+      title: _title.text.trim(),
+      amount: amount,
+      category: _category,
+      date: now,
+      isIncome: _isIncome,
+    );
+
+    Navigator.of(context).pop(e);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isEdit = widget.initial != null;
+    return Scaffold(
+      appBar: _AppBarTitle(
+        title: isEdit ? 'Редактировать' : 'Новая запись',
+        actions: const [_ThemeAction()],
+        canPop: true,
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Form(
+            key: _form,
+            child: ListView(
+              children: [
+                SwitchListTile(
+                  value: _isIncome,
+                  onChanged: (v) => setState(() => _isIncome = v),
+                  title: const Text('Это доход'),
+                  subtitle: const Text('Вычитается из итоговых расходов'),
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _amount,
+                  keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+                  ],
+                  decoration: const InputDecoration(
+                    labelText: 'Сумма',
+                    hintText: '0',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (v) {
+                    final x = double.tryParse((v ?? '').replaceAll(',', '.'));
+                    if (x == null || x <= 0) return 'Введите сумму > 0';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _title,
+                  decoration: const InputDecoration(
+                    labelText: 'Название',
+                    hintText: 'Например, Продукты',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? 'Введите название' : null,
+                ),
+                const SizedBox(height: 12),
+                InputDecorator(
+                  decoration: const InputDecoration(
+                    labelText: 'Категория',
+                    border: OutlineInputBorder(),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      isExpanded: true,
+                      value: _category,
+                      items: [
+                        for (final c in kCategories)
+                          DropdownMenuItem(value: c, child: Text(c))
+                      ],
+                      onChanged: (v) => setState(() => _category = v ?? _category),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                _PrimaryButton(
+                  onPressed: _save,
+                  label: isEdit ? 'Сохранить изменения' : 'Сохранить',
+                  icon: Icons.save,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// --------- Статистика (простая) ---------
+class StatsScreen extends StatelessWidget {
+  final List<Expense> items;
+  const StatsScreen({super.key, required this.items});
+
+  @override
+  Widget build(BuildContext context) {
+    final byCat = <String, double>{};
+    for (final c in kCategories) {
+      byCat[c] = 0.0;
+    }
+    for (final e in items) {
+      final sign = e.isIncome ? -1.0 : 1.0;
+      byCat[e.category] = (byCat[e.category] ?? 0.0) + sign * e.amount;
+    }
+    final maxVal =
+    (byCat.values.isEmpty ? 0.0 : byCat.values.reduce((a, b) => a > b ? a : b))
+        .abs();
+
+    return Scaffold(
+      appBar: _AppBarTitle(title: 'Статистика', actions: const [_ThemeAction()]),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            for (final entry in byCat.entries)
+              _BarRow(label: entry.key, value: entry.value, maxAbs: maxVal),
+            const SizedBox(height: 16),
+            Text(
+              'Всего расходов: ${_money(items.where((e) => !e.isIncome).fold(0.0, (s, e) => s + e.amount))}',
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BarRow extends StatelessWidget {
+  final String label;
+  final double value;
+  final double maxAbs;
+  const _BarRow({required this.label, required this.value, required this.maxAbs});
+
+  @override
+  Widget build(BuildContext context) {
+    final width = maxAbs == 0.0 ? 0.0 : (value.abs() / maxAbs);
+    final color = value >= 0 ? Colors.red : Colors.green;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          SizedBox(width: 92, child: Text(label)),
+          Expanded(
+            child: Container(
+              height: 12,
+              alignment: Alignment.centerLeft,
+              decoration: BoxDecoration(
+                color: Colors.black12,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: FractionallySizedBox(
+                widthFactor: width.clamp(0.0, 1.0).toDouble(),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 80,
+            child: Text(
+              _money(value.abs().toDouble()),
+              textAlign: TextAlign.right,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// --------- Компоненты UI ---------
+class _AppBarTitle extends StatelessWidget implements PreferredSizeWidget {
+  final String title;
+  final List<Widget> actions;
+  final bool canPop;
+  const _AppBarTitle({
+    required this.title,
+    this.actions = const [],
+    this.canPop = false,
+  });
+
+  @override
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+
+  @override
+  Widget build(BuildContext context) {
+    return AppBar(
+      leading: canPop ? const BackButton() : null,
+      title: Text(title),
+      actions: actions,
+    );
+  }
+}
+
+class _ThemeAction extends StatelessWidget {
+  const _ThemeAction();
+  @override
+  Widget build(BuildContext context) {
+    final ctrl = _ThemeController.of(context);
+    final isDark = ctrl.mode == ThemeMode.dark;
+    return IconButton(
+      tooltip: 'Переключить тему',
+      onPressed: ctrl.toggle,
+      icon: Icon(isDark ? Icons.wb_sunny_outlined : Icons.dark_mode_outlined),
+    );
+  }
+}
+
+class _PrimaryButton extends StatelessWidget {
+  final VoidCallback onPressed;
+  final String label;
+  final IconData? icon;
+  const _PrimaryButton({super.key, required this.onPressed, required this.label, this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    final child = Text(label);
+    return icon == null
+        ? FilledButton(onPressed: onPressed, child: child)
+        : FilledButton.icon(onPressed: onPressed, icon: Icon(icon), label: child);
   }
 }
 
@@ -384,233 +736,7 @@ class _ExpenseTile extends StatelessWidget {
   }
 }
 
-/// ----------------- Add/Edit форма -----------------
-class AddEditScreen extends StatefulWidget {
-  final Expense? initial;
-  const AddEditScreen({super.key, this.initial});
-
-  @override
-  State<AddEditScreen> createState() => _AddEditScreenState();
-}
-
-class _AddEditScreenState extends State<AddEditScreen> {
-  final _form = GlobalKey<FormState>();
-  final _title = TextEditingController();
-  final _amount = TextEditingController();
-  String _category = kCategories.first;
-  bool _isIncome = false;
-
-  @override
-  void initState() {
-    super.initState();
-    final i = widget.initial;
-    if (i != null) {
-      _title.text = i.title;
-      _amount.text = i.amount.toStringAsFixed(0);
-      _category = i.category;
-      _isIncome = i.isIncome;
-    }
-  }
-
-  @override
-  void dispose() {
-    _title.dispose();
-    _amount.dispose();
-    super.dispose();
-  }
-
-  void _save() {
-    if (_form.currentState?.validate() != true) return;
-    final amount = double.tryParse(_amount.text.replaceAll(',', '.')) ?? 0.0;
-    final now = DateTime.now();
-
-    final e = (widget.initial ??
-        Expense(
-          id: 'e${now.microsecondsSinceEpoch}',
-          title: '',
-          amount: 0.0,
-          category: _category,
-          date: now,
-          isIncome: _isIncome,
-        ))
-        .copyWith(
-      title: _title.text.trim(),
-      amount: amount,
-      category: _category,
-      date: now,
-      isIncome: _isIncome,
-    );
-
-    Navigator.of(context).pop(e);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isEdit = widget.initial != null;
-    return Scaffold(
-      appBar: AppBar(title: Text(isEdit ? 'Редактировать' : 'Новая запись')),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Form(
-            key: _form,
-            child: ListView(
-              children: [
-                SwitchListTile(
-                  value: _isIncome,
-                  onChanged: (v) => setState(() => _isIncome = v),
-                  title: const Text('Это доход'),
-                  subtitle: const Text('Вычитается из итоговых расходов'),
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _amount,
-                  keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-                  decoration: const InputDecoration(
-                    labelText: 'Сумма',
-                    hintText: '0',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (v) {
-                    final x = double.tryParse((v ?? '').replaceAll(',', '.'));
-                    if (x == null || x <= 0) return 'Введите сумму > 0';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _title,
-                  decoration: const InputDecoration(
-                    labelText: 'Название',
-                    hintText: 'Например, Продукты',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Введите название' : null,
-                ),
-                const SizedBox(height: 12),
-                InputDecorator(
-                  decoration: const InputDecoration(
-                    labelText: 'Категория',
-                    border: OutlineInputBorder(),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      isExpanded: true,
-                      value: _category,
-                      items: [
-                        for (final c in kCategories)
-                          DropdownMenuItem(value: c, child: Text(c))
-                      ],
-                      onChanged: (v) => setState(() => _category = v ?? _category),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                FilledButton.icon(
-                  onPressed: _save,
-                  icon: const Icon(Icons.save),
-                  label: Text(isEdit ? 'Сохранить изменения' : 'Сохранить'),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// ----------------- Статистика (простая) -----------------
-class StatsScreen extends StatelessWidget {
-  final List<Expense> items;
-  const StatsScreen({super.key, required this.items});
-
-  @override
-  Widget build(BuildContext context) {
-    final byCat = <String, double>{};
-    for (final c in kCategories) {
-      byCat[c] = 0.0;
-    }
-    for (final e in items) {
-      final sign = e.isIncome ? -1.0 : 1.0; // double!
-      byCat[e.category] = (byCat[e.category] ?? 0.0) + sign * e.amount;
-    }
-    final maxVal =
-    (byCat.values.isEmpty ? 0.0 : byCat.values.reduce((a, b) => a > b ? a : b))
-        .abs();
-
-    return Scaffold(
-      appBar: AppBar(title: const Text('Статистика')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            for (final entry in byCat.entries)
-              _BarRow(label: entry.key, value: entry.value, maxAbs: maxVal),
-            const SizedBox(height: 16),
-            Text(
-              'Всего расходов: ${_money(items.where((e) => !e.isIncome).fold(0.0, (s, e) => s + e.amount))}',
-              style: const TextStyle(fontWeight: FontWeight.w700),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _BarRow extends StatelessWidget {
-  final String label;
-  final double value;
-  final double maxAbs;
-
-  const _BarRow({required this.label, required this.value, required this.maxAbs});
-
-  @override
-  Widget build(BuildContext context) {
-    final width = maxAbs == 0.0 ? 0.0 : (value.abs() / maxAbs);
-    final color = value >= 0 ? Colors.red : Colors.green; // расходы красные, доходы зелёные
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          SizedBox(width: 92, child: Text(label)),
-          Expanded(
-            child: Container(
-              height: 12,
-              alignment: Alignment.centerLeft,
-              decoration: BoxDecoration(
-                color: Colors.black12,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: FractionallySizedBox(
-                widthFactor: width.clamp(0.0, 1.0).toDouble(),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: color,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          SizedBox(
-            width: 80,
-            child: Text(
-              _money(value.abs().toDouble()),
-              textAlign: TextAlign.right,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// --------------- Утилиты форматирования ---------------
+/// --------- Утилиты форматирования ---------
 String _money(double x) => '${x.toStringAsFixed(0)} ₽';
 
 String _formatDate(DateTime d) {
