@@ -13,7 +13,111 @@ class Routes {
   static const settings = '/settings';
 }
 
-/// Корень с управлением темой + генератором маршрутов
+/// ==== Модель ====
+class Expense {
+  final String id;
+  final String title;
+  final double amount;
+  final String category;
+  final DateTime date;
+  final bool isIncome;
+
+  const Expense({
+    required this.id,
+    required this.title,
+    required this.amount,
+    required this.category,
+    required this.date,
+    this.isIncome = false,
+  });
+
+  Expense copyWith({
+    String? id,
+    String? title,
+    double? amount,
+    String? category,
+    DateTime? date,
+    bool? isIncome,
+  }) {
+    return Expense(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      amount: amount ?? this.amount,
+      category: category ?? this.category,
+      date: date ?? this.date,
+      isIncome: isIncome ?? this.isIncome,
+    );
+  }
+}
+
+const kCategories = ['Еда', 'Транспорт', 'Дом', 'Досуг', 'Другое'];
+
+/// ==== Состояние приложения (единый источник правды) ====
+class AppState extends ChangeNotifier {
+  final List<Expense> _items = [
+    Expense(id: 'e1', title: 'Продукты', amount: 750, category: 'Еда', date: DateTime.now()),
+    Expense(id: 'e2', title: 'Такси', amount: 320, category: 'Транспорт', date: DateTime.now()),
+    Expense(
+      id: 'e3',
+      title: 'Зарплата',
+      amount: 50000,
+      category: 'Другое',
+      isIncome: true,
+      date: DateTime.now(),
+    ),
+  ];
+
+  List<Expense> get items => List.unmodifiable(_items);
+
+  // для Undo
+  Expense? _lastRemoved;
+  int? _lastIndex;
+
+  void add(Expense e) {
+    _items.insert(0, e);
+    notifyListeners();
+  }
+
+  void update(String id, Expense e) {
+    final i = _items.indexWhere((x) => x.id == id);
+    if (i != -1) {
+      _items[i] = e;
+      notifyListeners();
+    }
+  }
+
+  void removeAt(int index) {
+    if (index < 0 || index >= _items.length) return;
+    _lastRemoved = _items.removeAt(index);
+    _lastIndex = index;
+    notifyListeners();
+  }
+
+  bool undoLastRemove() {
+    if (_lastRemoved == null || _lastIndex == null) return false;
+    final i = (_lastIndex!).clamp(0, _items.length);
+    _items.insert(i, _lastRemoved!);
+    _lastRemoved = null;
+    _lastIndex = null;
+    notifyListeners();
+    return true;
+  }
+
+  // Заглушки под будущий персист (№7–10)
+  Future<void> load() async {}
+  Future<void> save() async {}
+}
+
+/// ==== InheritedNotifier для доступа к состоянию ====
+class AppScope extends InheritedNotifier<AppState> {
+  const AppScope({super.key, required AppState notifier, required Widget child})
+      : super(notifier: notifier, child: child);
+
+  static AppState of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<AppScope>()!.notifier!;
+}
+
+/// ==== Корень + темы + маршруты ====
 class FinControlRoot extends StatefulWidget {
   const FinControlRoot({super.key});
   @override
@@ -21,6 +125,7 @@ class FinControlRoot extends StatefulWidget {
 }
 
 class _FinControlRootState extends State<FinControlRoot> {
+  final _state = AppState();
   ThemeMode _mode = ThemeMode.light;
   void _toggleTheme() =>
       setState(() => _mode = _mode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light);
@@ -46,23 +151,27 @@ class _FinControlRootState extends State<FinControlRoot> {
 
   @override
   Widget build(BuildContext context) {
-    return _ThemeController(
-      mode: _mode,
-      toggle: _toggleTheme,
-      child: MaterialApp(
-        title: 'FinControl',
-        debugShowCheckedModeBanner: false,
-        themeMode: _mode,
-        theme: _buildLightTheme(),
-        darkTheme: _buildDarkTheme(),
-        navigatorObservers: [routeObserver],
-        onGenerateRoute: _onGenerateRoute,
-        initialRoute: Routes.welcome,
+    return AppScope(
+      notifier: _state,
+      child: _ThemeController(
+        mode: _mode,
+        toggle: _toggleTheme,
+        child: MaterialApp(
+          title: 'FinControl',
+          debugShowCheckedModeBanner: false,
+          themeMode: _mode,
+          theme: _buildLightTheme(),
+          darkTheme: _buildDarkTheme(),
+          navigatorObservers: [routeObserver],
+          onGenerateRoute: _onGenerateRoute,
+          initialRoute: Routes.welcome,
+        ),
       ),
     );
   }
 }
 
+/// ==== Тема ====
 class _ThemeController extends InheritedWidget {
   final ThemeMode mode;
   final VoidCallback toggle;
@@ -101,46 +210,9 @@ ThemeData _buildDarkTheme() {
   );
 }
 
-/// ==== Данные ====
-class Expense {
-  final String id;
-  final String title;
-  final double amount;
-  final String category;
-  final DateTime date;
-  final bool isIncome;
+/// ==== Экраны ====
 
-  Expense({
-    required this.id,
-    required this.title,
-    required this.amount,
-    required this.category,
-    required this.date,
-    this.isIncome = false,
-  });
-
-  Expense copyWith({
-    String? id,
-    String? title,
-    double? amount,
-    String? category,
-    DateTime? date,
-    bool? isIncome,
-  }) {
-    return Expense(
-      id: id ?? this.id,
-      title: title ?? this.title,
-      amount: amount ?? this.amount,
-      category: category ?? this.category,
-      date: date ?? this.date,
-      isIncome: isIncome ?? this.isIncome,
-    );
-  }
-}
-
-const kCategories = ['Еда', 'Транспорт', 'Дом', 'Досуг', 'Другое'];
-
-/// ==== Welcome ====
+/// Welcome
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
   @override
@@ -169,7 +241,7 @@ class WelcomeScreen extends StatelessWidget {
   }
 }
 
-/// ==== Shell (Home/Stats) ====
+/// Shell (Home/Stats)
 class ShellScreen extends StatefulWidget {
   const ShellScreen({super.key});
   @override
@@ -178,26 +250,6 @@ class ShellScreen extends StatefulWidget {
 
 class _ShellScreenState extends State<ShellScreen> with RouteAware {
   int _index = 0;
-
-  final List<Expense> _items = [
-    Expense(id: 'e1', title: 'Продукты', amount: 750, category: 'Еда', date: DateTime.now()),
-    Expense(id: 'e2', title: 'Такси', amount: 320, category: 'Транспорт', date: DateTime.now()),
-    Expense(
-        id: 'e3',
-        title: 'Зарплата',
-        amount: 50000,
-        category: 'Другое',
-        isIncome: true,
-        date: DateTime.now()),
-  ];
-
-  void _add(Expense e) => setState(() => _items.insert(0, e));
-  void _update(String id, Expense e) {
-    final i = _items.indexWhere((x) => x.id == id);
-    if (i != -1) setState(() => _items[i] = e);
-  }
-
-  void _removeAt(int index) => setState(() => _items.removeAt(index));
 
   @override
   void didChangeDependencies() {
@@ -212,22 +264,8 @@ class _ShellScreenState extends State<ShellScreen> with RouteAware {
   }
 
   @override
-  void didPush() {}
-  @override
-  void didPopNext() {}
-
-  @override
   Widget build(BuildContext context) {
-    final pages = [
-      HomeScreen(
-        items: _items,
-        onAdd: _add,
-        onUpdate: _update,
-        onRemoveAt: _removeAt,
-      ),
-      StatsScreen(items: _items),
-    ];
-
+    final pages = [const HomeScreen(), const StatsScreen()];
     return Scaffold(
       body: pages[_index],
       bottomNavigationBar: NavigationBar(
@@ -242,21 +280,9 @@ class _ShellScreenState extends State<ShellScreen> with RouteAware {
   }
 }
 
-/// ==== Home ====
+/// Home
 class HomeScreen extends StatefulWidget {
-  final List<Expense> items;
-  final void Function(Expense e) onAdd;
-  final void Function(String id, Expense e) onUpdate;
-  final void Function(int index) onRemoveAt;
-
-  const HomeScreen({
-    super.key,
-    required this.items,
-    required this.onAdd,
-    required this.onUpdate,
-    required this.onRemoveAt,
-  });
-
+  const HomeScreen({super.key});
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
@@ -264,13 +290,13 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   String? _filter;
 
-  double get _total =>
-      widget.items.fold(0.0, (s, e) => s + (e.isIncome ? -e.amount : e.amount));
+  double _total(AppState s) =>
+      s.items.fold(0.0, (sum, e) => sum + (e.isIncome ? -e.amount : e.amount));
 
-  Iterable<Expense> get _visible =>
-      _filter == null ? widget.items : widget.items.where((e) => e.category == _filter);
+  Iterable<Expense> _visible(AppState s) =>
+      _filter == null ? s.items : s.items.where((e) => e.category == _filter);
 
-  Future<void> _quickAddBottomSheet() async {
+  Future<void> _quickAddBottomSheet(AppState s) async {
     final amountCtrl = TextEditingController();
     String category = kCategories.first;
     final res = await showModalBottomSheet<Expense>(
@@ -293,25 +319,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 controller: amountCtrl,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
-                decoration: const InputDecoration(
-                  labelText: 'Сумма',
-                  border: OutlineInputBorder(),
-                ),
+                decoration: const InputDecoration(labelText: 'Сумма', border: OutlineInputBorder()),
               ),
               const SizedBox(height: 12),
               InputDecorator(
-                decoration: const InputDecoration(
-                  labelText: 'Категория',
-                  border: OutlineInputBorder(),
-                ),
+                decoration: const InputDecoration(labelText: 'Категория', border: OutlineInputBorder()),
                 child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    isExpanded: true,
-                    value: category,
-                    items: [
-                      for (final c in kCategories) DropdownMenuItem(value: c, child: Text(c))
-                    ],
-                    onChanged: (v) => setState(() => category = v ?? category),
+                  child: StatefulBuilder(
+                    builder: (ctx, setSheetState) => DropdownButton<String>(
+                      isExpanded: true,
+                      value: category,
+                      items: [for (final c in kCategories) DropdownMenuItem(value: c, child: Text(c))],
+                      onChanged: (v) => setSheetState(() => category = v ?? category),
+                    ),
                   ),
                 ),
               ),
@@ -321,10 +341,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon: Icons.check,
                 onPressed: () {
                   final x = double.tryParse(amountCtrl.text.replaceAll(',', '.')) ?? 0.0;
-                  if (x <= 0) {
-                    Navigator.pop(ctx);
-                    return;
-                  }
+                  if (x <= 0) return Navigator.pop(ctx);
                   final now = DateTime.now();
                   Navigator.pop(
                     ctx,
@@ -343,7 +360,7 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       },
     );
-    if (res != null) widget.onAdd(res);
+    if (res != null) s.add(res);
   }
 
   Future<bool> _confirmDelete(String title) async {
@@ -354,24 +371,21 @@ class _HomeScreenState extends State<HomeScreen> {
         content: Text('«$title» будет удалена безвозвратно.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Отмена')),
-          FilledButton(
-              onPressed: () => Navigator.pop(context, true), child: const Text('Удалить')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Удалить')),
         ],
       ),
     ) ??
         false;
   }
 
-  void _showUndoSnack({required Expense removed, required int index}) {
+  void _showUndoSnack(AppState s, {required Expense removed, required int index}) {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Удалено: ${removed.title}'),
         action: SnackBarAction(
           label: 'ОТМЕНА',
-          onPressed: () {
-            setState(() => widget.items.insert(index, removed));
-          },
+          onPressed: () => s.undoLastRemove(),
         ),
       ),
     );
@@ -379,27 +393,35 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppScope.of(context);
+
     return Scaffold(
-      appBar: _AppBarTitle(
-        title: 'Мои расходы',
-        actions: const [_ThemeAction(), _SettingsAction()],
-      ),
-      floatingActionButton: GestureDetector(
-        onLongPress: _quickAddBottomSheet,         // долгий тап — быстрый ввод
-        child: FloatingActionButton(
-          onPressed: () async {                     // обычный тап — переход на полный экран
-            final e = await Navigator.of(context).pushNamed(Routes.add) as Expense?;
-            if (e != null) widget.onAdd(e);
-          },
-          child: const Icon(Icons.add),
-        ),
+      appBar: _AppBarTitle(title: 'Мои расходы', actions: const [_ThemeAction(), _SettingsAction()]),
+      floatingActionButton: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FloatingActionButton.small(
+            heroTag: 'quick',
+            onPressed: () => _quickAddBottomSheet(s),
+            child: const Icon(Icons.flash_on),
+          ),
+          const SizedBox(width: 12),
+          FloatingActionButton(
+            heroTag: 'main',
+            onPressed: () async {
+              final e = await Navigator.of(context).pushNamed(Routes.add) as Expense?;
+              if (e != null) s.add(e);
+            },
+            child: const Icon(Icons.add),
+          ),
+        ],
       ),
       body: Column(
         children: [
           const SizedBox(height: 12),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: _SummaryCard(total: _total),
+            child: _SummaryCard(total: _total(s)),
           ),
           const SizedBox(height: 8),
           // Фильтр
@@ -427,32 +449,29 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 8),
           Expanded(
-            child: _visible.isEmpty
+            child: s.items.isEmpty
                 ? const Center(child: Text('Нет записей'))
                 : ListView.separated(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              itemCount: _visible.length,
+              itemCount: _visible(s).length,
               itemBuilder: (_, i) {
-                final e = _visible.elementAt(i);
-                final realIndex = widget.items.indexOf(e);
+                final e = _visible(s).elementAt(i);
+                final realIndex = s.items.indexOf(e);
                 return Dismissible(
                   key: ValueKey(e.id),
                   background: _dismissBg(left: true),
                   secondaryBackground: _dismissBg(left: false),
-                  confirmDismiss: (_) async {
-                    // подтверждение перед удалением
-                    return await _confirmDelete(e.title);
-                  },
+                  confirmDismiss: (_) async => await _confirmDelete(e.title),
                   onDismissed: (_) {
                     final removed = e;
-                    widget.onRemoveAt(realIndex);
-                    _showUndoSnack(removed: removed, index: realIndex);
+                    s.removeAt(realIndex);
+                    _showUndoSnack(s, removed: removed, index: realIndex);
                   },
                   child: InkWell(
                     onTap: () async {
-                      final updated = await Navigator.of(context)
-                          .pushNamed(Routes.add, arguments: e) as Expense?;
-                      if (updated != null) widget.onUpdate(e.id, updated);
+                      final updated =
+                      await Navigator.of(context).pushNamed(Routes.add, arguments: e) as Expense?;
+                      if (updated != null) s.update(e.id, updated);
                     },
                     child: _ExpenseTile(expense: e),
                   ),
@@ -479,7 +498,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-/// ==== Add/Edit ====
+/// Add/Edit
 class AddEditScreen extends StatefulWidget {
   final Expense? initial;
   const AddEditScreen({super.key, this.initial});
@@ -543,11 +562,7 @@ class _AddEditScreenState extends State<AddEditScreen> {
   Widget build(BuildContext context) {
     final isEdit = widget.initial != null;
     return Scaffold(
-      appBar: _AppBarTitle(
-        title: isEdit ? 'Редактировать' : 'Новая запись',
-        canPop: true,
-        actions: const [_ThemeAction()],
-      ),
+      appBar: const _AppBarTitle(title: 'Запись', canPop: true, actions: [_ThemeAction()]),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -589,17 +604,12 @@ class _AddEditScreenState extends State<AddEditScreen> {
                 ),
                 const SizedBox(height: 12),
                 InputDecorator(
-                  decoration: const InputDecoration(
-                    labelText: 'Категория',
-                    border: OutlineInputBorder(),
-                  ),
+                  decoration: const InputDecoration(labelText: 'Категория', border: OutlineInputBorder()),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       isExpanded: true,
                       value: _category,
-                      items: [
-                        for (final c in kCategories) DropdownMenuItem(value: c, child: Text(c))
-                      ],
+                      items: [for (final c in kCategories) DropdownMenuItem(value: c, child: Text(c))],
                       onChanged: (v) => setState(() => _category = v ?? _category),
                     ),
                   ),
@@ -619,18 +629,15 @@ class _AddEditScreenState extends State<AddEditScreen> {
   }
 }
 
-/// ==== Stats ====
+/// Stats
 class StatsScreen extends StatelessWidget {
-  final List<Expense> items;
-  const StatsScreen({super.key, required this.items});
+  const StatsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final byCat = <String, double>{};
-    for (final c in kCategories) {
-      byCat[c] = 0.0;
-    }
-    for (final e in items) {
+    final s = AppScope.of(context);
+    final byCat = <String, double>{for (final c in kCategories) c: 0.0};
+    for (final e in s.items) {
       final sign = e.isIncome ? -1.0 : 1.0;
       byCat[e.category] = (byCat[e.category] ?? 0.0) + sign * e.amount;
     }
@@ -638,7 +645,7 @@ class StatsScreen extends StatelessWidget {
     (byCat.values.isEmpty ? 0.0 : byCat.values.reduce((a, b) => a > b ? a : b)).abs();
 
     return Scaffold(
-      appBar: _AppBarTitle(title: 'Статистика', actions: const [_ThemeAction()]),
+      appBar: const _AppBarTitle(title: 'Статистика', actions: [_ThemeAction()]),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -647,7 +654,7 @@ class StatsScreen extends StatelessWidget {
               _BarRow(label: entry.key, value: entry.value, maxAbs: maxVal),
             const SizedBox(height: 16),
             Text(
-              'Всего расходов: ${_money(items.where((e) => !e.isIncome).fold(0.0, (s, e) => s + e.amount))}',
+              'Всего расходов: ${_money(s.items.where((e) => !e.isIncome).fold(0.0, (s, e) => s + e.amount))}',
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
           ],
@@ -657,52 +664,7 @@ class StatsScreen extends StatelessWidget {
   }
 }
 
-class _BarRow extends StatelessWidget {
-  final String label;
-  final double value;
-  final double maxAbs;
-  const _BarRow({required this.label, required this.value, required this.maxAbs});
-
-  @override
-  Widget build(BuildContext context) {
-    final width = maxAbs == 0.0 ? 0.0 : (value.abs() / maxAbs);
-    final color = value >= 0 ? Colors.red : Colors.green;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          SizedBox(width: 92, child: Text(label)),
-          Expanded(
-            child: Container(
-              height: 12,
-              alignment: Alignment.centerLeft,
-              decoration: BoxDecoration(
-                color: Colors.black12,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: FractionallySizedBox(
-                widthFactor: width.clamp(0.0, 1.0).toDouble(),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: color,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          SizedBox(
-            width: 80,
-            child: Text(_money(value.abs().toDouble()), textAlign: TextAlign.right),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// ==== Settings ====
+/// Settings
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
   @override
@@ -731,7 +693,7 @@ class SettingsScreen extends StatelessWidget {
   }
 }
 
-/// ==== Общие компоненты ====
+/// ==== UI-компоненты ====
 class _AppBarTitle extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final List<Widget> actions;
@@ -848,6 +810,59 @@ class _ExpenseTile extends StatelessWidget {
   }
 }
 
+class _BarRow extends StatelessWidget {
+  final String label;
+  final double value;   // сумма по категории (расходы положительные, доходы отрицательные)
+  final double maxAbs;  // максимальное |value| среди категорий, чтобы нормировать ширину
+
+  const _BarRow({
+    required this.label,
+    required this.value,
+    required this.maxAbs,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final width = maxAbs == 0.0 ? 0.0 : (value.abs() / maxAbs);
+    final color = value >= 0 ? Colors.red : Colors.green; // расходы — красные, доходы — зелёные
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          SizedBox(width: 92, child: Text(label)),
+          Expanded(
+            child: Container(
+              height: 12,
+              alignment: Alignment.centerLeft,
+              decoration: BoxDecoration(
+                color: Colors.black12,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: FractionallySizedBox(
+                widthFactor: width.clamp(0.0, 1.0).toDouble(),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 80,
+            child: Text(
+              _money(value.abs().toDouble()),
+              textAlign: TextAlign.right,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 /// ==== Утилиты ====
 String _money(double x) => '${x.toStringAsFixed(0)} ₽';
 String _formatDate(DateTime d) {
