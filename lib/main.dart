@@ -3,7 +3,17 @@ import 'package:flutter/services.dart';
 
 void main() => runApp(const FinControlRoot());
 
-/// Корневой виджет с управлением темой (ThemeMode)
+/// ==== Навигация ====
+final routeObserver = RouteObserver<PageRoute<dynamic>>();
+
+class Routes {
+  static const welcome = '/';
+  static const shell = '/home';
+  static const add = '/add';
+  static const settings = '/settings';
+}
+
+/// Корень с управлением темой + генератором маршрутов
 class FinControlRoot extends StatefulWidget {
   const FinControlRoot({super.key});
   @override
@@ -12,11 +22,26 @@ class FinControlRoot extends StatefulWidget {
 
 class _FinControlRootState extends State<FinControlRoot> {
   ThemeMode _mode = ThemeMode.light;
+  void _toggleTheme() =>
+      setState(() => _mode = _mode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light);
 
-  void _toggleTheme() {
-    setState(() {
-      _mode = _mode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
-    });
+  Route<dynamic> _onGenerateRoute(RouteSettings s) {
+    switch (s.name) {
+      case Routes.welcome:
+        return MaterialPageRoute(builder: (_) => const WelcomeScreen(), settings: s);
+      case Routes.shell:
+        return MaterialPageRoute(builder: (_) => const ShellScreen(), settings: s);
+      case Routes.add:
+        final initial = s.arguments is Expense ? s.arguments as Expense? : null;
+        return MaterialPageRoute(builder: (_) => AddEditScreen(initial: initial), settings: s);
+      case Routes.settings:
+        return MaterialPageRoute(builder: (_) => const SettingsScreen(), settings: s);
+      default:
+        return MaterialPageRoute(
+          builder: (_) => const Scaffold(body: Center(child: Text('Not found'))),
+          settings: s,
+        );
+    }
   }
 
   @override
@@ -30,37 +55,26 @@ class _FinControlRootState extends State<FinControlRoot> {
         themeMode: _mode,
         theme: _buildLightTheme(),
         darkTheme: _buildDarkTheme(),
-        home: const WelcomeScreen(),
+        navigatorObservers: [routeObserver],
+        onGenerateRoute: _onGenerateRoute,
+        initialRoute: Routes.welcome,
       ),
     );
   }
 }
 
-/// InheritedWidget, чтобы из любого места вызывать переключение темы
 class _ThemeController extends InheritedWidget {
   final ThemeMode mode;
   final VoidCallback toggle;
-  const _ThemeController({
-    required this.mode,
-    required this.toggle,
-    required super.child,
-  });
-
-  static _ThemeController of(BuildContext context) =>
-      context.dependOnInheritedWidgetOfExactType<_ThemeController>()!;
-
+  const _ThemeController({required this.mode, required this.toggle, required super.child});
+  static _ThemeController of(BuildContext c) =>
+      c.dependOnInheritedWidgetOfExactType<_ThemeController>()!;
   @override
-  bool updateShouldNotify(covariant _ThemeController old) =>
-      old.mode != mode || old.toggle != toggle;
+  bool updateShouldNotify(covariant _ThemeController old) => old.mode != mode;
 }
 
-/// --------- Темы и типографика ---------
 ThemeData _buildLightTheme() {
-  final base = ThemeData(
-    useMaterial3: true,
-    colorSchemeSeed: const Color(0xFF6750A4),
-    brightness: Brightness.light,
-  );
+  final base = ThemeData(useMaterial3: true, colorSchemeSeed: const Color(0xFF6750A4));
   return base.copyWith(
     textTheme: base.textTheme.copyWith(
       titleLarge: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
@@ -87,7 +101,7 @@ ThemeData _buildDarkTheme() {
   );
 }
 
-/// --------- Модель данных ---------
+/// ==== Данные ====
 class Expense {
   final String id;
   final String title;
@@ -126,17 +140,13 @@ class Expense {
 
 const kCategories = ['Еда', 'Транспорт', 'Дом', 'Досуг', 'Другое'];
 
-/// --------- Экран Welcome ---------
+/// ==== Welcome ====
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: _AppBarTitle(
-        title: 'Добро пожаловать',
-        actions: const [_ThemeAction()],
-      ),
+      appBar: _AppBarTitle(title: 'Добро пожаловать', actions: const [_ThemeAction()]),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -145,15 +155,10 @@ class WelcomeScreen extends StatelessWidget {
             children: [
               Text('FinControl', style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 8),
-              const Text(
-                'Калькулятор и учёт расходов',
-                textAlign: TextAlign.center,
-              ),
+              const Text('Калькулятор и учёт расходов', textAlign: TextAlign.center),
               const SizedBox(height: 24),
               _PrimaryButton(
-                onPressed: () => Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (_) => const ShellScreen()),
-                ),
+                onPressed: () => Navigator.of(context).pushReplacementNamed(Routes.shell),
                 label: 'Начать',
               ),
             ],
@@ -164,29 +169,19 @@ class WelcomeScreen extends StatelessWidget {
   }
 }
 
-/// --------- Общая «оболочка» с табами ---------
+/// ==== Shell (Home/Stats) ====
 class ShellScreen extends StatefulWidget {
   const ShellScreen({super.key});
   @override
   State<ShellScreen> createState() => _ShellScreenState();
 }
 
-class _ShellScreenState extends State<ShellScreen> {
+class _ShellScreenState extends State<ShellScreen> with RouteAware {
   int _index = 0;
 
   final List<Expense> _items = [
-    Expense(
-        id: 'e1',
-        title: 'Продукты',
-        amount: 750,
-        category: 'Еда',
-        date: DateTime.now()),
-    Expense(
-        id: 'e2',
-        title: 'Такси',
-        amount: 320,
-        category: 'Транспорт',
-        date: DateTime.now()),
+    Expense(id: 'e1', title: 'Продукты', amount: 750, category: 'Еда', date: DateTime.now()),
+    Expense(id: 'e2', title: 'Такси', amount: 320, category: 'Транспорт', date: DateTime.now()),
     Expense(
         id: 'e3',
         title: 'Зарплата',
@@ -202,10 +197,24 @@ class _ShellScreenState extends State<ShellScreen> {
     if (i != -1) setState(() => _items[i] = e);
   }
 
-  void _remove(String id) {
-    final i = _items.indexWhere((x) => x.id == id);
-    if (i != -1) setState(() => _items.removeAt(i));
+  void _removeAt(int index) => setState(() => _items.removeAt(index));
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context)! as PageRoute);
   }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPush() {}
+  @override
+  void didPopNext() {}
 
   @override
   Widget build(BuildContext context) {
@@ -214,7 +223,7 @@ class _ShellScreenState extends State<ShellScreen> {
         items: _items,
         onAdd: _add,
         onUpdate: _update,
-        onRemove: _remove,
+        onRemoveAt: _removeAt,
       ),
       StatsScreen(items: _items),
     ];
@@ -233,19 +242,19 @@ class _ShellScreenState extends State<ShellScreen> {
   }
 }
 
-/// --------- Главный экран: список + фильтр + FAB ---------
+/// ==== Home ====
 class HomeScreen extends StatefulWidget {
   final List<Expense> items;
   final void Function(Expense e) onAdd;
   final void Function(String id, Expense e) onUpdate;
-  final void Function(String id) onRemove;
+  final void Function(int index) onRemoveAt;
 
   const HomeScreen({
     super.key,
     required this.items,
     required this.onAdd,
     required this.onUpdate,
-    required this.onRemove,
+    required this.onRemoveAt,
   });
 
   @override
@@ -258,25 +267,132 @@ class _HomeScreenState extends State<HomeScreen> {
   double get _total =>
       widget.items.fold(0.0, (s, e) => s + (e.isIncome ? -e.amount : e.amount));
 
-  Iterable<Expense> get _visible => _filter == null
-      ? widget.items
-      : widget.items.where((e) => e.category == _filter);
+  Iterable<Expense> get _visible =>
+      _filter == null ? widget.items : widget.items.where((e) => e.category == _filter);
+
+  Future<void> _quickAddBottomSheet() async {
+    final amountCtrl = TextEditingController();
+    String category = kCategories.first;
+    final res = await showModalBottomSheet<Expense>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 16,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Быстрая запись', style: Theme.of(ctx).textTheme.titleMedium),
+              const SizedBox(height: 12),
+              TextField(
+                controller: amountCtrl,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
+                decoration: const InputDecoration(
+                  labelText: 'Сумма',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              InputDecorator(
+                decoration: const InputDecoration(
+                  labelText: 'Категория',
+                  border: OutlineInputBorder(),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    isExpanded: true,
+                    value: category,
+                    items: [
+                      for (final c in kCategories) DropdownMenuItem(value: c, child: Text(c))
+                    ],
+                    onChanged: (v) => setState(() => category = v ?? category),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              _PrimaryButton(
+                label: 'Добавить',
+                icon: Icons.check,
+                onPressed: () {
+                  final x = double.tryParse(amountCtrl.text.replaceAll(',', '.')) ?? 0.0;
+                  if (x <= 0) {
+                    Navigator.pop(ctx);
+                    return;
+                  }
+                  final now = DateTime.now();
+                  Navigator.pop(
+                    ctx,
+                    Expense(
+                      id: 'e${now.microsecondsSinceEpoch}',
+                      title: 'Быстрое добавление',
+                      amount: x,
+                      category: category,
+                      date: now,
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    if (res != null) widget.onAdd(res);
+  }
+
+  Future<bool> _confirmDelete(String title) async {
+    return await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Удалить запись?'),
+        content: Text('«$title» будет удалена безвозвратно.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Отмена')),
+          FilledButton(
+              onPressed: () => Navigator.pop(context, true), child: const Text('Удалить')),
+        ],
+      ),
+    ) ??
+        false;
+  }
+
+  void _showUndoSnack({required Expense removed, required int index}) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Удалено: ${removed.title}'),
+        action: SnackBarAction(
+          label: 'ОТМЕНА',
+          onPressed: () {
+            setState(() => widget.items.insert(index, removed));
+          },
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _AppBarTitle(
         title: 'Мои расходы',
-        actions: const [_ThemeAction()],
+        actions: const [_ThemeAction(), _SettingsAction()],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final e = await Navigator.of(context).push<Expense>(
-            MaterialPageRoute(builder: (_) => const AddEditScreen()),
-          );
-          if (e != null) widget.onAdd(e);
-        },
-        child: const Icon(Icons.add),
+      floatingActionButton: GestureDetector(
+        onLongPress: _quickAddBottomSheet,         // долгий тап — быстрый ввод
+        child: FloatingActionButton(
+          onPressed: () async {                     // обычный тап — переход на полный экран
+            final e = await Navigator.of(context).pushNamed(Routes.add) as Expense?;
+            if (e != null) widget.onAdd(e);
+          },
+          child: const Icon(Icons.add),
+        ),
       ),
       body: Column(
         children: [
@@ -286,7 +402,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: _SummaryCard(total: _total),
           ),
           const SizedBox(height: 8),
-          // Фильтр по категориям
+          // Фильтр
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -318,22 +434,24 @@ class _HomeScreenState extends State<HomeScreen> {
               itemCount: _visible.length,
               itemBuilder: (_, i) {
                 final e = _visible.elementAt(i);
+                final realIndex = widget.items.indexOf(e);
                 return Dismissible(
                   key: ValueKey(e.id),
                   background: _dismissBg(left: true),
                   secondaryBackground: _dismissBg(left: false),
+                  confirmDismiss: (_) async {
+                    // подтверждение перед удалением
+                    return await _confirmDelete(e.title);
+                  },
                   onDismissed: (_) {
-                    widget.onRemove(e.id);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Удалено: ${e.title}')),
-                    );
+                    final removed = e;
+                    widget.onRemoveAt(realIndex);
+                    _showUndoSnack(removed: removed, index: realIndex);
                   },
                   child: InkWell(
                     onTap: () async {
                       final updated = await Navigator.of(context)
-                          .push<Expense>(MaterialPageRoute(
-                        builder: (_) => AddEditScreen(initial: e),
-                      ));
+                          .pushNamed(Routes.add, arguments: e) as Expense?;
                       if (updated != null) widget.onUpdate(e.id, updated);
                     },
                     child: _ExpenseTile(expense: e),
@@ -361,7 +479,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-/// --------- Форма добавления/редактирования ---------
+/// ==== Add/Edit ====
 class AddEditScreen extends StatefulWidget {
   final Expense? initial;
   const AddEditScreen({super.key, this.initial});
@@ -427,8 +545,8 @@ class _AddEditScreenState extends State<AddEditScreen> {
     return Scaffold(
       appBar: _AppBarTitle(
         title: isEdit ? 'Редактировать' : 'Новая запись',
-        actions: const [_ThemeAction()],
         canPop: true,
+        actions: const [_ThemeAction()],
       ),
       body: SafeArea(
         child: Padding(
@@ -446,11 +564,8 @@ class _AddEditScreenState extends State<AddEditScreen> {
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _amount,
-                  keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
-                  ],
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
                   decoration: const InputDecoration(
                     labelText: 'Сумма',
                     hintText: '0',
@@ -470,8 +585,7 @@ class _AddEditScreenState extends State<AddEditScreen> {
                     hintText: 'Например, Продукты',
                     border: OutlineInputBorder(),
                   ),
-                  validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Введите название' : null,
+                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Введите название' : null,
                 ),
                 const SizedBox(height: 12),
                 InputDecorator(
@@ -484,8 +598,7 @@ class _AddEditScreenState extends State<AddEditScreen> {
                       isExpanded: true,
                       value: _category,
                       items: [
-                        for (final c in kCategories)
-                          DropdownMenuItem(value: c, child: Text(c))
+                        for (final c in kCategories) DropdownMenuItem(value: c, child: Text(c))
                       ],
                       onChanged: (v) => setState(() => _category = v ?? _category),
                     ),
@@ -506,7 +619,7 @@ class _AddEditScreenState extends State<AddEditScreen> {
   }
 }
 
-/// --------- Статистика (простая) ---------
+/// ==== Stats ====
 class StatsScreen extends StatelessWidget {
   final List<Expense> items;
   const StatsScreen({super.key, required this.items});
@@ -522,8 +635,7 @@ class StatsScreen extends StatelessWidget {
       byCat[e.category] = (byCat[e.category] ?? 0.0) + sign * e.amount;
     }
     final maxVal =
-    (byCat.values.isEmpty ? 0.0 : byCat.values.reduce((a, b) => a > b ? a : b))
-        .abs();
+    (byCat.values.isEmpty ? 0.0 : byCat.values.reduce((a, b) => a > b ? a : b)).abs();
 
     return Scaffold(
       appBar: _AppBarTitle(title: 'Статистика', actions: const [_ThemeAction()]),
@@ -582,10 +694,7 @@ class _BarRow extends StatelessWidget {
           const SizedBox(width: 8),
           SizedBox(
             width: 80,
-            child: Text(
-              _money(value.abs().toDouble()),
-              textAlign: TextAlign.right,
-            ),
+            child: Text(_money(value.abs().toDouble()), textAlign: TextAlign.right),
           ),
         ],
       ),
@@ -593,27 +702,46 @@ class _BarRow extends StatelessWidget {
   }
 }
 
-/// --------- Компоненты UI ---------
+/// ==== Settings ====
+class SettingsScreen extends StatelessWidget {
+  const SettingsScreen({super.key});
+  @override
+  Widget build(BuildContext context) {
+    final ctrl = _ThemeController.of(context);
+    final isDark = ctrl.mode == ThemeMode.dark;
+    return Scaffold(
+      appBar: const _AppBarTitle(title: 'Настройки', canPop: true, actions: [_ThemeAction()]),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          SwitchListTile(
+            value: isDark,
+            onChanged: (_) => ctrl.toggle(),
+            title: const Text('Тёмная тема'),
+            subtitle: const Text('Переключить оформление приложения'),
+          ),
+          const Divider(),
+          const ListTile(
+            title: Text('О приложении'),
+            subtitle: Text('FinControl — учебный прототип учёта расходов.'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// ==== Общие компоненты ====
 class _AppBarTitle extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final List<Widget> actions;
   final bool canPop;
-  const _AppBarTitle({
-    required this.title,
-    this.actions = const [],
-    this.canPop = false,
-  });
-
+  const _AppBarTitle({required this.title, this.actions = const [], this.canPop = false});
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
-
   @override
   Widget build(BuildContext context) {
-    return AppBar(
-      leading: canPop ? const BackButton() : null,
-      title: Text(title),
-      actions: actions,
-    );
+    return AppBar(leading: canPop ? const BackButton() : null, title: Text(title), actions: actions);
   }
 }
 
@@ -631,12 +759,23 @@ class _ThemeAction extends StatelessWidget {
   }
 }
 
+class _SettingsAction extends StatelessWidget {
+  const _SettingsAction();
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: 'Настройки',
+      onPressed: () => Navigator.of(context).pushNamed(Routes.settings),
+      icon: const Icon(Icons.settings_outlined),
+    );
+  }
+}
+
 class _PrimaryButton extends StatelessWidget {
   final VoidCallback onPressed;
   final String label;
   final IconData? icon;
   const _PrimaryButton({super.key, required this.onPressed, required this.label, this.icon});
-
   @override
   Widget build(BuildContext context) {
     final child = Text(label);
@@ -649,7 +788,6 @@ class _PrimaryButton extends StatelessWidget {
 class _SummaryCard extends StatelessWidget {
   final double total;
   const _SummaryCard({required this.total});
-
   @override
   Widget build(BuildContext context) {
     final isOk = total <= 0;
@@ -662,28 +800,15 @@ class _SummaryCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.account_balance_wallet_outlined,
-            size: 28,
-            color: isOk ? Colors.green : Colors.red,
-          ),
+          Icon(Icons.account_balance_wallet_outlined, size: 28, color: isOk ? Colors.green : Colors.red),
           const SizedBox(width: 12),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Итоги сегодня', style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 4),
-                Text(
-                  (total > 0 ? '— ' : '+ ') + _money(total.abs()),
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: isOk ? Colors.green : Colors.red,
-                  ),
-                ),
-              ],
-            ),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('Итоги сегодня', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 4),
+              Text((total > 0 ? '— ' : '+ ') + _money(total.abs()),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: isOk ? Colors.green : Colors.red)),
+            ]),
           ),
         ],
       ),
@@ -694,51 +819,37 @@ class _SummaryCard extends StatelessWidget {
 class _ExpenseTile extends StatelessWidget {
   final Expense expense;
   const _ExpenseTile({required this.expense});
-
   @override
   Widget build(BuildContext context) {
     final color = expense.isIncome ? Colors.green : Colors.red;
     final sign = expense.isIncome ? '+ ' : '- ';
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.black12),
-      ),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.black12)),
       child: Row(
         children: [
           CircleAvatar(
             radius: 18,
             backgroundColor: color.withOpacity(.12),
-            child: Text(
-              expense.category.characters.first.toUpperCase(),
-              style: TextStyle(color: color),
-            ),
+            child: Text(expense.category.characters.first.toUpperCase(), style: TextStyle(color: color)),
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(expense.title, style: const TextStyle(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 2),
-                Text(_formatDate(expense.date), style: const TextStyle(color: Colors.black54)),
-              ],
-            ),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(expense.title, style: const TextStyle(fontWeight: FontWeight.w600)),
+              const SizedBox(height: 2),
+              Text(_formatDate(expense.date), style: const TextStyle(color: Colors.black54)),
+            ]),
           ),
-          Text(
-            '$sign${_money(expense.amount)}',
-            style: TextStyle(fontWeight: FontWeight.w700, color: color),
-          ),
+          Text('$sign${_money(expense.amount)}', style: TextStyle(fontWeight: FontWeight.w700, color: color)),
         ],
       ),
     );
   }
 }
 
-/// --------- Утилиты форматирования ---------
+/// ==== Утилиты ====
 String _money(double x) => '${x.toStringAsFixed(0)} ₽';
-
 String _formatDate(DateTime d) {
   String two(int n) => n.toString().padLeft(2, '0');
   return '${two(d.day)}.${two(d.month)}.${d.year} • ${two(d.hour)}:${two(d.minute)}';
