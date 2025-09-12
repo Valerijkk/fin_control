@@ -1,6 +1,11 @@
+// lib/main.dart
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
+
 import 'data/db.dart';
+import 'services/rates_api.dart';
 
 void main() => runApp(const FinControlRoot());
 
@@ -12,6 +17,7 @@ class Routes {
   static const shell = '/home';
   static const add = '/add';
   static const settings = '/settings';
+  static const photo = '/photo';
 }
 
 /// ==== Модель ====
@@ -22,6 +28,7 @@ class Expense {
   final String category;
   final DateTime date;
   final bool isIncome;
+  final String? imagePath;
 
   const Expense({
     required this.id,
@@ -30,6 +37,7 @@ class Expense {
     required this.category,
     required this.date,
     this.isIncome = false,
+    this.imagePath,
   });
 
   Expense copyWith({
@@ -39,6 +47,7 @@ class Expense {
     String? category,
     DateTime? date,
     bool? isIncome,
+    String? imagePath,
   }) {
     return Expense(
       id: id ?? this.id,
@@ -47,36 +56,36 @@ class Expense {
       category: category ?? this.category,
       date: date ?? this.date,
       isIncome: isIncome ?? this.isIncome,
+      imagePath: imagePath ?? this.imagePath,
     );
   }
 }
 
 const kCategories = ['Еда', 'Транспорт', 'Дом', 'Досуг', 'Другое'];
 
-/// ==== Состояние приложения (с SQLite) ====
+/// ==== Состояние (SQLite) ====
 class AppState extends ChangeNotifier {
   final List<Expense> _items = [];
   final AppDatabase _db = AppDatabase();
 
   List<Expense> get items => List.unmodifiable(_items);
 
-  // для Undo
   Expense? _lastRemoved;
   int? _lastIndex;
 
-  /// Загрузка при старте
   Future<void> load() async {
     _items.clear();
     final rows = await _db.getAllRaw();
     for (final r in rows) {
       _items.add(
         Expense(
-          id: (r['id'] as String),
-          title: (r['title'] as String),
+          id: r['id'] as String,
+          title: r['title'] as String,
           amount: (r['amount'] as num).toDouble(),
-          category: (r['category'] as String),
-          date: DateTime.fromMillisecondsSinceEpoch((r['date'] as int)),
-          isIncome: ((r['is_income'] as int) == 1),
+          category: r['category'] as String,
+          date: DateTime.fromMillisecondsSinceEpoch(r['date'] as int),
+          isIncome: (r['is_income'] as int) == 1,
+          imagePath: r['image_path'] as String?,
         ),
       );
     }
@@ -93,6 +102,7 @@ class AppState extends ChangeNotifier {
       'category': e.category,
       'date': e.date.millisecondsSinceEpoch,
       'is_income': e.isIncome ? 1 : 0,
+      'image_path': e.imagePath,
     });
   }
 
@@ -108,6 +118,7 @@ class AppState extends ChangeNotifier {
       'category': e.category,
       'date': e.date.millisecondsSinceEpoch,
       'is_income': e.isIncome ? 1 : 0,
+      'image_path': e.imagePath,
     });
   }
 
@@ -121,7 +132,6 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  /// Возврат последнего удаления (из SnackBar)
   Future<bool> undoLastRemove() async {
     if (_lastRemoved == null || _lastIndex == null) return false;
     final i = (_lastIndex!).clamp(0, _items.length);
@@ -137,6 +147,7 @@ class AppState extends ChangeNotifier {
       'category': e.category,
       'date': e.date.millisecondsSinceEpoch,
       'is_income': e.isIncome ? 1 : 0,
+      'image_path': e.imagePath,
     });
     return true;
   }
@@ -144,8 +155,11 @@ class AppState extends ChangeNotifier {
 
 /// ==== InheritedNotifier для доступа к состоянию ====
 class AppScope extends InheritedNotifier<AppState> {
-  const AppScope({super.key, required AppState notifier, required Widget child})
-      : super(notifier: notifier, child: child);
+  const AppScope({
+    super.key,
+    required AppState notifier,
+    required Widget child,
+  }) : super(notifier: notifier, child: child);
 
   static AppState of(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<AppScope>()!.notifier!;
@@ -173,7 +187,7 @@ class _FinControlRootState extends State<FinControlRoot> {
   }
 
   Future<void> _init() async {
-    await _state.load(); // тянем из SQLite
+    await _state.load();
     if (mounted) setState(() => _loaded = true);
   }
 
@@ -189,6 +203,9 @@ class _FinControlRootState extends State<FinControlRoot> {
         return MaterialPageRoute(builder: (_) => AddEditScreen(initial: initial), settings: s);
       case Routes.settings:
         return MaterialPageRoute(builder: (_) => const SettingsScreen(), settings: s);
+      case Routes.photo:
+        final path = s.arguments as String;
+        return MaterialPageRoute(builder: (_) => PhotoViewerScreen(path: path), settings: s);
       default:
         return MaterialPageRoute(
           builder: (_) => const Scaffold(body: Center(child: Text('Not found'))),
@@ -199,7 +216,6 @@ class _FinControlRootState extends State<FinControlRoot> {
 
   @override
   Widget build(BuildContext context) {
-    // провайдеры кладём через builder, чтобы быть над Navigator
     return MaterialApp(
       title: 'FinControl',
       debugShowCheckedModeBanner: false,
@@ -213,9 +229,7 @@ class _FinControlRootState extends State<FinControlRoot> {
         if (!_loaded) {
           return Theme(
             data: _buildLightTheme(),
-            child: const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
-            ),
+            child: const Scaffold(body: Center(child: CircularProgressIndicator())),
           );
         }
         return AppScope(
@@ -231,24 +245,31 @@ class _FinControlRootState extends State<FinControlRoot> {
   }
 }
 
-/// ==== Тема ====
 class _ThemeController extends InheritedWidget {
   final ThemeMode mode;
   final VoidCallback toggle;
-  const _ThemeController({required this.mode, required this.toggle, required super.child});
+  const _ThemeController({
+    super.key,
+    required this.mode,
+    required this.toggle,
+    required super.child,
+  });
 
-  static _ThemeController of(BuildContext c) {
-    final ctrl = c.dependOnInheritedWidgetOfExactType<_ThemeController>();
-    assert(ctrl != null, 'ThemeController not found above MaterialApp routes');
-    return ctrl!;
-  }
+  static _ThemeController of(BuildContext c) =>
+      c.dependOnInheritedWidgetOfExactType<_ThemeController>()!;
 
   @override
   bool updateShouldNotify(covariant _ThemeController old) => old.mode != mode;
 }
 
+/// ==== Темы (исправлено: CardThemeData + читаемые цвета) ====
 ThemeData _buildLightTheme() {
-  final base = ThemeData(useMaterial3: true, colorSchemeSeed: const Color(0xFF6750A4));
+  final base = ThemeData(
+    useMaterial3: true,
+    colorSchemeSeed: const Color(0xFF6750A4),
+    brightness: Brightness.light,
+  );
+
   return base.copyWith(
     textTheme: base.textTheme.copyWith(
       titleLarge: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
@@ -256,26 +277,39 @@ ThemeData _buildLightTheme() {
       bodyLarge: const TextStyle(fontSize: 16),
       labelLarge: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
     ),
-    // ↓↓↓ ключевые фиксы
-    bottomSheetTheme: BottomSheetThemeData(
-      backgroundColor: base.colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+    cardTheme: CardThemeData(
+      color: base.colorScheme.surface,
+      elevation: 0,
+      margin: const EdgeInsets.all(0),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: base.colorScheme.outlineVariant),
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: base.colorScheme.surfaceVariant,
-      labelStyle: TextStyle(color: base.colorScheme.onSurface),
-      hintStyle: TextStyle(color: base.colorScheme.onSurfaceVariant),
+      fillColor: base.colorScheme.surface,
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(color: base.colorScheme.outlineVariant),
       ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: base.colorScheme.primary, width: 2),
+      labelStyle: TextStyle(color: base.colorScheme.onSurface.withOpacity(.8)),
+      hintStyle: TextStyle(color: base.colorScheme.onSurface.withOpacity(.55)),
+    ),
+    chipTheme: base.chipTheme.copyWith(
+      side: BorderSide(color: base.colorScheme.outlineVariant),
+      selectedColor: base.colorScheme.secondaryContainer,
+    ),
+    navigationBarTheme: const NavigationBarThemeData(),
+    filledButtonTheme: FilledButtonThemeData(
+      style: ButtonStyle(
+        padding: const MaterialStatePropertyAll(
+          EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        ),
+        shape: MaterialStatePropertyAll(
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
       ),
     ),
   );
@@ -287,6 +321,7 @@ ThemeData _buildDarkTheme() {
     colorSchemeSeed: const Color(0xFF6750A4),
     brightness: Brightness.dark,
   );
+
   return base.copyWith(
     textTheme: base.textTheme.copyWith(
       titleLarge: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
@@ -294,32 +329,47 @@ ThemeData _buildDarkTheme() {
       bodyLarge: const TextStyle(fontSize: 16),
       labelLarge: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
     ),
-    bottomSheetTheme: BottomSheetThemeData(
-      backgroundColor: base.colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+    cardTheme: CardThemeData(
+      color: base.colorScheme.surface,
+      elevation: 0,
+      margin: const EdgeInsets.all(0),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: base.colorScheme.outlineVariant),
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: base.colorScheme.surfaceVariant,
-      labelStyle: TextStyle(color: base.colorScheme.onSurface),
-      hintStyle: TextStyle(color: base.colorScheme.onSurfaceVariant),
+      fillColor: base.colorScheme.surface,
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(color: base.colorScheme.outlineVariant),
       ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: base.colorScheme.primary, width: 2),
+      labelStyle: TextStyle(color: base.colorScheme.onSurface.withOpacity(.9)),
+      hintStyle: TextStyle(color: base.colorScheme.onSurface.withOpacity(.65)),
+    ),
+    chipTheme: base.chipTheme.copyWith(
+      side: BorderSide(color: base.colorScheme.outlineVariant),
+      selectedColor: base.colorScheme.secondaryContainer,
+    ),
+    navigationBarTheme: const NavigationBarThemeData(),
+    filledButtonTheme: FilledButtonThemeData(
+      style: ButtonStyle(
+        padding: const MaterialStatePropertyAll(
+          EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        ),
+        shape: MaterialStatePropertyAll(
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
       ),
     ),
   );
 }
 
 /// ==== Экраны ====
-/// Welcome
+
+// Welcome
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
   @override
@@ -348,27 +398,15 @@ class WelcomeScreen extends StatelessWidget {
   }
 }
 
-/// Shell (Home/Stats)
+// Shell (Home/Stats)
 class ShellScreen extends StatefulWidget {
   const ShellScreen({super.key});
   @override
   State<ShellScreen> createState() => _ShellScreenState();
 }
 
-class _ShellScreenState extends State<ShellScreen> with RouteAware {
+class _ShellScreenState extends State<ShellScreen> {
   int _index = 0;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    routeObserver.subscribe(this, ModalRoute.of(context)! as PageRoute);
-  }
-
-  @override
-  void dispose() {
-    routeObserver.unsubscribe(this);
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -387,7 +425,7 @@ class _ShellScreenState extends State<ShellScreen> with RouteAware {
   }
 }
 
-/// Home
+// Home
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
   @override
@@ -396,6 +434,13 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   String? _filter;
+  late final Future<Rates> _ratesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _ratesFuture = RatesApi.fetch();
+  }
 
   double _total(AppState s) =>
       s.items.fold(0.0, (sum, e) => sum + (e.isIncome ? -e.amount : e.amount));
@@ -403,119 +448,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Iterable<Expense> _visible(AppState s) =>
       _filter == null ? s.items : s.items.where((e) => e.category == _filter);
 
-  Future<void> _quickAddBottomSheet(AppState s) async {
-    final amountCtrl = TextEditingController();
-    String category = kCategories.first;
-    final res = await showModalBottomSheet<Expense>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      backgroundColor: Theme.of(context).colorScheme.surface, // контрастный фон для обеих тем
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) {
-        final cs = Theme.of(ctx).colorScheme;
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 16,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Быстрая запись',
-                style: Theme.of(ctx).textTheme.titleMedium?.copyWith(color: cs.onSurface),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: amountCtrl,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
-                decoration: const InputDecoration(labelText: 'Сумма', border: OutlineInputBorder()),
-              ),
-              const SizedBox(height: 12),
-              InputDecorator(
-                decoration: const InputDecoration(labelText: 'Категория', border: OutlineInputBorder()),
-                child: DropdownButtonHideUnderline(
-                  child: StatefulBuilder(
-                    builder: (ctx, setSheetState) => DropdownButton<String>(
-                      isExpanded: true,
-                      value: category,
-                      items: [for (final c in kCategories) DropdownMenuItem(value: c, child: Text(c))],
-                      onChanged: (v) => setSheetState(() => category = v ?? category),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              _PrimaryButton(
-                label: 'Добавить',
-                icon: Icons.check,
-                onPressed: () {
-                  final x = double.tryParse(amountCtrl.text.replaceAll(',', '.')) ?? 0.0;
-                  if (x <= 0) return Navigator.pop(ctx);
-                  final now = DateTime.now();
-                  Navigator.pop(
-                    ctx,
-                    Expense(
-                      id: 'e${now.microsecondsSinceEpoch}',
-                      title: 'Быстрое добавление',
-                      amount: x,
-                      category: category,
-                      date: now,
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-    if (res != null) await s.add(res);
-  }
-
-  Future<bool> _confirmDelete(String title) async {
-    return await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Удалить запись?'),
-        content: Text('«$title» будет удалена безвозвратно.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Отмена')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Удалить')),
-        ],
-      ),
-    ) ??
-        false;
-  }
-
-  void _showUndoSnack(AppState s, {required Expense removed, required int index}) {
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Удалено: ${removed.title}'),
-        action: SnackBarAction(
-          label: 'ОТМЕНА',
-          onPressed: () async {
-            await s.undoLastRemove();
-            try {
-              await HapticFeedback.mediumImpact();
-            } catch (_) {}
-          },
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final s = AppScope.of(context);
-    final outline = Theme.of(context).colorScheme.outlineVariant;
 
     return Scaffold(
       appBar: _AppBarTitle(title: 'Мои расходы', actions: const [_ThemeAction(), _SettingsAction()]),
@@ -545,10 +480,14 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 12),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _RatesCard(future: _ratesFuture),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: _SummaryCard(total: _total(s)),
           ),
           const SizedBox(height: 8),
-          // Фильтр по категориям
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -595,11 +534,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                   child: InkWell(
                     onTap: () async {
-                      final updated =
-                      await Navigator.of(context).pushNamed(Routes.add, arguments: e) as Expense?;
+                      final updated = await Navigator.of(context)
+                          .pushNamed(Routes.add, arguments: e) as Expense?;
                       if (updated != null) await s.update(e.id, updated);
                     },
-                    child: _ExpenseTile(expense: e, outlineColor: outline),
+                    child: _ExpenseTile(expense: e),
                   ),
                 );
               },
@@ -607,6 +546,125 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Future<void> _quickAddBottomSheet(AppState s) async {
+    final amountCtrl = TextEditingController();
+    String category = kCategories.first;
+    final res = await showModalBottomSheet<Expense>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 16,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Быстрая запись', style: Theme.of(ctx).textTheme.titleMedium),
+              const SizedBox(height: 12),
+              TextField(
+                controller: amountCtrl,
+                keyboardType:
+                const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))
+                ],
+                decoration: const InputDecoration(
+                  labelText: 'Сумма',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              InputDecorator(
+                decoration: const InputDecoration(
+                  labelText: 'Категория',
+                  border: OutlineInputBorder(),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: StatefulBuilder(
+                    builder: (ctx, setSheetState) => DropdownButton<String>(
+                      isExpanded: true,
+                      value: category,
+                      items: [
+                        for (final c in kCategories)
+                          DropdownMenuItem(value: c, child: Text(c))
+                      ],
+                      onChanged: (v) => setSheetState(() => category = v ?? category),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              _PrimaryButton(
+                label: 'Добавить',
+                icon: Icons.check,
+                onPressed: () {
+                  final x =
+                      double.tryParse(amountCtrl.text.replaceAll(',', '.')) ??
+                          0.0;
+                  if (x <= 0) return Navigator.pop(ctx);
+                  final now = DateTime.now();
+                  Navigator.pop(
+                    ctx,
+                    Expense(
+                      id: 'e${now.microsecondsSinceEpoch}',
+                      title: 'Быстрое добавление',
+                      amount: x,
+                      category: category,
+                      date: now,
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    if (res != null) await s.add(res);
+  }
+
+  Future<bool> _confirmDelete(String title) async {
+    return await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Удалить запись?'),
+        content: Text('«$title» будет удалена безвозвратно.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Отмена')),
+          FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Удалить')),
+        ],
+      ),
+    ) ??
+        false;
+  }
+
+  void _showUndoSnack(AppState s,
+      {required Expense removed, required int index}) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Удалено: ${removed.title}'),
+        action: SnackBarAction(
+          label: 'ОТМЕНА',
+          onPressed: () async {
+            await s.undoLastRemove();
+            try {
+              await HapticFeedback.mediumImpact();
+            } catch (_) {}
+          },
+        ),
       ),
     );
   }
@@ -624,7 +682,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-/// Add/Edit
+// Add/Edit
 class AddEditScreen extends StatefulWidget {
   final Expense? initial;
   const AddEditScreen({super.key, this.initial});
@@ -639,6 +697,7 @@ class _AddEditScreenState extends State<AddEditScreen> {
   final _amount = TextEditingController();
   String _category = kCategories.first;
   bool _isIncome = false;
+  String? _imagePath;
 
   @override
   void initState() {
@@ -649,6 +708,7 @@ class _AddEditScreenState extends State<AddEditScreen> {
       _amount.text = i.amount.toStringAsFixed(0);
       _category = i.category;
       _isIncome = i.isIncome;
+      _imagePath = i.imagePath;
     }
   }
 
@@ -672,6 +732,7 @@ class _AddEditScreenState extends State<AddEditScreen> {
           category: _category,
           date: now,
           isIncome: _isIncome,
+          imagePath: _imagePath,
         ))
         .copyWith(
       title: _title.text.trim(),
@@ -679,6 +740,7 @@ class _AddEditScreenState extends State<AddEditScreen> {
       category: _category,
       date: now,
       isIncome: _isIncome,
+      imagePath: _imagePath,
     );
 
     Navigator.of(context).pop(e);
@@ -688,7 +750,8 @@ class _AddEditScreenState extends State<AddEditScreen> {
   Widget build(BuildContext context) {
     final isEdit = widget.initial != null;
     return Scaffold(
-      appBar: const _AppBarTitle(title: 'Запись', canPop: true, actions: [_ThemeAction()]),
+      appBar:
+      const _AppBarTitle(title: 'Запись', canPop: true, actions: [_ThemeAction()]),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -705,15 +768,19 @@ class _AddEditScreenState extends State<AddEditScreen> {
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _amount,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
+                  keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))
+                  ],
                   decoration: const InputDecoration(
                     labelText: 'Сумма',
                     hintText: '0',
                     border: OutlineInputBorder(),
                   ),
                   validator: (v) {
-                    final x = double.tryParse((v ?? '').replaceAll(',', '.'));
+                    final x =
+                    double.tryParse((v ?? '').replaceAll(',', '.'));
                     if (x == null || x <= 0) return 'Введите сумму > 0';
                     return null;
                   },
@@ -726,20 +793,37 @@ class _AddEditScreenState extends State<AddEditScreen> {
                     hintText: 'Например, Продукты',
                     border: OutlineInputBorder(),
                   ),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Введите название' : null,
+                  validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? 'Введите название' : null,
                 ),
                 const SizedBox(height: 12),
                 InputDecorator(
-                  decoration: const InputDecoration(labelText: 'Категория', border: OutlineInputBorder()),
+                  decoration: const InputDecoration(
+                      labelText: 'Категория', border: OutlineInputBorder()),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       isExpanded: true,
                       value: _category,
-                      items: [for (final c in kCategories) DropdownMenuItem(value: c, child: Text(c))],
+                      items: [
+                        for (final c in kCategories)
+                          DropdownMenuItem(value: c, child: Text(c))
+                      ],
                       onChanged: (v) => setState(() => _category = v ?? _category),
                     ),
                   ),
                 ),
+                if (_imagePath != null) ...[
+                  const SizedBox(height: 12),
+                  InkWell(
+                    onTap: () =>
+                        Navigator.of(context).pushNamed(Routes.photo, arguments: _imagePath!),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.file(File(_imagePath!),
+                          height: 180, fit: BoxFit.cover),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 20),
                 _PrimaryButton(
                   onPressed: _save,
@@ -755,7 +839,7 @@ class _AddEditScreenState extends State<AddEditScreen> {
   }
 }
 
-/// Stats
+// Stats
 class StatsScreen extends StatelessWidget {
   const StatsScreen({super.key});
 
@@ -780,7 +864,7 @@ class StatsScreen extends StatelessWidget {
               _BarRow(label: entry.key, value: entry.value, maxAbs: maxVal),
             const SizedBox(height: 16),
             Text(
-              'Всего расходов: ${_money(s.items.where((e) => !e.isIncome).fold(0.0, (s2, e) => s2 + e.amount))}',
+              'Всего расходов: ${_money(s.items.where((e) => !e.isIncome).fold(0.0, (s, e) => s + e.amount))}',
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
           ],
@@ -790,7 +874,7 @@ class StatsScreen extends StatelessWidget {
   }
 }
 
-/// Settings
+// Settings
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
   @override
@@ -819,12 +903,25 @@ class SettingsScreen extends StatelessWidget {
   }
 }
 
-/// ==== UI-компоненты ====
+// Photo viewer
+class PhotoViewerScreen extends StatelessWidget {
+  final String path;
+  const PhotoViewerScreen({super.key, required this.path});
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: const _AppBarTitle(title: 'Фото', canPop: true),
+      body: Center(child: Image.file(File(path))),
+    );
+  }
+}
+
+/// ==== UI-компоненты / Утилиты ====
 class _AppBarTitle extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final List<Widget> actions;
   final bool canPop;
-  const _AppBarTitle({required this.title, this.actions = const [], this.canPop = false});
+  const _AppBarTitle({required this.title, this.actions = const [], this.canPop = false, super.key});
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
   @override
@@ -878,26 +975,27 @@ class _SummaryCard extends StatelessWidget {
   const _SummaryCard({required this.total});
   @override
   Widget build(BuildContext context) {
-    final isOk = total <= 0;
-    final cs = Theme.of(context).colorScheme;
+    final isBad = total > 0; // расход красным
+    final color = isBad ? Colors.red : Colors.green;
+    final sign = isBad ? '— ' : '+ ';
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: cs.surface,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cs.outlineVariant),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Row(
         children: [
-          Icon(Icons.account_balance_wallet_outlined, size: 28, color: isOk ? Colors.green : Colors.red),
+          Icon(Icons.account_balance_wallet_outlined, size: 28, color: color),
           const SizedBox(width: 12),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('Итоги сегодня', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 4),
               Text(
-                (total > 0 ? '— ' : '+ ') + _money(total.abs()),
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: isOk ? Colors.green : Colors.red),
+                '$sign${_money(total.abs())}',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: color),
               ),
             ]),
           ),
@@ -909,35 +1007,50 @@ class _SummaryCard extends StatelessWidget {
 
 class _ExpenseTile extends StatelessWidget {
   final Expense expense;
-  final Color outlineColor;
-  const _ExpenseTile({required this.expense, required this.outlineColor});
+  const _ExpenseTile({required this.expense});
   @override
   Widget build(BuildContext context) {
     final color = expense.isIncome ? Colors.green : Colors.red;
     final sign = expense.isIncome ? '+ ' : '- ';
-    final onSurfaceVar = Theme.of(context).colorScheme.onSurfaceVariant;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: outlineColor),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+        color: Theme.of(context).colorScheme.surface,
       ),
       child: Row(
         children: [
           CircleAvatar(
             radius: 18,
             backgroundColor: color.withOpacity(.12),
-            child: Text(expense.category.characters.first.toUpperCase(), style: TextStyle(color: color)),
+            child: Text(expense.category.characters.first.toUpperCase(),
+                style: TextStyle(color: color)),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(expense.title, style: const TextStyle(fontWeight: FontWeight.w600)),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(expense.title, style: const TextStyle(fontWeight: FontWeight.w600)),
+                  ),
+                  if (expense.imagePath != null)
+                    IconButton(
+                      tooltip: 'Открыть фото',
+                      icon: const Icon(Icons.receipt_long_outlined),
+                      onPressed: () =>
+                          Navigator.of(context).pushNamed(Routes.photo, arguments: expense.imagePath!),
+                    ),
+                ],
+              ),
               const SizedBox(height: 2),
-              Text(_formatDate(expense.date), style: TextStyle(color: onSurfaceVar)),
+              Text(_formatDate(expense.date),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(.6))),
             ]),
           ),
-          Text('$sign${_money(expense.amount)}', style: TextStyle(fontWeight: FontWeight.w700, color: color)),
+          Text('$sign${_money(expense.amount)}',
+              style: TextStyle(fontWeight: FontWeight.w700, color: color)),
         ],
       ),
     );
@@ -946,15 +1059,14 @@ class _ExpenseTile extends StatelessWidget {
 
 class _BarRow extends StatelessWidget {
   final String label;
-  final double value;   // сумма по категории
-  final double maxAbs;  // для нормирования ширины
+  final double value;
+  final double maxAbs;
   const _BarRow({required this.label, required this.value, required this.maxAbs});
 
   @override
   Widget build(BuildContext context) {
     final width = maxAbs == 0.0 ? 0.0 : (value.abs() / maxAbs);
     final color = value >= 0 ? Colors.red : Colors.green;
-    final outlineVar = Theme.of(context).colorScheme.outlineVariant;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
@@ -965,7 +1077,7 @@ class _BarRow extends StatelessWidget {
               height: 12,
               alignment: Alignment.centerLeft,
               decoration: BoxDecoration(
-                color: outlineVar.withOpacity(0.35),
+                color: Theme.of(context).colorScheme.outlineVariant.withOpacity(.4),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: FractionallySizedBox(
@@ -980,16 +1092,70 @@ class _BarRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          SizedBox(width: 80, child: Text(_money(value.abs().toDouble()), textAlign: TextAlign.right)),
+          SizedBox(width: 80, child: Text(_money(value.abs()), textAlign: TextAlign.right)),
         ],
       ),
     );
   }
 }
 
-/// ==== Утилиты ====
 String _money(double x) => '${x.toStringAsFixed(0)} ₽';
 String _formatDate(DateTime d) {
   String two(int n) => n.toString().padLeft(2, '0');
   return '${two(d.day)}.${two(d.month)}.${d.year} • ${two(d.hour)}:${two(d.minute)}';
+}
+
+/// === Карточка курса валют (внешний API) ===
+class _RatesCard extends StatelessWidget {
+  final Future<Rates> future;
+  const _RatesCard({required this.future});
+
+  @override
+  Widget build(BuildContext context) {
+    final fmt = NumberFormat('##0.00', 'ru_RU');
+    return FutureBuilder<Rates>(
+      future: future,
+      builder: (context, snap) {
+        Widget child;
+        if (snap.connectionState == ConnectionState.waiting) {
+          child = const Padding(
+            padding: EdgeInsets.all(12),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        } else if (snap.hasError) {
+          child = Padding(
+            padding: const EdgeInsets.all(12),
+            child: Text(
+              'Курс валют: ошибка загрузки',
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          );
+        } else {
+          final r = snap.data!;
+          child = Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                const Icon(Icons.currency_exchange),
+                const SizedBox(width: 12),
+                Text(
+                  'USD ${fmt.format(r.usd)} • EUR ${fmt.format(r.eur)}',
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+          ),
+          child: child,
+        );
+      },
+    );
+  }
 }
