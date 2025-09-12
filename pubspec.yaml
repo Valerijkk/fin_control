@@ -1,7 +1,6 @@
 name: fin_control
 description: "Personal expense manager"
 publish_to: 'none'
-
 version: 1.0.0+1
 
 environment:
@@ -10,17 +9,17 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
   cupertino_icons: ^1.0.8
-
-  # --- для работы с API ---
-  http: ^1.2.2
   intl: ^0.19.0
+  http: ^1.2.2
 
-  # --- локальная база ---
+  # SQLite
   sqflite: ^2.3.3
   path: ^1.9.0
   path_provider: ^2.1.4
+
+  # Камера (через системный пикер)
+  image_picker: ^1.1.2
 
 dev_dependencies:
   flutter_test:

@@ -1,32 +1,20 @@
-import 'dart:async';
-import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as p;
+import 'package:sqflite/sqflite.dart';
 
 class AppDatabase {
-  static final AppDatabase _instance = AppDatabase._internal();
-  factory AppDatabase() => _instance;
-  AppDatabase._internal();
-
-  static const _dbName = 'fin_control.db';
-  static const _dbVersion = 2; // ↑ повысили версию, добавили image_path
+  static const _dbName = 'fincontrol.db';
+  static const _dbVersion = 2; // ↑ увеличили для image_path
 
   Database? _db;
 
-  Future<Database> get database async {
-    if (_db != null) return _db!;
-    _db = await _open();
-    return _db!;
-  }
-
   Future<Database> _open() async {
-    final dbPath = await getDatabasesPath();
-    final path = p.join(dbPath, _dbName);
-
-    return openDatabase(
+    if (_db != null) return _db!;
+    final dir = await getDatabasesPath();
+    final path = p.join(dir, _dbName);
+    _db = await openDatabase(
       path,
       version: _dbVersion,
-      onCreate: (db, version) async {
-        // таблица сразу с image_path
+      onCreate: (db, v) async {
         await db.execute('''
           CREATE TABLE expenses(
             id TEXT PRIMARY KEY,
@@ -39,71 +27,32 @@ class AppDatabase {
           )
         ''');
       },
-      onUpgrade: (db, oldVersion, newVersion) async {
-        // миграция: добавляем колонку image_path, если базы старой версии
-        if (oldVersion < 2) {
-          // проверим, нет ли уже этой колонки
-          final hasImagePath = await _hasColumn(db, 'expenses', 'image_path');
-          if (!hasImagePath) {
-            await db.execute('ALTER TABLE expenses ADD COLUMN image_path TEXT');
-          }
+      onUpgrade: (db, oldV, newV) async {
+        if (oldV < 2) {
+          await db.execute('ALTER TABLE expenses ADD COLUMN image_path TEXT');
         }
       },
     );
+    return _db!;
   }
-
-  /// Проверка наличия колонки в таблице (для надёжных миграций)
-  Future<bool> _hasColumn(Database db, String table, String col) async {
-    final res = await db.rawQuery('PRAGMA table_info($table)');
-    for (final row in res) {
-      if ((row['name'] as String).toLowerCase() == col.toLowerCase()) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  // ===== CRUD низкоуровневыми Map'ами, как у тебя в AppState =====
 
   Future<List<Map<String, Object?>>> getAllRaw() async {
-    final db = await database;
-    // сортировка по дате по убыванию (новые сверху)
+    final db = await _open();
     return db.query('expenses', orderBy: 'date DESC');
   }
 
-  Future<void> insertRaw(Map<String, Object?> data) async {
-    final db = await database;
-    // на случай повторной вставки одной и той же id — заменяем
-    await db.insert(
-      'expenses',
-      data,
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+  Future<void> insertRaw(Map<String, Object?> values) async {
+    final db = await _open();
+    await db.insert('expenses', values, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
-  Future<void> updateRaw(String id, Map<String, Object?> data) async {
-    final db = await database;
-    await db.update(
-      'expenses',
-      data,
-      where: 'id = ?',
-      whereArgs: [id],
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+  Future<void> updateRaw(String id, Map<String, Object?> values) async {
+    final db = await _open();
+    await db.update('expenses', values, where: 'id=?', whereArgs: [id]);
   }
 
   Future<void> deleteById(String id) async {
-    final db = await database;
-    await db.delete(
-      'expenses',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-  }
-
-  // опционально: очистка таблицы
-  Future<void> clearAll() async {
-    final db = await database;
-    await db.delete('expenses');
+    final db = await _open();
+    await db.delete('expenses', where: 'id=?', whereArgs: [id]);
   }
 }

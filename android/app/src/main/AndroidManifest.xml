@@ -1,7 +1,18 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.yourname.fincontrol.fin_control">
 
-    <!-- NEW: доступ в сеть для HTTP-запросов -->
+    <!-- Для HTTP/внешнего API -->
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Камера -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- Чтение медиа: Android 13+ (Tiramisu, API 33) -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+
+    <!-- Чтение внешнего хранилища: до Android 12L (API <= 32).
+         Не помешает, если захочешь выбирать фото из галереи. -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
 
     <application
         android:label="fin_control"
@@ -20,11 +31,11 @@
 
             <meta-data
                 android:name="io.flutter.embedding.android.NormalTheme"
-                android:resource="@style/NormalTheme"/>
+                android:resource="@style/NormalTheme" />
 
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
@@ -32,11 +43,4 @@
             android:name="flutterEmbedding"
             android:value="2" />
     </application>
-
-    <queries>
-        <intent>
-            <action android:name="android.intent.action.PROCESS_TEXT"/>
-            <data android:mimeType="text/plain"/>
-        </intent>
-    </queries>
 </manifest>
