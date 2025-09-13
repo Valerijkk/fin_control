@@ -62,22 +62,6 @@ lib/
 
 ---
 
-## 🧱 Слои (как это всё течёт)
-
-```mermaid
-flowchart LR
-  UI[UI (screens/widgets)] --> STATE[State (AppState)]
-  STATE --> REPO[ExpenseRepository]
-  REPO --> DB[(SQLite)]
-  UI -->|FutureBuilder| RATES[RatesApi → exchangerate.host]
-
-  subgraph Core
-    ROUTES[routes + router]
-    THEME[themes]
-    UTILS[formatters + categories]
-  end
-```
-
 ---
 
 ## 🚀 Быстрый старт
