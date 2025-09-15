@@ -26,8 +26,8 @@
 ---
 
 ## 🧭 Структура проекта
-```
-```
+
+````bash
 lib/
 ├─ main.dart
 ├─ core/
@@ -52,7 +52,7 @@ lib/
 └─ widgets/                # app\_bar\_title, theme\_action, settings\_action,
 \# primary\_button, summary\_card, expense\_tile,
 \# bar\_row, rates\_card
-```
+````
 
 > Почему так? 🧩  
 > – **UI** не знает про БД → вся работа с данными в `state`/`domain`.  
@@ -61,11 +61,10 @@ lib/
 > – Переиспользуемые компоненты — в `ui/widgets`.  
 > – Форматирование денег/дат — централизовано.
 
----
 
 ## 🚀 Быстрый старт
 
-```bash
+````bash
 git clone https://github.com/Valerijkk/fin_control.git
 cd fin_control
 
@@ -75,7 +74,6 @@ flutter run
 
 **Требования**: Flutter **3.x** ✅  •  Dart **3.x** ✅
 
----
 
 ## 🔌 Платформенные настройки
 
@@ -101,8 +99,6 @@ flutter run
 </manifest>
 ```
 
-
----
 
 ## 🧪 Тесты
 
@@ -136,7 +132,6 @@ Future<void> testExecutable(FutureOr<void> Function() testMain) async {
 flutter test
 ```
 
----
 
 ## 💱 Курсы валют: как сделано
 
@@ -144,7 +139,6 @@ flutter test
 * Таймауты и строгий парсинг JSON
 * Кэш последнего успешного ответа (`shared_preferences`), отображаем **офлайн** (есть отметка)
 
----
 
 ## 🧑‍💻 Сценарии разработчика
 
@@ -164,7 +158,6 @@ flutter install
 adb install -r build/app/outputs/flutter-apk/app-release.apk
 ```
 
----
 
 ## 🛠️ Траблшутинг
 
@@ -173,7 +166,6 @@ adb install -r build/app/outputs/flutter-apk/app-release.apk
 * **`dependOnInheritedWidgetOfExactType... before initState`** → читать `AppScope.of(context)` только в `didChangeDependencies()` (исправлено).
 * **Курсы «ошибка загрузки»** → покажется кэш с пометкой «офлайн», как только сеть даст ответ — обновится.
 
----
 
 ## 📦 Основные зависимости
 
@@ -184,7 +176,6 @@ adb install -r build/app/outputs/flutter-apk/app-release.apk
 * `shared_preferences`
 * (dev) `sqflite_common_ffi`, `flutter_test`, `flutter_lints`
 
----
 
 ## 🔮 Roadmap
 
@@ -195,19 +186,15 @@ adb install -r build/app/outputs/flutter-apk/app-release.apk
 * 🧹 Очистка прикреплённых фото при удалении записи
 * 🧪 Golden-тесты UI
 
----
 
 ## 🤝 Контрибьюшн
 
 PR’ы welcome! Соблюдай **flutter\_lints**, **Conventional Commits** и прикладывай хотя бы один тест к новой фиче. 🧪
 
----
 
 ## 📄 Лицензия
 
 MIT — делай что хочешь, но сохраняй копирайт. ♥️
-
----
 
 ## 🙌 Спасибо
 
