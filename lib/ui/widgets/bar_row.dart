@@ -1,27 +1,37 @@
 import 'package:flutter/material.dart';
-import '../../../core/formatters.dart';
+import '../../core/formatters.dart';
 
 class BarRow extends StatelessWidget {
   final String label;
   final double value;
   final double maxAbs;
-  const BarRow({super.key, required this.label, required this.value, required this.maxAbs});
+  final double? percent; // 0..1
+
+  const BarRow({
+    super.key,
+    required this.label,
+    required this.value,
+    required this.maxAbs,
+    this.percent,
+  });
 
   @override
   Widget build(BuildContext context) {
     final width = maxAbs == 0.0 ? 0.0 : (value.abs() / maxAbs);
     final color = value >= 0 ? Colors.red : Colors.green;
+    final pctText = percent != null ? ' • ${(percent! * 100).toStringAsFixed(0)}%' : '';
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
-          SizedBox(width: 92, child: Text(label)),
+          SizedBox(width: 96, child: Text(label)),
           Expanded(
             child: Container(
               height: 12,
               alignment: Alignment.centerLeft,
               decoration: BoxDecoration(
-                color: Colors.black12,
+                color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.35),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: FractionallySizedBox(
@@ -36,7 +46,10 @@ class BarRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          SizedBox(width: 80, child: Text(money(value.abs().toDouble()), textAlign: TextAlign.right)),
+          SizedBox(
+            width: 120,
+            child: Text('${money(value.abs())}$pctText', textAlign: TextAlign.right),
+          ),
         ],
       ),
     );

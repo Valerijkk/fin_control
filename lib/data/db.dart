@@ -55,4 +55,9 @@ class AppDatabase {
     final db = await _open();
     await db.delete('expenses', where: 'id=?', whereArgs: [id]);
   }
+
+  Future<void> deleteAll() async {
+    final db = await _open();
+    await db.delete('expenses');
+  }
 }

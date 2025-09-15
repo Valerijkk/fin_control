@@ -1,12 +1,18 @@
 import 'package:flutter/foundation.dart';
 import '../domain/models/expense.dart';
 import '../domain/repositories/expense_repository.dart';
+import '../data/category_store.dart';
+import '../core/categories.dart';
 
 class AppState extends ChangeNotifier {
   final ExpenseRepository _repo = ExpenseRepository();
+  final CategoryStore _catStore = CategoryStore();
+
   final List<Expense> _items = [];
+  List<String> _categories = List<String>.from(kDefaultCategories);
 
   List<Expense> get items => List.unmodifiable(_items);
+  List<String> get categories => List.unmodifiable(_categories);
 
   Expense? _lastRemoved;
   int? _lastIndex;
@@ -15,6 +21,8 @@ class AppState extends ChangeNotifier {
     _items
       ..clear()
       ..addAll(await _repo.getAll());
+
+    _categories = await _catStore.load();
     notifyListeners();
   }
 
@@ -52,5 +60,22 @@ class AppState extends ChangeNotifier {
     notifyListeners();
     await _repo.insert(e);
     return true;
+  }
+
+  Future<void> clearAll() async {
+    _items.clear();
+    notifyListeners();
+    await _repo.clear();
+  }
+
+  // ===== Категории =====
+
+  Future<String?> addCategory(String name) async {
+    final n = name.trim();
+    if (n.isEmpty) return null;
+    if (_categories.contains(n)) return n;
+    _categories = await _catStore.add(n);
+    notifyListeners();
+    return n;
   }
 }

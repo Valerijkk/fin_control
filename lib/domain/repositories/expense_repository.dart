@@ -46,4 +46,8 @@ class ExpenseRepository {
   Future<void> delete(String id) async {
     await _db.deleteById(id);
   }
+
+  Future<void> clear() async {
+    await _db.deleteAll();
+  }
 }

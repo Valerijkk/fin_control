@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import '../../state/app_scope.dart';
 import '../../state/app_state.dart';
 import '../../core/categories.dart';
 import '../../core/routes.dart';
+import '../../core/formatters.dart';
 import '../../domain/models/expense.dart';
 import '../../services/rates_api.dart';
+
 import '../widgets/app_bar_title.dart';
 import '../widgets/primary_button.dart';
 import '../widgets/settings_action.dart';
@@ -14,6 +17,8 @@ import '../widgets/expense_tile.dart';
 import '../widgets/rates_card.dart';
 import '../widgets/theme_action.dart';
 
+enum _DateFilter { all, today, d7, d30 }
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
   @override
@@ -21,7 +26,9 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  String? _filter;
+  String? _categoryFilter;
+  _DateFilter _dateFilter = _DateFilter.all;
+  String _query = '';
   late final Future<Rates> _ratesFuture;
 
   @override
@@ -30,15 +37,42 @@ class _HomeScreenState extends State<HomeScreen> {
     _ratesFuture = RatesApi.fetch();
   }
 
-  double _total(AppState s) =>
-      s.items.fold(0.0, (sum, e) => sum + (e.isIncome ? -e.amount : e.amount));
+  Iterable<Expense> _filterVisible(AppState s) {
+    Iterable<Expense> x = s.items;
 
-  Iterable<Expense> _visible(AppState s) =>
-      _filter == null ? s.items : s.items.where((e) => e.category == _filter);
+    if (_categoryFilter != null) {
+      x = x.where((e) => e.category == _categoryFilter);
+    }
+
+    if (_dateFilter != _DateFilter.all) {
+      x = x.where((e) {
+        switch (_dateFilter) {
+          case _DateFilter.today:
+            return isWithinDays(e.date, 0);
+          case _DateFilter.d7:
+            return isWithinDays(e.date, 7);
+          case _DateFilter.d30:
+            return isWithinDays(e.date, 30);
+          case _DateFilter.all:
+            return true;
+        }
+      });
+    }
+
+    if (_query.trim().isNotEmpty) {
+      final q = _query.trim().toLowerCase();
+      x = x.where((e) => e.title.toLowerCase().contains(q));
+    }
+
+    return x;
+  }
 
   @override
   Widget build(BuildContext context) {
     final s = AppScope.of(context);
+    final cats = s.categories;
+    final visible = _filterVisible(s).toList();
+    final grouped = _groupByDay(visible);
 
     return Scaffold(
       appBar: const AppBarTitle(title: 'Мои расходы', actions: [ThemeAction(), SettingsAction()]),
@@ -71,65 +105,114 @@ class _HomeScreenState extends State<HomeScreen> {
             child: RatesCard(future: _ratesFuture),
           ),
           const SizedBox(height: 8),
+          // Поиск
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: SummaryCard(total: _total(s)),
+            child: TextField(
+              decoration: const InputDecoration(
+                prefixIcon: Icon(Icons.search),
+                hintText: 'Поиск по названию…',
+              ),
+              onChanged: (v) => setState(() => _query = v),
+            ),
           ),
           const SizedBox(height: 8),
+          // Итоги по выборке
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: SummaryCard(items: visible),
+          ),
+          const SizedBox(height: 8),
+          // Фильтры: категория + период + добавить
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Row(
               children: [
                 ChoiceChip(
-                  label: const Text('Все'),
-                  selected: _filter == null,
-                  onSelected: (_) => setState(() => _filter = null),
+                  label: const Text('Все категории'),
+                  selected: _categoryFilter == null,
+                  onSelected: (_) => setState(() => _categoryFilter = null),
                 ),
                 const SizedBox(width: 8),
-                ...kCategories.map((c) => Padding(
+                ...cats.map((c) => Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: ChoiceChip(
                     label: Text(c),
-                    selected: _filter == c,
-                    onSelected: (_) => setState(() => _filter = c),
+                    selected: _categoryFilter == c,
+                    onSelected: (_) => setState(() => _categoryFilter = c),
                   ),
                 )),
+                Padding(
+                  padding: const EdgeInsets.only(left: 4),
+                  child: ActionChip(
+                    avatar: const Icon(Icons.add),
+                    label: const Text('Категория'),
+                    onPressed: () async {
+                      final created = await _askNewCategory(context, s);
+                      if (created != null) setState(() => _categoryFilter = created);
+                    },
+                  ),
+                ),
+                const SizedBox(width: 16),
+                _periodChip(_DateFilter.all, 'Все'),
+                const SizedBox(width: 8),
+                _periodChip(_DateFilter.today, 'Сегодня'),
+                const SizedBox(width: 8),
+                _periodChip(_DateFilter.d7, '7 дней'),
+                const SizedBox(width: 8),
+                _periodChip(_DateFilter.d30, '30 дней'),
               ],
             ),
           ),
           const SizedBox(height: 8),
+          // Список
           Expanded(
-            child: s.items.isEmpty
+            child: grouped.isEmpty
                 ? const Center(child: Text('Нет записей'))
-                : ListView.separated(
+                : ListView.builder(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              itemCount: _visible(s).length,
+              itemCount: grouped.length,
               itemBuilder: (_, i) {
-                final e = _visible(s).elementAt(i);
-                final realIndex = s.items.indexOf(e);
-                return Dismissible(
-                  key: ValueKey(e.id),
-                  background: _dismissBg(left: true),
-                  secondaryBackground: _dismissBg(left: false),
-                  confirmDismiss: (_) async => await _confirmDelete(e.title),
-                  onDismissed: (_) async {
-                    final removed = e;
-                    await s.removeAt(realIndex);
-                    _showUndoSnack(s, removed: removed, index: realIndex);
-                  },
-                  child: InkWell(
-                    onTap: () async {
-                      final updated =
-                      await Navigator.of(context).pushNamed(Routes.add, arguments: e)
-                      as Expense?;
-                      if (updated != null) await s.update(e.id, updated);
-                    },
-                    child: ExpenseTile(expense: e),
-                  ),
-                );
+                final entry = grouped[i];
+                if (entry is _Header) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Text(entry.title,
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w700)),
+                  );
+                } else if (entry is _RowItem) {
+                  final e = entry.expense;
+                  final realIndex = s.items.indexOf(e);
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Dismissible(
+                      key: ValueKey(e.id),
+                      background: _dismissBg(left: true),
+                      secondaryBackground: _dismissBg(left: false),
+                      confirmDismiss: (_) async => await _confirmDelete(e.title),
+                      onDismissed: (_) async {
+                        final removed = e;
+                        await s.removeAt(realIndex);
+                        _showUndoSnack(s, removed: removed, index: realIndex);
+                      },
+                      child: InkWell(
+                        onTap: () async {
+                          final updated =
+                          await Navigator.of(context).pushNamed(Routes.add, arguments: e)
+                          as Expense?;
+                          if (updated != null) await s.update(e.id, updated);
+                        },
+                        child: ExpenseTile(expense: e),
+                      ),
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
               },
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
             ),
           ),
         ],
@@ -137,9 +220,35 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _periodChip(_DateFilter f, String label) {
+    return ChoiceChip(
+      label: Text(label),
+      selected: _dateFilter == f,
+      onSelected: (_) => setState(() => _dateFilter = f),
+    );
+  }
+
+  List<_Entry> _groupByDay(List<Expense> list) {
+    if (list.isEmpty) return const [];
+
+    list.sort((a, b) => b.date.compareTo(a.date));
+    final entries = <_Entry>[];
+    DateTime? currentDay;
+
+    for (final e in list) {
+      final d = DateTime(e.date.year, e.date.month, e.date.day);
+      if (currentDay == null || d != currentDay) {
+        entries.add(_Header(shortDayHeader(e.date)));
+        currentDay = d;
+      }
+      entries.add(_RowItem(e));
+    }
+    return entries;
+  }
+
   Future<void> _quickAddBottomSheet(AppState s) async {
     final amountCtrl = TextEditingController();
-    String category = kCategories.first;
+    String category = s.categories.first;
     final res = await showModalBottomSheet<Expense>(
       context: context,
       isScrollControlled: true,
@@ -170,8 +279,23 @@ class _HomeScreenState extends State<HomeScreen> {
                     builder: (ctx, setSheetState) => DropdownButton<String>(
                       isExpanded: true,
                       value: category,
-                      items: [for (final c in kCategories) DropdownMenuItem(value: c, child: Text(c))],
-                      onChanged: (v) => setSheetState(() => category = v ?? category),
+                      items: [
+                        for (final c in s.categories) DropdownMenuItem(value: c, child: Text(c)),
+                        const DropdownMenuItem(
+                          value: '__add__',
+                          child: Row(children: [Icon(Icons.add, size: 18), SizedBox(width: 8), Text('Добавить категорию…')]),
+                        ),
+                      ],
+                      onChanged: (v) async {
+                        if (v == '__add__') {
+                          final created = await _askNewCategory(ctx, s);
+                          if (created != null) {
+                            setSheetState(() => category = created);
+                          }
+                        } else {
+                          setSheetState(() => category = v ?? category);
+                        }
+                      },
                     ),
                   ),
                 ),
@@ -237,6 +361,28 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Future<String?> _askNewCategory(BuildContext context, AppState state) async {
+    final ctrl = TextEditingController();
+    final res = await showDialog<String>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Новая категория'),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          decoration: const InputDecoration(hintText: 'Например, Здоровье'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Отмена')),
+          FilledButton(onPressed: () => Navigator.pop(context, ctrl.text.trim()), child: const Text('Добавить')),
+        ],
+      ),
+    );
+    if (res == null || res.trim().isEmpty) return null;
+    final created = await state.addCategory(res);
+    return created;
+  }
+
   Widget _dismissBg({required bool left}) {
     return Container(
       decoration: BoxDecoration(
@@ -248,4 +394,14 @@ class _HomeScreenState extends State<HomeScreen> {
       child: const Icon(Icons.delete, color: Colors.white),
     );
   }
+}
+
+sealed class _Entry {}
+class _Header extends _Entry {
+  final String title;
+  _Header(this.title);
+}
+class _RowItem extends _Entry {
+  final Expense expense;
+  _RowItem(this.expense);
 }
