@@ -2,7 +2,6 @@
 
 ---
 
-```markdown
 # FinControl — простой и быстрый учёт расходов 💸
 
 ![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter&logoColor=white)
@@ -31,9 +30,8 @@
 ---
 
 ## 🧭 Структура проекта
-
 ```
-
+```
 lib/
 ├─ main.dart
 ├─ core/
@@ -58,8 +56,7 @@ lib/
 └─ widgets/                # app\_bar\_title, theme\_action, settings\_action,
 \# primary\_button, summary\_card, expense\_tile,
 \# bar\_row, rates\_card
-
-````
+```
 
 > Почему так? 🧩  
 > – **UI** не знает про БД → вся работа с данными в `state`/`domain`.  
