@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+
 import '../../core/formatters.dart';
+import '../../core/l10n.dart';
 import '../../domain/models/expense.dart';
 
 class SummaryCard extends StatelessWidget {
@@ -15,6 +17,8 @@ class SummaryCard extends StatelessWidget {
 
     Color tr(bool ok) => ok ? Colors.green : Colors.red;
 
+    final l10n = context.l10n;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -28,18 +32,22 @@ class SummaryCard extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Итоги', style: Theme.of(context).textTheme.titleMedium),
+              Text(l10n.summaryTitle, style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 6),
               Row(
                 children: [
-                  Expanded(child: Text('Расходы', style: Theme.of(context).textTheme.bodyMedium)),
+                  Expanded(
+                    child: Text(l10n.summaryExpenses, style: Theme.of(context).textTheme.bodyMedium),
+                  ),
                   Text('— ${money(expenses)}', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w700)),
                 ],
               ),
               const SizedBox(height: 2),
               Row(
                 children: [
-                  Expanded(child: Text('Доходы', style: Theme.of(context).textTheme.bodyMedium)),
+                  Expanded(
+                    child: Text(l10n.summaryIncomes, style: Theme.of(context).textTheme.bodyMedium),
+                  ),
                   Text('+ ${money(incomes)}', style: TextStyle(color: Colors.green, fontWeight: FontWeight.w700)),
                 ],
               ),
@@ -48,7 +56,7 @@ class SummaryCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      'Итог',
+                      l10n.summaryNet,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
                     ),
                   ),

@@ -1,0 +1,116 @@
+{
+  "@@locale": "en",
+  "appTitle": "FinControl",
+  "pageNotFound": "Page not found",
+  "commonCancel": "Cancel",
+  "commonDelete": "Delete",
+  "commonAdd": "Add",
+  "commonSave": "Save",
+  "commonSaveChanges": "Save changes",
+  "commonRefresh": "Refresh",
+  "homeTitle": "My expenses",
+  "homeQuickEntryTooltip": "Quick entry",
+  "homeNewEntryTooltip": "New entry",
+  "homeSearchHint": "Search by title…",
+  "homeAllCategories": "All categories",
+  "homeCreateCategoryAction": "Category",
+  "homePeriodAll": "All",
+  "homePeriodToday": "Today",
+  "homePeriod7Days": "7 days",
+  "homePeriod30Days": "30 days",
+  "homeEmptyState": "No records",
+  "homeQuickAddTitle": "Quick entry",
+  "homeAmountLabel": "Amount",
+  "homeCategoryLabel": "Category",
+  "homeAddCategoryOption": "Add category…",
+  "homePrimaryAdd": "Add",
+  "homeQuickAddDefaultTitle": "Quick add",
+  "homeDeleteDialogTitle": "Delete entry?",
+  "homeDeleteDialogMessage": "\u00ab{title}\u00bb will be deleted permanently.",
+  "@homeDeleteDialogMessage": {
+    "placeholders": {
+      "title": {}
+    }
+  },
+  "homeUndoMessage": "Deleted: {title}",
+  "@homeUndoMessage": {
+    "placeholders": {
+      "title": {}
+    }
+  },
+  "homeUndoAction": "UNDO",
+  "homeNewCategoryTitle": "New category",
+  "homeNewCategoryHint": "For example, Health",
+  "homeNewCategoryAdd": "Add",
+  "ratesError": "Exchange rates: failed to load",
+  "ratesValue": "USD {usd} • EUR {eur}",
+  "@ratesValue": {
+    "placeholders": {
+      "usd": {},
+      "eur": {}
+    }
+  },
+  "ratesTimestampSuffix": " • as of {timestamp}",
+  "@ratesTimestampSuffix": {
+    "placeholders": {
+      "timestamp": {}
+    }
+  },
+  "ratesOfflineSuffix": " • offline",
+  "settingsActionTooltip": "Settings",
+  "themeToggleTooltip": "Toggle theme",
+  "summaryTitle": "Summary",
+  "summaryExpenses": "Expenses",
+  "summaryIncomes": "Incomes",
+  "summaryNet": "Net",
+  "statsTitle": "Statistics",
+  "statsTotalExpenses": "Total expenses: {amount}",
+  "@statsTotalExpenses": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "shellListTab": "List",
+  "shellStatsTab": "Statistics",
+  "welcomeTitle": "Welcome",
+  "welcomeSubtitle": "Expense tracking made simple",
+  "welcomeStartButton": "Get started",
+  "photoTitle": "Photo",
+  "settingsTitle": "Settings",
+  "settingsDarkThemeTitle": "Dark theme",
+  "settingsDarkThemeSubtitle": "Switch the app appearance",
+  "settingsClearTitle": "Clear all data",
+  "settingsClearSubtitle": "Deletes all expense and income records from the local DB",
+  "settingsConfirmTitle": "Confirm",
+  "settingsConfirmMessage": "Delete all records permanently?",
+  "settingsClearedMessage": "Data cleared",
+  "settingsAboutTitle": "About",
+  "settingsAboutDescription": "FinControl is a learning expense tracker prototype.",
+  "entryTitle": "Entry",
+  "entryIncomeSwitchTitle": "This is income",
+  "entryIncomeSwitchSubtitle": "Subtracted from total expenses",
+  "entryAmountLabel": "Amount",
+  "entryAmountHint": "0",
+  "entryAmountValidation": "Enter an amount > 0",
+  "entryNameLabel": "Title",
+  "entryNameHint": "For example, Groceries",
+  "entryNameValidation": "Enter a title",
+  "entryDateLabel": "Date",
+  "entryDateChange": "Change",
+  "entryCategoryLabel": "Category",
+  "entryAttachPhoto": "Attach photo",
+  "entryViewPhotoTooltip": "View",
+  "entrySaveNew": "Save",
+  "entrySaveChanges": "Save changes",
+  "entryDatePickerHelp": "Operation date",
+  "entryDatePickerCancel": "Cancel",
+  "entryDatePickerConfirm": "Select",
+  "entryCameraError": "Camera: {message}",
+  "@entryCameraError": {
+    "placeholders": {
+      "message": {}
+    }
+  },
+  "today": "Today",
+  "yesterday": "Yesterday"
+}

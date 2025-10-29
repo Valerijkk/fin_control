@@ -1,4 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'core/app_theme.dart';
 import 'core/app_router.dart';
 import 'core/routes.dart';
@@ -13,12 +20,16 @@ class FinControlApp extends StatefulWidget {
 }
 
 class _FinControlAppState extends State<FinControlApp> {
+  static const _themePrefKey = 'app_theme_mode';
   final AppState _state = AppState();
   ThemeMode _mode = ThemeMode.light;
   bool _loaded = false;
 
-  void _toggleTheme() =>
-      setState(() => _mode = _mode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light);
+  void _toggleTheme() {
+    final next = _mode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    setState(() => _mode = next);
+    unawaited(_persistTheme(next));
+  }
 
   @override
   void initState() {
@@ -27,14 +38,28 @@ class _FinControlAppState extends State<FinControlApp> {
   }
 
   Future<void> _init() async {
-    await _state.load();
+    await Future.wait([_loadTheme(), _state.load()]);
     if (mounted) setState(() => _loaded = true);
+  }
+
+  Future<void> _loadTheme() async {
+    final prefs = await SharedPreferences.getInstance();
+    final stored = prefs.getString(_themePrefKey);
+    if (stored == null) return;
+    final savedMode =
+        ThemeMode.values.firstWhere((m) => m.name == stored, orElse: () => _mode);
+    _mode = savedMode;
+  }
+
+  Future<void> _persistTheme(ThemeMode mode) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_themePrefKey, mode.name);
   }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'FinControl',
+      onGenerateTitle: (context) => AppLocalizations.of(context)?.appTitle ?? 'FinControl',
       debugShowCheckedModeBanner: false,
       themeMode: _mode,
       theme: AppTheme.buildLight(),
@@ -42,7 +67,20 @@ class _FinControlAppState extends State<FinControlApp> {
       navigatorObservers: [routeObserver],
       onGenerateRoute: AppRouter.onGenerateRoute,
       initialRoute: Routes.welcome,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) {
+        final locale = Localizations.localeOf(context);
+        final localeName =
+            locale.countryCode != null && locale.countryCode!.isNotEmpty
+                ? '${locale.languageCode}_${locale.countryCode}'
+                : locale.languageCode;
+        Intl.defaultLocale = localeName;
         if (!_loaded) {
           return Theme(
             data: AppTheme.buildLight(),
