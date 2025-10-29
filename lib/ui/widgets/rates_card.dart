@@ -1,21 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
+import '../../core/l10n.dart';
 import '../../services/rates_api.dart';
 
 class RatesCard extends StatelessWidget {
   final Future<Rates> future;
-  const RatesCard({super.key, required this.future});
+  final VoidCallback onReload;
+  const RatesCard({super.key, required this.future, required this.onReload});
 
   @override
   Widget build(BuildContext context) {
-    final fmt = NumberFormat('##0.00', 'ru_RU');
+    final locale = context.l10n.localeName;
+    final NumberFormat fmt;
+    try {
+      fmt = NumberFormat('##0.00', locale);
+    } catch (_) {
+      fmt = NumberFormat('##0.00');
+    }
 
     String _formatTs(DateTime d) {
       try {
-        return DateFormat('dd.MM HH:mm', 'ru_RU').format(d);
+        return DateFormat.yMd(locale).add_Hm().format(d);
       } catch (_) {
         try {
-          return DateFormat('dd.MM HH:mm').format(d);
+          return DateFormat.yMd().add_Hm().format(d);
         } catch (_) {
           return d.toIso8601String();
         }
@@ -35,14 +44,15 @@ class RatesCard extends StatelessWidget {
           child = Padding(
             padding: const EdgeInsets.all(12),
             child: Text(
-              'Курс валют: ошибка загрузки',
+              context.l10n.ratesError,
               style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
           );
         } else {
           final r = snap.data!;
-          final ts = r.asOf != null ? ' • от ${_formatTs(r.asOf!)}' : '';
-          final offline = r.fromCache ? ' • офлайн' : '';
+          final ts =
+              r.asOf != null ? context.l10n.ratesTimestampSuffix(_formatTs(r.asOf!)) : '';
+          final offline = r.fromCache ? context.l10n.ratesOfflineSuffix : '';
           child = Padding(
             padding: const EdgeInsets.all(12),
             child: Row(
@@ -51,17 +61,13 @@ class RatesCard extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'USD ${fmt.format(r.usd)} • EUR ${fmt.format(r.eur)}$ts$offline',
+                    '${context.l10n.ratesValue(fmt.format(r.usd), fmt.format(r.eur))}$ts$offline',
                     style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
                 ),
                 IconButton(
-                  tooltip: 'Обновить',
-                  onPressed: () {
-                    // Переинициализируем Future и перерисуемся через родителя, если нужно —
-                    // но чаще всего карточка живёт коротко, так что просто вызовем setState вне.
-                    // Здесь безопасно: FutureBuilder получит новый future, если родитель передаст его.
-                  },
+                  tooltip: context.l10n.commonRefresh,
+                  onPressed: onReload,
                   icon: const Icon(Icons.refresh),
                 ),
               ],

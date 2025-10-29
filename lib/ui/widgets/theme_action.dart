@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../state/theme_controller.dart';
+
+import '../../core/l10n.dart';
+import '../../state/theme_controller.dart';
 
 class ThemeAction extends StatelessWidget {
   const ThemeAction({super.key});
@@ -8,7 +10,7 @@ class ThemeAction extends StatelessWidget {
     final ctrl = ThemeController.of(context);
     final isDark = ctrl.mode == ThemeMode.dark;
     return IconButton(
-      tooltip: 'Переключить тему',
+      tooltip: context.l10n.themeToggleTooltip,
       onPressed: ctrl.toggle,
       icon: Icon(isDark ? Icons.wb_sunny_outlined : Icons.dark_mode_outlined),
     );

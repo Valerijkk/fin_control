@@ -1,0 +1,116 @@
+{
+  "@@locale": "ru",
+  "appTitle": "FinControl",
+  "pageNotFound": "Страница не найдена",
+  "commonCancel": "Отмена",
+  "commonDelete": "Удалить",
+  "commonAdd": "Добавить",
+  "commonSave": "Сохранить",
+  "commonSaveChanges": "Сохранить изменения",
+  "commonRefresh": "Обновить",
+  "homeTitle": "Мои расходы",
+  "homeQuickEntryTooltip": "Быстрая запись",
+  "homeNewEntryTooltip": "Новая запись",
+  "homeSearchHint": "Поиск по названию…",
+  "homeAllCategories": "Все категории",
+  "homeCreateCategoryAction": "Категория",
+  "homePeriodAll": "Все",
+  "homePeriodToday": "Сегодня",
+  "homePeriod7Days": "7 дней",
+  "homePeriod30Days": "30 дней",
+  "homeEmptyState": "Нет записей",
+  "homeQuickAddTitle": "Быстрая запись",
+  "homeAmountLabel": "Сумма",
+  "homeCategoryLabel": "Категория",
+  "homeAddCategoryOption": "Добавить категорию…",
+  "homePrimaryAdd": "Добавить",
+  "homeQuickAddDefaultTitle": "Быстрое добавление",
+  "homeDeleteDialogTitle": "Удалить запись?",
+  "homeDeleteDialogMessage": "\u00ab{title}\u00bb будет удалена безвозвратно.",
+  "@homeDeleteDialogMessage": {
+    "placeholders": {
+      "title": {}
+    }
+  },
+  "homeUndoMessage": "Удалено: {title}",
+  "@homeUndoMessage": {
+    "placeholders": {
+      "title": {}
+    }
+  },
+  "homeUndoAction": "ОТМЕНА",
+  "homeNewCategoryTitle": "Новая категория",
+  "homeNewCategoryHint": "Например, Здоровье",
+  "homeNewCategoryAdd": "Добавить",
+  "ratesError": "Курс валют: ошибка загрузки",
+  "ratesValue": "USD {usd} • EUR {eur}",
+  "@ratesValue": {
+    "placeholders": {
+      "usd": {},
+      "eur": {}
+    }
+  },
+  "ratesTimestampSuffix": " • от {timestamp}",
+  "@ratesTimestampSuffix": {
+    "placeholders": {
+      "timestamp": {}
+    }
+  },
+  "ratesOfflineSuffix": " • офлайн",
+  "settingsActionTooltip": "Настройки",
+  "themeToggleTooltip": "Переключить тему",
+  "summaryTitle": "Итоги",
+  "summaryExpenses": "Расходы",
+  "summaryIncomes": "Доходы",
+  "summaryNet": "Итог",
+  "statsTitle": "Статистика",
+  "statsTotalExpenses": "Всего расходов: {amount}",
+  "@statsTotalExpenses": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "shellListTab": "Список",
+  "shellStatsTab": "Статистика",
+  "welcomeTitle": "Добро пожаловать",
+  "welcomeSubtitle": "Калькулятор и учёт расходов",
+  "welcomeStartButton": "Начать",
+  "photoTitle": "Фото",
+  "settingsTitle": "Настройки",
+  "settingsDarkThemeTitle": "Тёмная тема",
+  "settingsDarkThemeSubtitle": "Переключить оформление приложения",
+  "settingsClearTitle": "Очистить все данные",
+  "settingsClearSubtitle": "Удаляет все записи расходов/доходов из локальной БД",
+  "settingsConfirmTitle": "Подтвердите",
+  "settingsConfirmMessage": "Удалить все записи безвозвратно?",
+  "settingsClearedMessage": "Данные очищены",
+  "settingsAboutTitle": "О приложении",
+  "settingsAboutDescription": "FinControl — учебный прототип учёта расходов.",
+  "entryTitle": "Запись",
+  "entryIncomeSwitchTitle": "Это доход",
+  "entryIncomeSwitchSubtitle": "Вычитается из итоговых расходов",
+  "entryAmountLabel": "Сумма",
+  "entryAmountHint": "0",
+  "entryAmountValidation": "Введите сумму > 0",
+  "entryNameLabel": "Название",
+  "entryNameHint": "Например, Продукты",
+  "entryNameValidation": "Введите название",
+  "entryDateLabel": "Дата",
+  "entryDateChange": "Изменить",
+  "entryCategoryLabel": "Категория",
+  "entryAttachPhoto": "Прикрепить фото",
+  "entryViewPhotoTooltip": "Просмотреть",
+  "entrySaveNew": "Сохранить",
+  "entrySaveChanges": "Сохранить изменения",
+  "entryDatePickerHelp": "Дата операции",
+  "entryDatePickerCancel": "Отмена",
+  "entryDatePickerConfirm": "Выбрать",
+  "entryCameraError": "Камера: {message}",
+  "@entryCameraError": {
+    "placeholders": {
+      "message": {}
+    }
+  },
+  "today": "Сегодня",
+  "yesterday": "Вчера"
+}

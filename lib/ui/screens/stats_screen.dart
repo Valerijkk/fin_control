@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../state/app_scope.dart';
+
 import '../../core/formatters.dart';
+import '../../core/l10n.dart';
+import '../../state/app_scope.dart';
 import '../widgets/app_bar_title.dart';
 import '../widgets/bar_row.dart';
 import '../widgets/theme_action.dart';
@@ -26,8 +28,10 @@ class StatsScreen extends StatelessWidget {
     // Для процентов считаем только расходы
     final totalExpenses = s.items.where((e) => !e.isIncome).fold<double>(0, (x, e) => x + e.amount);
 
+    final l10n = context.l10n;
+
     return Scaffold(
-      appBar: const AppBarTitle(title: 'Статистика', actions: [ThemeAction()]),
+      appBar: AppBarTitle(title: l10n.statsTitle, actions: const [ThemeAction()]),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -41,7 +45,9 @@ class StatsScreen extends StatelessWidget {
               ),
             const SizedBox(height: 16),
             Text(
-              'Всего расходов: ${money(s.items.where((e) => !e.isIncome).fold(0.0, (s, e) => s + e.amount))}',
+              l10n.statsTotalExpenses(
+                money(s.items.where((e) => !e.isIncome).fold(0.0, (s, e) => s + e.amount)),
+              ),
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
           ],

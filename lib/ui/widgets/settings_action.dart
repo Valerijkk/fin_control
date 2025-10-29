@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
-import '../../../core/routes.dart';
+
+import '../../core/l10n.dart';
+import '../../core/routes.dart';
 
 class SettingsAction extends StatelessWidget {
   const SettingsAction({super.key});
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      tooltip: 'Настройки',
+      tooltip: context.l10n.settingsActionTooltip,
       onPressed: () => Navigator.of(context).pushNamed(Routes.settings),
       icon: const Icon(Icons.settings_outlined),
     );

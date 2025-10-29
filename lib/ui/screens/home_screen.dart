@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../state/app_scope.dart';
-import '../../state/app_state.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
 import '../../core/categories.dart';
-import '../../core/routes.dart';
 import '../../core/formatters.dart';
+import '../../core/l10n.dart';
+import '../../core/routes.dart';
 import '../../domain/models/expense.dart';
 import '../../services/rates_api.dart';
+import '../../state/app_scope.dart';
+import '../../state/app_state.dart';
 
 import '../widgets/app_bar_title.dart';
 import '../widgets/primary_button.dart';
@@ -29,13 +32,15 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _categoryFilter;
   _DateFilter _dateFilter = _DateFilter.all;
   String _query = '';
-  late final Future<Rates> _ratesFuture;
+  late Future<Rates> _ratesFuture;
 
   @override
   void initState() {
     super.initState();
     _ratesFuture = RatesApi.fetch();
   }
+
+  void _reloadRates() => setState(() => _ratesFuture = RatesApi.fetch());
 
   Iterable<Expense> _filterVisible(AppState s) {
     Iterable<Expense> x = s.items;
@@ -69,26 +74,27 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final s = AppScope.of(context);
     final cats = s.categories;
     final visible = _filterVisible(s).toList();
-    final grouped = _groupByDay(visible);
+    final grouped = _groupByDay(l10n, visible);
 
     return Scaffold(
-      appBar: const AppBarTitle(title: 'Мои расходы', actions: [ThemeAction(), SettingsAction()]),
+      appBar: AppBarTitle(title: l10n.homeTitle, actions: const [ThemeAction(), SettingsAction()]),
       floatingActionButton: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           FloatingActionButton.small(
             heroTag: 'quick',
-            tooltip: 'Быстрая запись',
+            tooltip: l10n.homeQuickEntryTooltip,
             onPressed: () => _quickAddBottomSheet(s),
             child: const Icon(Icons.flash_on),
           ),
           const SizedBox(width: 12),
           FloatingActionButton(
             heroTag: 'main',
-            tooltip: 'Новая запись',
+            tooltip: l10n.homeNewEntryTooltip,
             onPressed: () async {
               final e = await Navigator.of(context).pushNamed(Routes.add) as Expense?;
               if (e != null) await s.add(e);
@@ -102,16 +108,16 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 12),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: RatesCard(future: _ratesFuture),
+            child: RatesCard(future: _ratesFuture, onReload: _reloadRates),
           ),
           const SizedBox(height: 8),
           // Поиск
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: TextField(
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.search),
-                hintText: 'Поиск по названию…',
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.search),
+                hintText: l10n.homeSearchHint,
               ),
               onChanged: (v) => setState(() => _query = v),
             ),
@@ -130,7 +136,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Row(
               children: [
                 ChoiceChip(
-                  label: const Text('Все категории'),
+                  label: Text(l10n.homeAllCategories),
                   selected: _categoryFilter == null,
                   onSelected: (_) => setState(() => _categoryFilter = null),
                 ),
@@ -147,7 +153,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   padding: const EdgeInsets.only(left: 4),
                   child: ActionChip(
                     avatar: const Icon(Icons.add),
-                    label: const Text('Категория'),
+                    label: Text(l10n.homeCreateCategoryAction),
                     onPressed: () async {
                       final created = await _askNewCategory(context, s);
                       if (created != null) setState(() => _categoryFilter = created);
@@ -155,13 +161,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const SizedBox(width: 16),
-                _periodChip(_DateFilter.all, 'Все'),
+                _periodChip(_DateFilter.all, l10n.homePeriodAll),
                 const SizedBox(width: 8),
-                _periodChip(_DateFilter.today, 'Сегодня'),
+                _periodChip(_DateFilter.today, l10n.homePeriodToday),
                 const SizedBox(width: 8),
-                _periodChip(_DateFilter.d7, '7 дней'),
+                _periodChip(_DateFilter.d7, l10n.homePeriod7Days),
                 const SizedBox(width: 8),
-                _periodChip(_DateFilter.d30, '30 дней'),
+                _periodChip(_DateFilter.d30, l10n.homePeriod30Days),
               ],
             ),
           ),
@@ -169,7 +175,7 @@ class _HomeScreenState extends State<HomeScreen> {
           // Список
           Expanded(
             child: grouped.isEmpty
-                ? const Center(child: Text('Нет записей'))
+                ? Center(child: Text(l10n.homeEmptyState))
                 : ListView.builder(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
               itemCount: grouped.length,
@@ -228,7 +234,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  List<_Entry> _groupByDay(List<Expense> list) {
+  List<_Entry> _groupByDay(AppLocalizations l10n, List<Expense> list) {
     if (list.isEmpty) return const [];
 
     list.sort((a, b) => b.date.compareTo(a.date));
@@ -238,7 +244,7 @@ class _HomeScreenState extends State<HomeScreen> {
     for (final e in list) {
       final d = DateTime(e.date.year, e.date.month, e.date.day);
       if (currentDay == null || d != currentDay) {
-        entries.add(_Header(shortDayHeader(e.date)));
+        entries.add(_Header(shortDayHeader(l10n, e.date)));
         currentDay = d;
       }
       entries.add(_RowItem(e));
@@ -248,11 +254,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _quickAddBottomSheet(AppState s) async {
     final amountCtrl = TextEditingController();
-    String category = s.categories.first;
+    String category = s.categories.isNotEmpty ? s.categories.first : '';
     final res = await showModalBottomSheet<Expense>(
       context: context,
       isScrollControlled: true,
       builder: (ctx) {
+        final sheetL10n = ctx.l10n;
         return Padding(
           padding: EdgeInsets.only(
             left: 16,
@@ -263,27 +270,31 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Быстрая запись', style: Theme.of(ctx).textTheme.titleMedium),
+              Text(sheetL10n.homeQuickAddTitle, style: Theme.of(ctx).textTheme.titleMedium),
               const SizedBox(height: 12),
               TextField(
                 controller: amountCtrl,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
-                decoration: const InputDecoration(labelText: 'Сумма'),
+                decoration: InputDecoration(labelText: sheetL10n.homeAmountLabel),
               ),
               const SizedBox(height: 12),
               InputDecorator(
-                decoration: const InputDecoration(labelText: 'Категория'),
+                decoration: InputDecoration(labelText: sheetL10n.homeCategoryLabel),
                 child: DropdownButtonHideUnderline(
                   child: StatefulBuilder(
                     builder: (ctx, setSheetState) => DropdownButton<String>(
                       isExpanded: true,
-                      value: category,
+                      value: category.isEmpty ? null : category,
                       items: [
                         for (final c in s.categories) DropdownMenuItem(value: c, child: Text(c)),
-                        const DropdownMenuItem(
+                        DropdownMenuItem(
                           value: '__add__',
-                          child: Row(children: [Icon(Icons.add, size: 18), SizedBox(width: 8), Text('Добавить категорию…')]),
+                          child: Row(children: [
+                            const Icon(Icons.add, size: 18),
+                            const SizedBox(width: 8),
+                            Text(sheetL10n.homeAddCategoryOption),
+                          ]),
                         ),
                       ],
                       onChanged: (v) async {
@@ -302,19 +313,19 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 12),
               PrimaryButton(
-                label: 'Добавить',
+                label: sheetL10n.homePrimaryAdd,
                 icon: Icons.check,
                 onPressed: () {
                   final x = double.tryParse(amountCtrl.text.replaceAll(',', '.')) ?? 0.0;
-                  if (x <= 0) return Navigator.pop(ctx);
+                  if (x <= 0 || (category.isEmpty && s.categories.isEmpty)) return Navigator.pop(ctx);
                   final now = DateTime.now();
                   Navigator.pop(
                     ctx,
                     Expense(
                       id: 'e${now.microsecondsSinceEpoch}',
-                      title: 'Быстрое добавление',
+                      title: sheetL10n.homeQuickAddDefaultTitle,
                       amount: x,
-                      category: category,
+                      category: category.isEmpty && s.categories.isNotEmpty ? s.categories.first : category,
                       date: now,
                     ),
                   );
@@ -329,14 +340,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<bool> _confirmDelete(String title) async {
+    final l10n = context.l10n;
     return await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Удалить запись?'),
-        content: Text('«$title» будет удалена безвозвратно.'),
+        title: Text(l10n.homeDeleteDialogTitle),
+        content: Text(l10n.homeDeleteDialogMessage(title)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Отмена')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Удалить')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(l10n.commonCancel)),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(l10n.commonDelete)),
         ],
       ),
     ) ??
@@ -347,9 +359,9 @@ class _HomeScreenState extends State<HomeScreen> {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Удалено: ${removed.title}'),
+        content: Text(context.l10n.homeUndoMessage(removed.title)),
         action: SnackBarAction(
-          label: 'ОТМЕНА',
+          label: context.l10n.homeUndoAction,
           onPressed: () async {
             await s.undoLastRemove();
             try {
@@ -363,18 +375,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<String?> _askNewCategory(BuildContext context, AppState state) async {
     final ctrl = TextEditingController();
+    final l10n = context.l10n;
     final res = await showDialog<String>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Новая категория'),
+        title: Text(l10n.homeNewCategoryTitle),
         content: TextField(
           controller: ctrl,
           autofocus: true,
-          decoration: const InputDecoration(hintText: 'Например, Здоровье'),
+          decoration: InputDecoration(hintText: l10n.homeNewCategoryHint),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Отмена')),
-          FilledButton(onPressed: () => Navigator.pop(context, ctrl.text.trim()), child: const Text('Добавить')),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.commonCancel)),
+          FilledButton(onPressed: () => Navigator.pop(context, ctrl.text.trim()), child: Text(l10n.homeNewCategoryAdd)),
         ],
       ),
     );

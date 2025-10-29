@@ -1,5 +1,8 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
+
+import '../../core/l10n.dart';
 import '../widgets/app_bar_title.dart';
 
 class PhotoViewerScreen extends StatelessWidget {
@@ -8,7 +11,7 @@ class PhotoViewerScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const AppBarTitle(title: 'Фото', canPop: true),
+      appBar: AppBarTitle(title: context.l10n.photoTitle, canPop: true),
       body: Center(child: Image.file(File(path))),
     );
   }
