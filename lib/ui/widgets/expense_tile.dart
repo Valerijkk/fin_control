@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-
-import '../../core/categories.dart';
 import '../../core/formatters.dart';
-import '../../core/l10n.dart';
 import '../../core/routes.dart';
+import '../../core/categories.dart';
 import '../../domain/models/expense.dart';
 
 class ExpenseTile extends StatelessWidget {
@@ -38,15 +36,15 @@ class ExpenseTile extends StatelessWidget {
                 ),
                 if (expense.imagePath != null)
                   IconButton(
-                    tooltip: context.l10n.entryViewPhotoTooltip,
+                    tooltip: 'Открыть фото',
                     icon: const Icon(Icons.receipt_long_outlined),
-                    onPressed: () =>
-                        Navigator.of(context).pushNamed(Routes.photo, arguments: expense.imagePath!),
+                    onPressed: () => Navigator.of(context)
+                        .pushNamed(Routes.photo, arguments: expense.imagePath!),
                   ),
               ]),
               const SizedBox(height: 2),
               Text(
-                '${expense.category} • ${formatDate(expense.date, locale: context.l10n.localeName)}',
+                '${expense.category} • ${formatDate(expense.date)}',
                 style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ]),

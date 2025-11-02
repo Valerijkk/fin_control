@@ -1,14 +1,11 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart';
 
-import '../../core/l10n.dart';
+import '../../state/app_scope.dart';
 import '../../core/routes.dart';
 import '../../domain/models/expense.dart';
-import '../../state/app_scope.dart';
 import '../widgets/app_bar_title.dart';
 import '../widgets/primary_button.dart';
 import '../widgets/theme_action.dart';
@@ -58,11 +55,11 @@ class _AddEditScreenState extends State<AddEditScreen> {
     final s = AppScope.of(context);
     if (widget.initial == null) {
       // для новой записи — дефолтная категория из списка, иначе оставим ту, что была в initial
-      _category = s.categories.isNotEmpty ? s.categories.first : '';
+      _category = (s.categories.isNotEmpty ? s.categories.first : 'Другое');
     } else {
       // если редактирование, убедимся, что категория существует (вдруг была удалена)
       if (!s.categories.contains(_category)) {
-        _category = s.categories.isNotEmpty ? s.categories.first : '';
+        _category = (s.categories.isNotEmpty ? s.categories.first : 'Другое');
       }
     }
 
@@ -84,8 +81,7 @@ class _AddEditScreenState extends State<AddEditScreen> {
       setState(() => _imagePath = shot.path);
     } on PlatformException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(context.l10n.entryCameraError(e.message ?? e.toString()))));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Камера: ${e.message}')));
     }
   }
 
@@ -95,10 +91,10 @@ class _AddEditScreenState extends State<AddEditScreen> {
       initialDate: _selectedDate,
       firstDate: DateTime(2020, 1, 1),
       lastDate: DateTime(2100, 12, 31),
-      helpText: context.l10n.entryDatePickerHelp,
-      cancelText: context.l10n.entryDatePickerCancel,
-      confirmText: context.l10n.entryDatePickerConfirm,
-      locale: Localizations.localeOf(context),
+      helpText: 'Дата операции',
+      cancelText: 'Отмена',
+      confirmText: 'Выбрать',
+      locale: const Locale('ru', 'RU'),
     );
     if (picked != null) {
       setState(() => _selectedDate = DateTime(
@@ -117,18 +113,15 @@ class _AddEditScreenState extends State<AddEditScreen> {
     final name = await showDialog<String>(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text(context.l10n.homeNewCategoryTitle),
+        title: const Text('Новая категория'),
         content: TextField(
           controller: ctrl,
           autofocus: true,
-          decoration: InputDecoration(hintText: context.l10n.homeNewCategoryHint),
+          decoration: const InputDecoration(hintText: 'Например, Здоровье'),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: Text(context.l10n.commonCancel)),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, ctrl.text.trim()),
-            child: Text(context.l10n.homeNewCategoryAdd),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Отмена')),
+          FilledButton(onPressed: () => Navigator.pop(context, ctrl.text.trim()), child: const Text('Добавить')),
         ],
       ),
     );
@@ -170,11 +163,8 @@ class _AddEditScreenState extends State<AddEditScreen> {
     final s = AppScope.of(context); // читать в build можно
     final isEdit = widget.initial != null;
 
-    final l10n = context.l10n;
-    final dateLabel = DateFormat.yMMMMd(l10n.localeName).format(_selectedDate);
-
     return Scaffold(
-      appBar: AppBarTitle(title: l10n.entryTitle, canPop: true, actions: const [ThemeAction()]),
+      appBar: const AppBarTitle(title: 'Запись', canPop: true, actions: [ThemeAction()]),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -185,8 +175,8 @@ class _AddEditScreenState extends State<AddEditScreen> {
                 SwitchListTile(
                   value: _isIncome,
                   onChanged: (v) => setState(() => _isIncome = v),
-                  title: Text(l10n.entryIncomeSwitchTitle),
-                  subtitle: Text(l10n.entryIncomeSwitchSubtitle),
+                  title: const Text('Это доход'),
+                  subtitle: const Text('Вычитается из итоговых расходов'),
                 ),
                 const SizedBox(height: 8),
 
@@ -194,10 +184,10 @@ class _AddEditScreenState extends State<AddEditScreen> {
                   controller: _amount,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
-                  decoration: InputDecoration(labelText: l10n.entryAmountLabel, hintText: l10n.entryAmountHint),
+                  decoration: const InputDecoration(labelText: 'Сумма', hintText: '0'),
                   validator: (v) {
                     final x = double.tryParse((v ?? '').replaceAll(',', '.'));
-                    if (x == null || x <= 0) return l10n.entryAmountValidation;
+                    if (x == null || x <= 0) return 'Введите сумму > 0';
                     return null;
                   },
                 ),
@@ -205,38 +195,40 @@ class _AddEditScreenState extends State<AddEditScreen> {
 
                 TextFormField(
                   controller: _title,
-                  decoration: InputDecoration(
-                    labelText: l10n.entryNameLabel,
-                    hintText: l10n.entryNameHint,
+                  decoration: const InputDecoration(
+                    labelText: 'Название',
+                    hintText: 'Например, Продукты',
                   ),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? l10n.entryNameValidation : null,
+                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Введите название' : null,
                 ),
                 const SizedBox(height: 12),
 
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.event),
-                  title: Text(l10n.entryDateLabel),
-                  subtitle: Text(dateLabel),
-                  trailing: TextButton(onPressed: _pickDate, child: Text(l10n.entryDateChange)),
+                  title: const Text('Дата'),
+                  subtitle: Text(
+                    '${_selectedDate.day.toString().padLeft(2, '0')}.${_selectedDate.month.toString().padLeft(2, '0')}.${_selectedDate.year}',
+                  ),
+                  trailing: TextButton(onPressed: _pickDate, child: const Text('Изменить')),
                 ),
                 const SizedBox(height: 8),
 
                 InputDecorator(
-                  decoration: InputDecoration(labelText: l10n.entryCategoryLabel),
+                  decoration: const InputDecoration(labelText: 'Категория'),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       isExpanded: true,
                       value: _category.isNotEmpty ? _category : null,
                       items: [
                         for (final c in s.categories) DropdownMenuItem(value: c, child: Text(c)),
-                        DropdownMenuItem(
+                        const DropdownMenuItem(
                           value: '__add__',
                           child: Row(
                             children: [
-                              const Icon(Icons.add, size: 18),
-                              const SizedBox(width: 8),
-                              Text(l10n.homeAddCategoryOption),
+                              Icon(Icons.add, size: 18),
+                              SizedBox(width: 8),
+                              Text('Добавить категорию…'),
                             ],
                           ),
                         ),
@@ -259,13 +251,13 @@ class _AddEditScreenState extends State<AddEditScreen> {
                       child: OutlinedButton.icon(
                         onPressed: _pickImage,
                         icon: const Icon(Icons.photo_camera_outlined),
-                        label: Text(l10n.entryAttachPhoto),
+                        label: const Text('Прикрепить фото'),
                       ),
                     ),
                     const SizedBox(width: 12),
                     if (_imagePath != null)
                       IconButton(
-                        tooltip: l10n.entryViewPhotoTooltip,
+                        tooltip: 'Просмотреть',
                         onPressed: () =>
                             Navigator.of(context).pushNamed(Routes.photo, arguments: _imagePath!),
                         icon: const Icon(Icons.open_in_new),
@@ -283,7 +275,7 @@ class _AddEditScreenState extends State<AddEditScreen> {
                 const SizedBox(height: 20),
                 PrimaryButton(
                   onPressed: _save,
-                  label: isEdit ? l10n.entrySaveChanges : l10n.entrySaveNew,
+                  label: isEdit ? 'Сохранить изменения' : 'Сохранить',
                   icon: Icons.save,
                 ),
               ],
