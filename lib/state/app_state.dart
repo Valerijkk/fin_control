@@ -5,12 +5,8 @@ import '../data/category_store.dart';
 import '../core/categories.dart';
 
 class AppState extends ChangeNotifier {
-  final ExpenseRepository _repo;
-  final CategoryStore _catStore;
-
-  AppState({ExpenseRepository? repository, CategoryStore? categoryStore})
-      : _repo = repository ?? ExpenseRepository(),
-        _catStore = categoryStore ?? CategoryStore();
+  final ExpenseRepository _repo = ExpenseRepository();
+  final CategoryStore _catStore = CategoryStore();
 
   final List<Expense> _items = [];
   List<String> _categories = List<String>.from(kDefaultCategories);

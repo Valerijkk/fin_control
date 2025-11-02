@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-
 import '../core/routes.dart';
-import '../domain/models/expense.dart';
-import '../ui/screens/add_edit_screen.dart';
-import '../ui/screens/photo_viewer_screen.dart';
-import '../ui/screens/settings_screen.dart';
-import '../ui/screens/shell_screen.dart';
 import '../ui/screens/welcome_screen.dart';
+import '../ui/screens/shell_screen.dart';
+import '../ui/screens/add_edit_screen.dart';
+import '../ui/screens/settings_screen.dart';
+import '../ui/screens/photo_viewer_screen.dart';
+import '../domain/models/expense.dart';
 
 class AppRouter {
   static Route<dynamic> onGenerateRoute(RouteSettings s) {
@@ -26,9 +24,7 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => PhotoViewerScreen(path: path), settings: s);
       default:
         return MaterialPageRoute(
-          builder: (context) => Scaffold(
-            body: Center(child: Text(AppLocalizations.of(context)?.pageNotFound ?? 'Page not found')),
-          ),
+          builder: (_) => const Scaffold(body: Center(child: Text('Not found'))),
           settings: s,
         );
     }
