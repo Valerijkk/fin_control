@@ -275,7 +275,7 @@ class _AddEditScreenState extends State<AddEditScreen> {
                 const SizedBox(height: 20),
                 PrimaryButton(
                   onPressed: _save,
-                  label: isEdit ? 'Сохранить изменения' : 'Сохранить',
+                  label: isEdit ? 'Сохранить изменения' : 'Сохранить)',
                   icon: Icons.save,
                 ),
               ],
