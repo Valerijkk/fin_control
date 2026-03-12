@@ -1,6 +1,7 @@
 // test/ui/screens/home_screen_test.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fin_control/ui/screens/add_edit_screen.dart';
 import 'package:fin_control/ui/screens/home_screen.dart';
 
 import '../../helpers/test_host.dart';
