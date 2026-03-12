@@ -25,6 +25,12 @@ dependencies:
   # Персист пользовательских категорий
   shared_preferences: ^2.2.2
 
+  # Интеграции для практик тестировщиков (опционально: задайте DSN/API key в config/telemetry.dart)
+  sentry_flutter: ^8.0.0
+  appmetrica_plugin: ^3.4.0
+
+  # Firebase — не добавлен по умолчанию. Для практик 10–15: зарегистрируйте свой проект (00-firebase-setup.md), добавьте конфиги, затем добавьте firebase_core и нужные пакеты по шагам в практиках.
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

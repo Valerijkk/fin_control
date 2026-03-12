@@ -16,9 +16,13 @@ class WelcomeScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('FinControl', style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 8),
-              const Text('Калькулятор и учёт расходов', textAlign: TextAlign.center),
+              Text('FinControl', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 12),
+              Text(
+                'Курсы валют, обменник, портфель и учёт расходов',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+              ),
               const SizedBox(height: 24),
               PrimaryButton(
                 onPressed: () => Navigator.of(context).pushReplacementNamed(Routes.shell),

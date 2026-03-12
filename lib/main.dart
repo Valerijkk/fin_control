@@ -1,6 +1,9 @@
+import 'package:appmetrica_plugin/appmetrica_plugin.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
+import 'package:fin_control/config/telemetry.dart';
 import 'package:fin_control/core/app_theme.dart';
 import 'package:fin_control/state/app_scope.dart';
 import 'package:fin_control/state/app_state.dart';
@@ -14,20 +17,37 @@ import 'package:fin_control/ui/screens/shell_screen.dart';
 import 'package:fin_control/ui/screens/add_edit_screen.dart';
 import 'package:fin_control/ui/screens/settings_screen.dart';
 import 'package:fin_control/ui/screens/photo_viewer_screen.dart';
+import 'package:fin_control/ui/screens/exchange_screen.dart';
+import 'package:fin_control/ui/screens/portfolio_screen.dart';
 
 final routeObserver = RouteObserver<PageRoute<dynamic>>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Инициализация локали для Intl (форматирование дат в виджетах)
+  if (appMetricaApiKey.isNotEmpty) await _initAppMetrica();
   try {
     await initializeDateFormatting('ru_RU');
-  } catch (_) {
-    // ок, используем дефолтную локаль
-  }
+  } catch (_) {}
 
-  runApp(const FinControlRoot());
+  if (sentryDsn.isNotEmpty) {
+    await SentryFlutter.init(
+      (options) {
+        options.dsn = sentryDsn;
+        options.tracesSampleRate = 1.0;
+        options.environment = 'development';
+      },
+      appRunner: () => runApp(const FinControlRoot()),
+    );
+  } else {
+    runApp(const FinControlRoot());
+  }
+}
+
+Future<void> _initAppMetrica() async {
+  try {
+    await AppMetrica.activate(AppMetricaConfig(appMetricaApiKey));
+  } catch (_) {}
 }
 
 class FinControlRoot extends StatefulWidget {
@@ -69,6 +89,10 @@ class _FinControlRootState extends State<FinControlRoot> {
       case Routes.photo:
         final path = s.arguments as String;
         return MaterialPageRoute(builder: (_) => PhotoViewerScreen(path: path), settings: s);
+      case Routes.exchange:
+        return MaterialPageRoute(builder: (_) => const ExchangeScreen(), settings: s);
+      case Routes.portfolio:
+        return MaterialPageRoute(builder: (_) => const PortfolioScreen(), settings: s);
       default:
         return MaterialPageRoute(
           builder: (_) => const Scaffold(body: Center(child: Text('Not found'))),

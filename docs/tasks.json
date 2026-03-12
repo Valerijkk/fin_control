@@ -1,0 +1,540 @@
+{
+  "project": "FinControl — учебная платформа",
+  "created_at": "2026-03-13",
+  "agent_instructions": {
+    "before_start": [
+      "Прочитай docs/tasks.json и docs/progress.txt (если есть)",
+      "Выбери ОДНУ задачу со статусом pending и наивысшим приоритетом",
+      "Проверь, что все dependencies этой задачи имеют статус done"
+    ],
+    "during_work": [
+      "Работай только над выбранной задачей",
+      "Делай коммиты после логических изменений (по правилам commit-messages, commit-after-single-file)",
+      "Не трогай код, не связанный с текущей задачей"
+    ],
+    "before_finish": [
+      "Выполни ВСЕ test_steps из задачи",
+      "Меняй status на done ТОЛЬКО после успешной проверки",
+      "ДОПИСЫВАЙ summary в конец docs/progress.txt (append-only)",
+      "ЗАПРЕЩЕНО удалять или редактировать задачи — только менять status"
+    ]
+  },
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Миграция БД: таблицы обменника и портфеля",
+      "category": "infrastructure",
+      "priority": "critical",
+      "complexity": "M",
+      "sprint": 1,
+      "status": "done",
+      "dependencies": [],
+      "description": "Добавить в AppDatabase таблицы exchange_operations, portfolio_balance (или хранение в prefs), portfolio_holdings, portfolio_transactions по docs/data-models.md. Увеличить _dbVersion, реализовать onUpgrade.",
+      "acceptance_criteria": [
+        "Таблицы создаются при первом запуске или при обновлении с предыдущей версии",
+        "Поля и типы соответствуют data-models.md",
+        "Существующая таблица expenses не затронута"
+      ],
+      "test_steps": [
+        "Запустить приложение на эмуляторе/симуляторе",
+        "Проверить отсутствие ошибок при открытии БД",
+        "flutter test — все тесты проходят"
+      ],
+      "technical_details": {
+        "files_to_modify": ["lib/data/db.dart"],
+        "notes": "Дата в новых таблицах — INTEGER (millis) или TEXT ISO8601 по соглашению в db.dart"
+      }
+    },
+    {
+      "id": "TASK-002",
+      "title": "Модели и репозитории: обмен и портфель",
+      "category": "functional",
+      "priority": "critical",
+      "complexity": "M",
+      "sprint": 1,
+      "status": "done",
+      "dependencies": ["TASK-001"],
+      "description": "Добавить domain-модели ExchangeOperation, PortfolioHolding, PortfolioTransaction; репозитории ExchangeRepository и PortfolioRepository для работы с новыми таблицами.",
+      "acceptance_criteria": [
+        "Модели в domain/models с полями по data-models",
+        "Репозитории выполняют CRUD для операций обмена и портфеля",
+        "Инициализация начального баланса портфеля при первом запуске"
+      ],
+      "test_steps": [
+        "Unit-тесты на репозитории или интеграция в виджеты — сохранение/чтение операций",
+        "flutter test и flutter analyze без ошибок"
+      ],
+      "technical_details": {
+        "files_to_create": ["lib/domain/models/exchange_operation.dart", "lib/domain/models/portfolio_holding.dart", "lib/domain/models/portfolio_transaction.dart", "lib/domain/repositories/exchange_repository.dart", "lib/domain/repositories/portfolio_repository.dart"]
+      }
+    },
+    {
+      "id": "TASK-003",
+      "title": "Экран «Обменник»: калькулятор и история",
+      "category": "functional",
+      "priority": "critical",
+      "complexity": "L",
+      "sprint": 1,
+      "status": "done",
+      "dependencies": ["TASK-002"],
+      "description": "Экран обмена валют: выбор валюты из/в, ввод суммы, расчёт по RatesApi, кнопка «Обменять» с сохранением в exchange_operations и отображение истории операций.",
+      "acceptance_criteria": [
+        "Форма: валюта из, валюта в, сумма; отображение результата по актуальному курсу",
+        "Операция сохраняется в БД и отображается в списке истории на экране",
+        "Используется существующий RatesApi для курсов"
+      ],
+      "test_steps": [
+        "Ввести сумму, выбрать пару валют, нажать Обменять — запись в истории",
+        "flutter test — при необходимости добавить тесты экрана"
+      ],
+      "technical_details": {
+        "files_to_create": ["lib/ui/screens/exchange_screen.dart"],
+        "files_to_modify": ["lib/core/routes.dart", "lib/core/app_router.dart", "lib/ui/screens/shell_screen.dart"]
+      }
+    },
+    {
+      "id": "TASK-004",
+      "title": "Экран «Портфель»: баланс, активы, сделки",
+      "category": "functional",
+      "priority": "high",
+      "complexity": "L",
+      "sprint": 1,
+      "status": "done",
+      "dependencies": ["TASK-002"],
+      "description": "Экран портфеля: отображение базовой валюты и баланса, список активов (валют), кнопки купить/продать по текущему курсу, история сделок.",
+      "acceptance_criteria": [
+        "Отображается текущий баланс и список позиций по валютам",
+        "Покупка/продажа пересчитывает баланс и позиции по курсу из RatesApi",
+        "История сделок отображается на экране"
+      ],
+      "test_steps": [
+        "Купить USD — баланс уменьшился, позиция USD появилась",
+        "Продать часть USD — баланс и позиция обновились"
+      ],
+      "technical_details": {
+        "files_to_create": ["lib/ui/screens/portfolio_screen.dart", "lib/ui/widgets/portfolio_list.dart"],
+        "files_to_modify": ["lib/core/routes.dart", "lib/core/app_router.dart", "lib/ui/screens/shell_screen.dart"]
+      }
+    },
+    {
+      "id": "TASK-005",
+      "title": "Добавить iOS-проект в репозиторий",
+      "category": "infrastructure",
+      "priority": "high",
+      "complexity": "M",
+      "sprint": 2,
+      "status": "done",
+      "dependencies": [],
+      "description": "Сгенерировать и закоммитить ios/ через flutter create (если ещё нет) или скопировать из шаблона. Настроить минимальные права (камера, сеть) в Info.plist.",
+      "acceptance_criteria": [
+        "Папка ios/ присутствует, проект открывается в Xcode",
+        "flutter run на iOS-симуляторе запускает приложение",
+        "Подписание и capabilities при необходимости для симулятора не блокируют запуск"
+      ],
+      "test_steps": [
+        "flutter build ios --simulator",
+        "Запуск на симуляторе из Xcode или flutter run"
+      ],
+      "technical_details": {
+        "notes": "flutter create . в корне перезаписывает только при отсутствии ios/; иначе добавить ios вручную из шаблона Flutter"
+      }
+    },
+    {
+      "id": "TASK-006",
+      "title": "Практика: Charles — снифф мобильного и веб-приложения",
+      "category": "integration",
+      "priority": "high",
+      "complexity": "M",
+      "sprint": 2,
+      "status": "done",
+      "dependencies": ["TASK-003"],
+      "description": "Написать практику для учеников: установка Charles, настройка прокси на устройстве/эмуляторе и в браузере, установка сертификата Charles, перехват запросов FinControl к API курсов.",
+      "acceptance_criteria": [
+        "Документ в docs/practices с пошаговой инструкцией",
+        "Описаны сценарии: Android-эмулятор, реальное устройство, веб (если есть)",
+        "Указано, какие запросы должны быть видны (exchangerate.host, open.er-api.com)"
+      ],
+      "test_steps": [
+        "По инструкции настроить Charles и открыть запрос к курсам в приложении — запрос виден"
+      ],
+      "technical_details": {
+        "files_to_create": ["docs/practices/01-charles.md"]
+      }
+    },
+    {
+      "id": "TASK-007",
+      "title": "Практика: Proxyman — снифф мобильного и веб-приложения",
+      "category": "integration",
+      "priority": "high",
+      "complexity": "M",
+      "sprint": 2,
+      "status": "done",
+      "dependencies": ["TASK-003"],
+      "description": "Написать практику по Proxyman: установка, настройка прокси и сертификата на устройстве/эмуляторе, перехват трафика FinControl.",
+      "acceptance_criteria": [
+        "Документ docs/practices/02-proxyman.md с пошаговой инструкцией",
+        "Сценарии для Android и при возможности iOS"
+      ],
+      "test_steps": [
+        "Выполнить шаги практики — запросы к API курсов видны в Proxyman"
+      ],
+      "technical_details": {
+        "files_to_create": ["docs/practices/02-proxyman.md"]
+      }
+    },
+    {
+      "id": "TASK-008",
+      "title": "Практика: Android Studio — установка в эмуляторе и логирование",
+      "category": "integration",
+      "priority": "high",
+      "complexity": "M",
+      "sprint": 2,
+      "status": "done",
+      "dependencies": [],
+      "description": "Практика: установка FinControl в эмуляторе Android Studio, настройка logcat и фильтрация логов приложения.",
+      "acceptance_criteria": [
+        "Документ docs/practices/03-android-studio.md",
+        "Шаги: создание/запуск AVD, установка APK, настройка logcat по тегу/пакету"
+      ],
+      "test_steps": [
+        "По инструкции установить приложение в эмулятор и увидеть логи в logcat"
+      ],
+      "technical_details": {
+        "files_to_create": ["docs/practices/03-android-studio.md"]
+      }
+    },
+    {
+      "id": "TASK-009",
+      "title": "Практика: Xcode — установка в симуляторе и логирование",
+      "category": "integration",
+      "priority": "high",
+      "complexity": "M",
+      "sprint": 2,
+      "status": "done",
+      "dependencies": ["TASK-005"],
+      "description": "Практика: открытие проекта в Xcode, запуск на симуляторе iOS, просмотр логов в Console.",
+      "acceptance_criteria": [
+        "Документ docs/practices/04-xcode.md",
+        "Шаги: открытие ios/Runner.xcworkspace, выбор симулятора, запуск, просмотр логов"
+      ],
+      "test_steps": [
+        "По инструкции запустить приложение в симуляторе и увидеть вывод в консоли"
+      ],
+      "technical_details": {
+        "files_to_create": ["docs/practices/04-xcode.md"]
+      }
+    },
+    {
+      "id": "TASK-010",
+      "title": "Практика: ADB — мануал по возможностям на основе FinControl",
+      "category": "integration",
+      "priority": "high",
+      "complexity": "M",
+      "sprint": 2,
+      "status": "done",
+      "dependencies": [],
+      "description": "Написать мануал по ADB: установка приложения, просмотр логов, скриншоты, очистка данных, снятие дампов и другие команды на примере FinControl.",
+      "acceptance_criteria": [
+        "Документ docs/practices/05-adb.md",
+        "Описаны команды: adb install, logcat, shell am/pm, screencap, clear data и т.д."
+      ],
+      "test_steps": [
+        "Выполнить ключевые команды из мануала — установка, логи, очистка"
+      ],
+      "technical_details": {
+        "files_to_create": ["docs/practices/05-adb.md"]
+      }
+    },
+    {
+      "id": "TASK-011",
+      "title": "Подключение Sentry SDK в Flutter",
+      "category": "integration",
+      "priority": "high",
+      "complexity": "M",
+      "sprint": 2,
+      "status": "done",
+      "dependencies": [],
+      "description": "Добавить sentry_flutter в зависимости, инициализировать в main() с DSN (конфиг/переменная окружения). Опционально: кнопка в настройках «Отправить тестовое исключение».",
+      "acceptance_criteria": [
+        "Sentry инициализируется при старте приложения",
+        "Тестовое исключение появляется в кабинете Sentry"
+      ],
+      "test_steps": [
+        "Запустить приложение, вызвать тестовое исключение — событие в Sentry"
+      ],
+      "technical_details": {
+        "files_to_modify": ["pubspec.yaml", "lib/main.dart", "lib/ui/screens/settings_screen.dart"]
+      }
+    },
+    {
+      "id": "TASK-012",
+      "title": "Практика: Sentry — настройка и проверка",
+      "category": "integration",
+      "priority": "medium",
+      "complexity": "S",
+      "sprint": 2,
+      "status": "done",
+      "dependencies": ["TASK-011"],
+      "description": "Документ docs/practices/06-sentry.md: создание проекта в Sentry, получение DSN, настройка приложения, проверка получения событий.",
+      "acceptance_criteria": [
+        "Практика описывает шаги от регистрации до появления события в Sentry"
+      ],
+      "test_steps": [
+        "Выполнить практику по документу"
+      ],
+      "technical_details": {
+        "files_to_create": ["docs/practices/06-sentry.md"]
+      }
+    },
+    {
+      "id": "TASK-013",
+      "title": "Подключение AppMetrica SDK в Flutter",
+      "category": "integration",
+      "priority": "high",
+      "complexity": "M",
+      "sprint": 2,
+      "status": "done",
+      "dependencies": [],
+      "description": "Добавить appmetrica_sdk (или актуальный пакет AppMetrica для Flutter), инициализация в main() с API Key. Завести приложение в кабинете AppMetrica.",
+      "acceptance_criteria": [
+        "AppMetrica инициализируется при старте",
+        "В кабинете AppMetrica видны сессии/устройства после запуска приложения"
+      ],
+      "test_steps": [
+        "Запустить приложение на устройстве/эмуляторе — в отчётах AppMetrica появляется сессия"
+      ],
+      "technical_details": {
+        "files_to_modify": ["pubspec.yaml", "lib/main.dart"]
+      }
+    },
+    {
+      "id": "TASK-014",
+      "title": "Практика: AppMetrica — заведение приложения и проверка",
+      "category": "integration",
+      "priority": "medium",
+      "complexity": "S",
+      "sprint": 2,
+      "status": "done",
+      "dependencies": ["TASK-013"],
+      "description": "Документ docs/practices/07-appmetrica.md: регистрация приложения в AppMetrica, получение ключа, проверка отображения устройств и сессий.",
+      "acceptance_criteria": [
+        "Практика пошагово описывает настройку и проверку"
+      ],
+      "test_steps": [
+        "Выполнить практику — устройства/сессии видны в кабинете"
+      ],
+      "technical_details": {
+        "files_to_create": ["docs/practices/07-appmetrica.md"]
+      }
+    },
+    {
+      "id": "TASK-015",
+      "title": "Практика: iOS — сборка и публикация в TestFlight",
+      "category": "integration",
+      "priority": "high",
+      "complexity": "L",
+      "sprint": 3,
+      "status": "done",
+      "dependencies": ["TASK-005"],
+      "description": "Документ docs/practices/08-testflight.md: подписание, архив, загрузка в App Store Connect, настройка TestFlight и установка тестовой сборки.",
+      "acceptance_criteria": [
+        "По документу можно выполнить полный цикл до появления сборки в TestFlight"
+      ],
+      "test_steps": [
+        "Выполнить шаги (при наличии аккаунта разработчика)"
+      ],
+      "technical_details": {
+        "files_to_create": ["docs/practices/08-testflight.md"]
+      }
+    },
+    {
+      "id": "TASK-016",
+      "title": "Практика: Android — сборка и публикация в дистрибьютор",
+      "category": "integration",
+      "priority": "high",
+      "complexity": "L",
+      "sprint": 3,
+      "status": "done",
+      "dependencies": [],
+      "description": "Документ docs/practices/09-android-distribution.md: подписание release, загрузка в Google Play Internal testing или Firebase App Distribution (самый популярный вариант для учебных проектов).",
+      "acceptance_criteria": [
+        "Описаны шаги сборки AAB/APK, подписание, загрузка и установка тестерами"
+      ],
+      "test_steps": [
+        "Собрать release и по инструкции загрузить в выбранный дистрибьютор"
+      ],
+      "technical_details": {
+        "files_to_create": ["docs/practices/09-android-distribution.md"]
+      }
+    },
+    {
+      "id": "TASK-017",
+      "title": "Firebase: проект и подключение приложения (Android/iOS)",
+      "category": "infrastructure",
+      "priority": "critical",
+      "complexity": "L",
+      "sprint": 3,
+      "status": "pending",
+      "dependencies": ["TASK-005"],
+      "description": "Создать Firebase-проект, подключить Android и iOS приложения (google-services.json, GoogleService-Info.plist), добавить flutterfire_cli и зависимости Firebase в pubspec.",
+      "acceptance_criteria": [
+        "Приложение подключается к Firebase без ошибок при запуске",
+        "В консоли Firebase видны добавленные приложения"
+      ],
+      "test_steps": [
+        "flutter run — приложение запускается, в Firebase Console отображаются приложения"
+      ],
+      "technical_details": {
+        "files_to_modify": ["pubspec.yaml", "android/app/build.gradle.kts", "ios/Runner/Info.plist"],
+        "notes": "Использовать Firebase Flutter docs и flutterfire configure"
+      }
+    },
+    {
+      "id": "TASK-018",
+      "title": "Firebase Crashlytics в приложении",
+      "category": "integration",
+      "priority": "high",
+      "complexity": "M",
+      "sprint": 3,
+      "status": "done",
+      "dependencies": ["TASK-017"],
+      "description": "Подключить Firebase Crashlytics в Flutter, настроить отправку крашей и нефатальных ошибок. Практика в docs/practices/10-firebase-crashlytics.md.",
+      "acceptance_criteria": [
+        "Crashlytics зарегистрирован в приложении",
+        "Тестовый краш отображается в Firebase Console"
+      ],
+      "test_steps": [
+        "Вызвать тестовый краш — отчёт в Crashlytics"
+      ],
+      "technical_details": {
+        "files_to_create": ["docs/practices/10-firebase-crashlytics.md"]
+      }
+    },
+    {
+      "id": "TASK-019",
+      "title": "Firebase FCM (push) и практика",
+      "category": "integration",
+      "priority": "high",
+      "complexity": "L",
+      "sprint": 3,
+      "status": "done",
+      "dependencies": ["TASK-017"],
+      "description": "Подключить Firebase Cloud Messaging, запрос разрешений, получение токена и обработка уведомлений. Документ docs/practices/11-firebase-fcm.md с push-флоу.",
+      "acceptance_criteria": [
+        "Приложение запрашивает разрешение на уведомления и получает FCM-токен",
+        "Практика описывает отправку тестового push из консоли Firebase"
+      ],
+      "test_steps": [
+        "Отправить тестовое уведомление из Firebase — приложение его получает"
+      ],
+      "technical_details": {
+        "files_to_create": ["docs/practices/11-firebase-fcm.md"]
+      }
+    },
+    {
+      "id": "TASK-020",
+      "title": "Firebase Analytics и практика (ивенты/воронки)",
+      "category": "integration",
+      "priority": "high",
+      "complexity": "M",
+      "sprint": 3,
+      "status": "done",
+      "dependencies": ["TASK-017"],
+      "description": "Включить Firebase Analytics, логировать ключевые события (открытие экранов, обмен, сделка в портфеле). Практика docs/practices/12-firebase-analytics.md — просмотр событий и воронок.",
+      "acceptance_criteria": [
+        "События отправляются в Analytics",
+        "В консоли Firebase видны события и базовые отчёты"
+      ],
+      "test_steps": [
+        "Выполнить сценарии в приложении — события отображаются в Analytics"
+      ],
+      "technical_details": {
+        "files_to_create": ["docs/practices/12-firebase-analytics.md"]
+      }
+    },
+    {
+      "id": "TASK-021",
+      "title": "Firebase Remote Config и практика (фичефлаги)",
+      "category": "integration",
+      "priority": "medium",
+      "complexity": "M",
+      "sprint": 3,
+      "status": "done",
+      "dependencies": ["TASK-017"],
+      "description": "Подключить Remote Config, добавить параметр (например фичефлаг показа экрана «Портфель» или процент комиссии). Практика docs/practices/13-firebase-remote-config.md.",
+      "acceptance_criteria": [
+        "Приложение получает параметры Remote Config",
+        "Изменение значения в консоли влияет на поведение приложения после fetch/activate"
+      ],
+      "test_steps": [
+        "Изменить параметр в консоли, обновить в приложении — поведение изменилось"
+      ],
+      "technical_details": {
+        "files_to_create": ["docs/practices/13-firebase-remote-config.md"]
+      }
+    },
+    {
+      "id": "TASK-022",
+      "title": "Firebase Performance Monitoring и практика",
+      "category": "integration",
+      "priority": "medium",
+      "complexity": "M",
+      "sprint": 3,
+      "status": "done",
+      "dependencies": ["TASK-017"],
+      "description": "Подключить Firebase Performance Monitoring, автоматические трейсы экранов/сетевых запросов. Практика docs/practices/14-firebase-performance.md — поиск регрессов по скорости.",
+      "acceptance_criteria": [
+        "Performance собирает данные по запуску и сетевому трафику",
+        "В консоли отображаются метрики"
+      ],
+      "test_steps": [
+        "Выполнить сценарии — в Performance появляются трейсы"
+      ],
+      "technical_details": {
+        "files_to_create": ["docs/practices/14-firebase-performance.md"]
+      }
+    },
+    {
+      "id": "TASK-023",
+      "title": "Firebase In-App Messaging и практика",
+      "category": "integration",
+      "priority": "medium",
+      "complexity": "M",
+      "sprint": 3,
+      "status": "done",
+      "dependencies": ["TASK-017"],
+      "description": "Подключить Firebase In-App Messaging, создать тестовое сообщение в консоли (триггер по событию или по экрану). Практика docs/practices/15-firebase-in-app-messaging.md.",
+      "acceptance_criteria": [
+        "In-App Messaging настроен",
+        "Тестовое сообщение показывается в приложении по условию"
+      ],
+      "test_steps": [
+        "Создать кампанию в консоли — сообщение отображается в приложении"
+      ],
+      "technical_details": {
+        "files_to_create": ["docs/practices/15-firebase-in-app-messaging.md"]
+      }
+    },
+    {
+      "id": "TASK-024",
+      "title": "Обновить README под учебную платформу",
+      "category": "ui",
+      "priority": "medium",
+      "complexity": "S",
+      "sprint": 3,
+      "status": "done",
+      "dependencies": [],
+      "description": "Обновить README: цель — учебный проект для тестировщиков, описание обменника и портфеля, ссылки на docs/practices, требования (Flutter, эмуляторы), список технологий (Charles, Proxyman, ADB, Sentry, AppMetrica, Firebase, TestFlight/Play).",
+      "acceptance_criteria": [
+        "README содержит раздел о практиках и ссылки на docs/practices",
+        "Описаны все основные технологии из PRD"
+      ],
+      "test_steps": [
+        "Прочитать README — ясно, что проект учебный и где искать практики"
+      ],
+      "technical_details": {
+        "files_to_modify": ["README.md"]
+      }
+    }
+  ]
+}

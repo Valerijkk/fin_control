@@ -8,4 +8,6 @@ class Routes {
   static const add = '/add';
   static const settings = '/settings';
   static const photo = '/photo';
+  static const exchange = '/exchange';
+  static const portfolio = '/portfolio';
 }

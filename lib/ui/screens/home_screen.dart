@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 
 import '../../state/app_scope.dart';
 import '../../state/app_state.dart';
-import '../../core/categories.dart';
 import '../../core/routes.dart';
 import '../../core/formatters.dart';
 import '../../domain/models/expense.dart';

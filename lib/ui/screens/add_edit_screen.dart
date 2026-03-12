@@ -187,7 +187,7 @@ class _AddEditScreenState extends State<AddEditScreen> {
                   decoration: const InputDecoration(labelText: 'Сумма', hintText: '0'),
                   validator: (v) {
                     final x = double.tryParse((v ?? '').replaceAll(',', '.'));
-                    if (x == null || x <= 0) return 'Введите сумму > 0';
+                    if (x == null || x < 0) return 'Введите неотрицательную сумму';
                     return null;
                   },
                 ),

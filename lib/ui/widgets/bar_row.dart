@@ -31,7 +31,7 @@ class BarRow extends StatelessWidget {
               height: 12,
               alignment: Alignment.centerLeft,
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.35),
+                color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: FractionallySizedBox(

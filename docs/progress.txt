@@ -1,0 +1,14 @@
+# Прогресс цикла Ральфа / ручная разработка
+
+---
+[2026-03-13] Инициализация
+- Созданы docs/PRD_fin_control.md, architecture.md, data-models.md, api-spec.md.
+- Добавлены задачи в docs/tasks.json (TASK-001 — TASK-024).
+- Реализованы: миграция БД (обменник, портфель), модели и репозитории, экраны Обменник и Портфель, маршруты и Shell.
+- Добавлена платформа iOS (flutter create . --platforms=ios).
+- Написаны практики 01–15 в docs/practices/ (Charles, Proxyman, Android Studio, Xcode, ADB, Sentry, AppMetrica, TestFlight, Android-дистрибуция, Firebase: Crashlytics, FCM, Analytics, Remote Config, Performance, In-App Messaging).
+- Обновлён README под учебную платформу. Добавлена инструкция по запуску цикла Ральфа для Flutter: docs/RALPH_FLUTTER.md.
+- Статусы задач TASK-001 — TASK-010, TASK-012, TASK-014 — TASK-016, TASK-018 — TASK-024 переведены в done.
+- Реализованы интеграции: Sentry SDK и AppMetrica SDK (lib/config/telemetry.dart, main.dart, кнопка «Тест Sentry» в настройках). TASK-011, TASK-013 переведены в done.
+- Оставшаяся задача для реализации в коде: TASK-017 (Firebase проект и подключение приложения — требует создания проекта в Firebase и добавления google-services.json / GoogleService-Info.plist).
+---

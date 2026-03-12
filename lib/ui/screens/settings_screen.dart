@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
+
+import '../../config/telemetry.dart';
 import '../../state/theme_controller.dart';
 import '../../state/app_scope.dart';
 import '../widgets/app_bar_title.dart';
@@ -51,10 +54,26 @@ class SettingsScreen extends StatelessWidget {
               }
             },
           ),
+          if (sentryDsn.isNotEmpty) ...[
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.bug_report_outlined),
+              title: const Text('Тест Sentry'),
+              subtitle: const Text('Отправить тестовое исключение в Sentry'),
+              onTap: () {
+                Sentry.captureException(Exception('Тестовое исключение из FinControl (Настройки)'));
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Исключение отправлено в Sentry')),
+                  );
+                }
+              },
+            ),
+          ],
           const Divider(),
           const ListTile(
             title: Text('О приложении'),
-            subtitle: Text('FinControl — учебный прототип учёта расходов.'),
+            subtitle: Text('FinControl — учебная платформа: учёт расходов, обменник, портфель.'),
           ),
         ],
       ),

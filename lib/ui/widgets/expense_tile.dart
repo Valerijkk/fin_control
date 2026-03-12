@@ -24,7 +24,7 @@ class ExpenseTile extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 18,
-            backgroundColor: color.withOpacity(.12),
+            backgroundColor: color.withValues(alpha: 0.12),
             child: Icon(categoryIcon(expense.category), color: color, size: 20),
           ),
           const SizedBox(width: 12),

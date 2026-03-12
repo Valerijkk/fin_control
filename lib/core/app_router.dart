@@ -5,6 +5,8 @@ import '../ui/screens/shell_screen.dart';
 import '../ui/screens/add_edit_screen.dart';
 import '../ui/screens/settings_screen.dart';
 import '../ui/screens/photo_viewer_screen.dart';
+import '../ui/screens/exchange_screen.dart';
+import '../ui/screens/portfolio_screen.dart';
 import '../domain/models/expense.dart';
 
 class AppRouter {
@@ -22,6 +24,10 @@ class AppRouter {
       case Routes.photo:
         final path = s.arguments as String;
         return MaterialPageRoute(builder: (_) => PhotoViewerScreen(path: path), settings: s);
+      case Routes.exchange:
+        return MaterialPageRoute(builder: (_) => const ExchangeScreen(), settings: s);
+      case Routes.portfolio:
+        return MaterialPageRoute(builder: (_) => const PortfolioScreen(), settings: s);
       default:
         return MaterialPageRoute(
           builder: (_) => const Scaffold(body: Center(child: Text('Not found'))),

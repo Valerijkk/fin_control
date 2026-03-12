@@ -11,7 +11,7 @@ void main() {
     await tester.pumpWidget(makeHost(home: const WelcomeScreen(), state: state));
 
     expect(find.text('FinControl'), findsOneWidget);
-    expect(find.text('Калькулятор и учёт расходов'), findsOneWidget);
+    expect(find.text('Курсы валют, обменник, портфель и учёт расходов'), findsOneWidget);
 
     await tester.tap(find.text('Начать'));
     await tester.pumpAndSettle();

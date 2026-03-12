@@ -17,11 +17,11 @@ class AppTheme {
     return base.copyWith(
       visualDensity: VisualDensity.adaptivePlatformDensity,
 
-      // В ThemeData нужна именно CardThemeData
       cardTheme: CardThemeData(
         elevation: 0,
         margin: const EdgeInsets.symmetric(vertical: 6),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        color: scheme.surfaceContainerHighest,
       ),
 
       listTileTheme: const ListTileThemeData(
@@ -30,14 +30,12 @@ class AppTheme {
 
       chipTheme: base.chipTheme.copyWith(
         labelStyle: TextStyle(color: onBg),
-        // StadiumBorder доступен везде
         shape: StadiumBorder(side: BorderSide(color: scheme.outlineVariant)),
       ),
 
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        // Без surfaceContainerHighest для совместимости
-        fillColor: scheme.surfaceVariant.withOpacity(0.15),
+        fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.6),
         labelStyle: TextStyle(color: onBg),
         hintStyle: TextStyle(color: hint),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -55,7 +53,7 @@ class AppTheme {
         titleLarge: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: onBg),
         titleMedium: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: onBg),
         bodyLarge: TextStyle(fontSize: 16, color: onBg),
-        bodyMedium: TextStyle(fontSize: 14, color: onBg.withOpacity(.9)),
+        bodyMedium: TextStyle(fontSize: 14, color: onBg.withValues(alpha: 0.9)),
         labelLarge: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
       ),
 

@@ -10,7 +10,7 @@ class RatesCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final fmt = NumberFormat('##0.00', 'ru_RU');
 
-    String _formatTs(DateTime d) {
+    String formatTs(DateTime d) {
       try {
         return DateFormat('dd.MM HH:mm', 'ru_RU').format(d);
       } catch (_) {
@@ -41,7 +41,7 @@ class RatesCard extends StatelessWidget {
           );
         } else {
           final r = snap.data!;
-          final ts = r.asOf != null ? ' • от ${_formatTs(r.asOf!)}' : '';
+          final ts = r.asOf != null ? ' • от ${formatTs(r.asOf!)}' : '';
           final offline = r.fromCache ? ' • офлайн' : '';
           child = Padding(
             padding: const EdgeInsets.all(12),
