@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../domain/models/expense.dart';
 import '../../domain/models/portfolio_holding.dart';
 import '../../domain/models/portfolio_transaction.dart';
 import '../../domain/repositories/portfolio_repository.dart';
 import '../../services/rates_api.dart';
+import '../../state/app_scope.dart';
 import '../widgets/app_bar_title.dart';
 import '../widgets/theme_action.dart';
 import '../widgets/settings_action.dart';
@@ -59,9 +61,8 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
   double? _rateToBase(String currency) {
     if (_rates == null) return null;
     if (currency == 'RUB') return 1.0;
-    if (currency == 'USD') return 1 / _rates!.usd;
-    if (currency == 'EUR') return 1 / _rates!.eur;
-    return null;
+    final r = _rates!.rates[currency];
+    return r != null && r > 0 ? 1 / r : null;
   }
 
   /// Стоимость amount валюты в базовой.
@@ -112,6 +113,17 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
         rate: rate,
         totalBase: costInBase,
       ));
+      if (mounted) {
+        final state = AppScope.of(context);
+        await state.add(Expense(
+          id: 'portfolio_buy_${DateTime.now().microsecondsSinceEpoch}',
+          title: 'Покупка $currency',
+          amount: costInBase,
+          category: 'Портфель',
+          date: DateTime.now(),
+          isIncome: false,
+        ));
+      }
       await _load();
       if (mounted) _showSnack('Куплено $amount $currency');
     } finally {
@@ -124,11 +136,8 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
       _showSnack('Некорректная сумма продажи');
       return;
     }
-    final rate = _rateToBase(holding.currency);
-    if (rate == null) {
-      _showSnack('Не удалось получить курс');
-      return;
-    }
+    double rate = _rateToBase(holding.currency) ?? 0;
+    if (rate <= 0) rate = holding.avgRate;
     final creditInBase = amount * rate;
     setState(() => _loading = true);
     try {
@@ -154,6 +163,17 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
         rate: rate,
         totalBase: creditInBase,
       ));
+      if (mounted) {
+        final state = AppScope.of(context);
+        await state.add(Expense(
+          id: 'portfolio_sell_${DateTime.now().microsecondsSinceEpoch}',
+          title: 'Продажа ${holding.currency}',
+          amount: creditInBase,
+          category: 'Портфель',
+          date: DateTime.now(),
+          isIncome: true,
+        ));
+      }
       await _load();
       if (mounted) _showSnack('Продано $amount ${holding.currency}');
     } finally {
@@ -222,13 +242,15 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
                 else
                   ..._holdings.map((h) {
                     final worth = _costInBase(h.amount, h.currency);
+                    final displayWorth = worth ?? (h.amount * h.avgRate);
+                    final isStock = _rates == null || !_rates!.rates.containsKey(h.currency);
                     return Card(
                       margin: const EdgeInsets.only(bottom: 8),
                       child: ListTile(
-                        title: Text('${h.currency}: ${fmt.format(h.amount)}'),
-                        subtitle: worth != null
-                            ? Text('≈ ${fmt.format(worth)} $_baseCurrency • средняя ${fmt.format(h.avgRate)}')
-                            : null,
+                        title: Text('${h.currency}: ${fmt.format(h.amount)}${isStock ? ' (акции)' : ''}'),
+                        subtitle: Text(
+                          '≈ ${fmt.format(displayWorth)} $_baseCurrency • ${isStock ? 'средняя цена ' : ''}${fmt.format(h.avgRate)}',
+                        ),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -247,10 +269,12 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
                   const SizedBox(height: 10),
                   Wrap(
                     spacing: 8,
-                    children: ['USD', 'EUR'].map((c) {
+                    runSpacing: 8,
+                    children: _rates!.rates.keys.where((c) => c != _baseCurrency).map((c) {
                       final rate = _rateToBase(c);
+                      if (rate == null) return const SizedBox.shrink();
                       return FilledButton(
-                        onPressed: _loading ? null : () => _showBuyDialog(c, rate!),
+                        onPressed: _loading ? null : () => _showBuyDialog(c, rate),
                         child: Text('Купить $c (1 $c = ${fmt.format(rate)} $_baseCurrency)'),
                       );
                     }).toList(),

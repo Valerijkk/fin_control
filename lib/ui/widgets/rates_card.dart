@@ -51,7 +51,7 @@ class RatesCard extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'USD ${fmt.format(r.usd)} • EUR ${fmt.format(r.eur)}$ts$offline',
+                    '${r.rates.entries.take(6).map((e) => '${e.key} ${fmt.format(e.value)}').join(' • ')}$ts$offline',
                     style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
                 ),

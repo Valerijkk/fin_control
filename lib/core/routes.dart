@@ -9,5 +9,6 @@ class Routes {
   static const settings = '/settings';
   static const photo = '/photo';
   static const exchange = '/exchange';
+  static const stocks = '/stocks';
   static const portfolio = '/portfolio';
 }

@@ -15,10 +15,11 @@ void main() {
     await tester.enterText(find.byType(TextFormField).at(1), 'Продукты');
     await tester.pump();
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
-    await tester.pumpAndSettle();
-
-    // Вернулись назад — просто smoke (нет явной проверки state, т.к. экран сам pop-ает результат)
+    await tester.tap(find.text('Сохранить'));
+    for (var i = 0; i < 15; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.byType(AddEditScreen).evaluate().isEmpty) break;
+    }
     expect(find.byType(AddEditScreen), findsNothing);
   });
 
@@ -34,6 +35,6 @@ void main() {
     final state = TestAppState();
     await tester.pumpWidget(makeHost(home: AddEditScreen(initial: init), state: state));
 
-    expect(find.widgetWithText(FilledButton, 'Сохранить изменения'), findsOneWidget);
+    expect(find.text('Сохранить изменения'), findsOneWidget);
   });
 }

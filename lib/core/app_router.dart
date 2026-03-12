@@ -6,6 +6,7 @@ import '../ui/screens/add_edit_screen.dart';
 import '../ui/screens/settings_screen.dart';
 import '../ui/screens/photo_viewer_screen.dart';
 import '../ui/screens/exchange_screen.dart';
+import '../ui/screens/stocks_screen.dart';
 import '../ui/screens/portfolio_screen.dart';
 import '../domain/models/expense.dart';
 
@@ -26,6 +27,8 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => PhotoViewerScreen(path: path), settings: s);
       case Routes.exchange:
         return MaterialPageRoute(builder: (_) => const ExchangeScreen(), settings: s);
+      case Routes.stocks:
+        return MaterialPageRoute(builder: (_) => const StocksScreen(), settings: s);
       case Routes.portfolio:
         return MaterialPageRoute(builder: (_) => const PortfolioScreen(), settings: s);
       default:

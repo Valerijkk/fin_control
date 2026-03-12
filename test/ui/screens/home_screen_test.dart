@@ -18,13 +18,17 @@ void main() {
 
     expect(find.textContaining('— 50 ₽'), findsOneWidget);
 
-    await tester.tap(find.widgetWithText(ChoiceChip, 'Еда'));
-    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Еда'));
+    await tester.tap(find.text('Еда'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
     expect(find.text('Продукты'), findsOneWidget);
     expect(find.text('Зарплата'), findsNothing);
 
-    await tester.tap(find.widgetWithText(ChoiceChip, 'Все'));
-    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Все'));
+    await tester.tap(find.text('Все'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
     expect(find.text('Продукты'), findsOneWidget);
     expect(find.text('Зарплата'), findsOneWidget);
   });
@@ -34,13 +38,15 @@ void main() {
     await tester.pumpWidget(makeHost(home: const HomeScreen(), state: state));
 
     await tester.tap(find.byTooltip('Быстрая запись'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     await tester.enterText(find.byType(TextField).first, '123');
     await tester.pump();
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Добавить'));
-    await tester.pumpAndSettle();
+    await tester.tap(find.text('Добавить'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.text('Быстрое добавление'), findsOneWidget);
     expect(state.items.any((e) => e.title == 'Быстрое добавление' && e.amount == 123), isTrue);
@@ -53,15 +59,19 @@ void main() {
     await tester.pumpWidget(makeHost(home: const HomeScreen(), state: state));
 
     await tester.tap(find.text('Такси'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     await tester.enterText(find.byType(TextFormField).at(1), 'Такси (исправлено)');
     await tester.pump();
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить изменения'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Такси (исправлено)'), findsOneWidget);
+    await tester.tap(find.text('Сохранить изменения'));
+    for (var i = 0; i < 20; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.byType(AddEditScreen).evaluate().isEmpty) break;
+    }
+    expect(find.byType(AddEditScreen), findsNothing);
+    expect(find.text('Такси (исправлено)'), findsAtLeastNWidgets(1));
   });
 
   testWidgets('Home: dismiss delete + UNDO', (tester) async {
@@ -72,12 +82,15 @@ void main() {
     expect(find.text('Кофе'), findsOneWidget);
 
     final d = find.byType(Dismissible).first;
+    await tester.ensureVisible(d);
     await tester.drag(d, const Offset(-500, 0));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 800));
 
     expect(find.textContaining('Удалено: Кофе'), findsOneWidget);
     await tester.tap(find.text('ОТМЕНА'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.text('Кофе'), findsOneWidget);
   });

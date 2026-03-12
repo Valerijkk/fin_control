@@ -3,6 +3,7 @@ import 'home_screen.dart';
 import 'stats_screen.dart';
 import 'exchange_screen.dart';
 import 'portfolio_screen.dart';
+import 'stocks_screen.dart';
 
 class ShellScreen extends StatefulWidget {
   const ShellScreen({super.key});
@@ -17,6 +18,7 @@ class _ShellScreenState extends State<ShellScreen> {
     final pages = [
       const HomeScreen(),
       const ExchangeScreen(),
+      const StocksScreen(),
       const PortfolioScreen(),
       const StatsScreen(),
     ];
@@ -28,6 +30,7 @@ class _ShellScreenState extends State<ShellScreen> {
         destinations: const [
           NavigationDestination(icon: Icon(Icons.list_alt), label: 'Список'),
           NavigationDestination(icon: Icon(Icons.currency_exchange), label: 'Обменник'),
+          NavigationDestination(icon: Icon(Icons.show_chart), label: 'Акции'),
           NavigationDestination(icon: Icon(Icons.account_balance_wallet), label: 'Портфель'),
           NavigationDestination(icon: Icon(Icons.insights), label: 'Статистика'),
         ],

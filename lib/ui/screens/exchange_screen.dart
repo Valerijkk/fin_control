@@ -3,12 +3,12 @@ import 'package:intl/intl.dart';
 
 import '../../domain/models/exchange_operation.dart';
 import '../../domain/repositories/exchange_repository.dart';
-import '../../services/rates_api.dart';
+import '../../services/rates_api.dart' show Rates, RatesApi, kCurrencyCodes;
 import '../widgets/app_bar_title.dart';
 import '../widgets/theme_action.dart';
 import '../widgets/settings_action.dart';
 
-const _currencies = ['RUB', 'USD', 'EUR'];
+final _currencies = ['RUB', ...kCurrencyCodes];
 
 class ExchangeScreen extends StatefulWidget {
   const ExchangeScreen({super.key});
@@ -58,42 +58,38 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
     if (mounted) setState(() => _history = list);
   }
 
+  /// Конвертация: курсы от RUB (1 RUB = rates[X] в валюте X).
   double? _convert(double amount, String from, String to) {
     if (_rates == null) return null;
-    final r = _rates!;
-    // Курсы от RUB: 1 RUB = r.usd USD, 1 RUB = r.eur EUR
-    double toAmount;
-    if (from == 'RUB' && to == 'USD') {
-      toAmount = amount * r.usd;
-    } else if (from == 'RUB' && to == 'EUR') {
-      toAmount = amount * r.eur;
-    } else if (from == 'USD' && to == 'RUB') {
-      toAmount = amount / r.usd;
-    } else if (from == 'EUR' && to == 'RUB') {
-      toAmount = amount / r.eur;
-    } else if (from == 'USD' && to == 'EUR') {
-      toAmount = amount * (r.eur / r.usd);
-    } else if (from == 'EUR' && to == 'USD') {
-      toAmount = amount * (r.usd / r.eur);
-    } else if (from == to) {
-      toAmount = amount;
-    } else {
-      return null;
+    final r = _rates!.rates;
+    if (from == to) return amount;
+    if (from == 'RUB') {
+      final rate = r[to];
+      return rate != null ? amount * rate : null;
     }
-    return toAmount;
+    if (to == 'RUB') {
+      final rate = r[from];
+      return rate != null && rate > 0 ? amount / rate : null;
+    }
+    final fromRate = r[from];
+    final toRate = r[to];
+    if (fromRate == null || toRate == null || fromRate <= 0) return null;
+    return amount / fromRate * toRate;
   }
 
   double? _rateUsed(String from, String to) {
     if (_rates == null) return null;
-    final r = _rates!;
-    if (from == 'RUB' && to == 'USD') return r.usd;
-    if (from == 'RUB' && to == 'EUR') return r.eur;
-    if (from == 'USD' && to == 'RUB') return 1 / r.usd;
-    if (from == 'EUR' && to == 'RUB') return 1 / r.eur;
-    if (from == 'USD' && to == 'EUR') return r.eur / r.usd;
-    if (from == 'EUR' && to == 'USD') return r.usd / r.eur;
     if (from == to) return 1.0;
-    return null;
+    final r = _rates!.rates;
+    if (from == 'RUB') return r[to];
+    if (to == 'RUB') {
+      final x = r[from];
+      return x != null && x > 0 ? 1 / x : null;
+    }
+    final fromRate = r[from];
+    final toRate = r[to];
+    if (fromRate == null || toRate == null || fromRate <= 0) return null;
+    return toRate / fromRate;
   }
 
   Future<void> _performExchange() async {
@@ -174,8 +170,12 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Курсы (RUB): USD ${fmt.format(_rates!.usd)}, EUR ${fmt.format(_rates!.eur)}',
-                            style: const TextStyle(fontSize: 12)),
+                        Expanded(
+                          child: Text(
+                            'Курсы (1 RUB): ${_rates!.rates.entries.take(5).map((e) => '${e.key} ${fmt.format(e.value)}').join(', ')}${_rates!.rates.length > 5 ? '…' : ''}',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ),
                         TextButton.icon(
                           onPressed: _loading ? null : _loadRates,
                           icon: const Icon(Icons.refresh, size: 18),

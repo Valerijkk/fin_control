@@ -87,6 +87,8 @@ flutter run
 
 **Требования**: Flutter **3.x** ✅  •  Dart **3.x** ✅
 
+**Запуск в Android Studio:** открывай **корневую папку проекта** (где лежит `pubspec.yaml`), а не папку `android/` — иначе будут сотни ошибок. Подробно: [docs/ANDROID_STUDIO_LAUNCH.md](docs/ANDROID_STUDIO_LAUNCH.md). Эмулятор (например Pixel 9) запускай из Device Manager, затем Run ▶.
+
 
 ## 🔌 Платформенные настройки
 
@@ -126,18 +128,7 @@ test/
 └─ ui/screens/...
 ```
 
-`test/flutter_test_config.dart`:
-
-```dart
-import 'dart:async';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-
-Future<void> testExecutable(FutureOr<void> Function() testMain) async {
-  sqfliteFfiInit();
-  databaseFactory = databaseFactoryFfi;
-  await testMain();
-}
-```
+`test/flutter_test_config.dart` — глобальная инициализация перед тестами (SQLite FFI, локали intl, мок SharedPreferences). См. текущее содержимое файла.
 
 Запуск:
 
@@ -175,7 +166,7 @@ adb install -r build/app/outputs/flutter-apk/app-release.apk
 ## 🛠️ Траблшутинг
 
 * **`Locale data has not been initialized`** → локаль инициализируется в `main()` через `initializeDateFormatting('ru_RU')` (уже добавлено).
-* **`databaseFactory not initialized` в тестах** → проверь `test/flutter_test_config.dart` (см. выше).
+* **`databaseFactory not initialized` в тестах** → в `test/flutter_test_config.dart` должны быть `sqfliteFfiInit()`, `databaseFactory = databaseFactoryFfi`, а также `initializeDateFormatting('ru_RU')` и `SharedPreferences.setMockInitialValues({})`.
 * **`dependOnInheritedWidgetOfExactType... before initState`** → читать `AppScope.of(context)` только в `didChangeDependencies()` (исправлено).
 * **Курсы «ошибка загрузки»** → покажется кэш с пометкой «офлайн», как только сеть даст ответ — обновится.
 

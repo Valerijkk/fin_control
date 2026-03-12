@@ -2,32 +2,46 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// Коды валют для запроса курсов (база RUB).
+const kCurrencyCodes = [
+  'USD', 'EUR', 'GBP', 'CHF', 'CNY', 'JPY', 'KZT', 'TRY', 'BRL', 'INR',
+];
+
 class Rates {
-  final double usd;
-  final double eur;
+  /// Курсы от RUB: 1 RUB = rates[code] в данной валюте (например 1 RUB = 0.011 USD).
+  final Map<String, double> rates;
   final DateTime? asOf;
-  final bool fromCache; // показаны из кэша (офлайн)
-  final String source;  // имя источника (для отладки)
+  final bool fromCache;
+  final String source;
 
   const Rates(
-      this.usd,
-      this.eur, {
-        this.asOf,
-        this.fromCache = false,
-        this.source = 'unknown',
-      });
+    this.rates, {
+    this.asOf,
+    this.fromCache = false,
+    this.source = 'unknown',
+  });
+
+  double get usd => rates['USD'] ?? 0;
+  double get eur => rates['EUR'] ?? 0;
+
+  double? rate(String code) => rates[code];
 
   Map<String, dynamic> toJson() => {
-    'usd': usd,
-    'eur': eur,
-    'asOf': asOf?.millisecondsSinceEpoch,
-    'source': source,
-  };
+        'rates': rates,
+        'asOf': asOf?.millisecondsSinceEpoch,
+        'source': source,
+      };
 
   static Rates fromJson(Map<String, dynamic> j) {
+    final r = j['rates'];
+    final Map<String, double> map = {};
+    if (r is Map) {
+      for (final e in r.entries) {
+        if (e.value is num) map[e.key.toString()] = (e.value as num).toDouble();
+      }
+    }
     return Rates(
-      (j['usd'] as num).toDouble(),
-      (j['eur'] as num).toDouble(),
+      map,
       asOf: j['asOf'] == null
           ? null
           : DateTime.fromMillisecondsSinceEpoch(j['asOf'] as int),
@@ -38,80 +52,66 @@ class Rates {
 }
 
 class RatesApi {
-  static const _cacheKey = 'rates_cache_v1';
+  static const _cacheKey = 'rates_cache_v2';
   static const _timeout = Duration(seconds: 5);
+  static const _symbols = 'USD,EUR,GBP,CHF,CNY,JPY,KZT,TRY,BRL,INR';
 
   static Future<Rates> fetch() async {
-    // 1) exchangerate.host
     try {
       final r = await _fetchFromExchangeRateHost().timeout(_timeout);
       await _saveCache(r);
       return r;
-    } catch (_) {
-      // fallthrough
-    }
+    } catch (_) {}
 
-    // 2) open.er-api.com
     try {
       final r = await _fetchFromOpenERApi().timeout(_timeout);
       await _saveCache(r);
       return r;
-    } catch (_) {
-      // fallthrough
-    }
+    } catch (_) {}
 
-    // 3) кэш
     final cached = await _loadCache();
     if (cached != null) return cached;
 
-    // 4) совсем печально
     throw Exception('All providers failed and no cache available');
   }
 
-  /// ===== Providers =====
-
   static Future<Rates> _fetchFromExchangeRateHost() async {
     final uri = Uri.parse(
-      'https://api.exchangerate.host/latest?base=RUB&symbols=USD,EUR',
+      'https://api.exchangerate.host/latest?base=RUB&symbols=$_symbols',
     );
     final resp = await http.get(uri, headers: {
       'Accept': 'application/json',
       'User-Agent': 'fin_control/1.0',
     });
-    if (resp.statusCode != 200) {
-      throw Exception('HTTP ${resp.statusCode}');
-    }
+    if (resp.statusCode != 200) throw Exception('HTTP ${resp.statusCode}');
 
     final root = jsonDecode(resp.body);
     if (root is! Map<String, dynamic>) throw Exception('Bad JSON root');
 
     final ratesNode = root['rates'];
-    if (ratesNode is! Map<String, dynamic>) {
-      throw Exception('Bad JSON: rates');
-    }
+    if (ratesNode is! Map<String, dynamic>) throw Exception('Bad JSON: rates');
 
-    final usd = (ratesNode['USD'] as num?)?.toDouble();
-    final eur = (ratesNode['EUR'] as num?)?.toDouble();
-    if (usd == null || eur == null) throw Exception('USD/EUR missing');
+    final map = <String, double>{};
+    for (final code in kCurrencyCodes) {
+      final v = (ratesNode[code] as num?)?.toDouble();
+      if (v != null) map[code] = v;
+    }
+    if (map.isEmpty) throw Exception('No rates');
 
     DateTime? asOf;
     final dateStr = root['date'] as String?;
     if (dateStr != null) asOf = DateTime.tryParse(dateStr);
 
-    return Rates(usd, eur, asOf: asOf ?? DateTime.now(), source: 'exchangerate.host');
+    return Rates(map, asOf: asOf ?? DateTime.now(), source: 'exchangerate.host');
   }
 
   static Future<Rates> _fetchFromOpenERApi() async {
-    // Документация: https://www.exchangerate-api.com/docs/free
-    // Пример: https://open.er-api.com/v6/latest/RUB
     final uri = Uri.parse('https://open.er-api.com/v6/latest/RUB');
     final resp = await http.get(uri, headers: {
       'Accept': 'application/json',
       'User-Agent': 'fin_control/1.0',
     });
-    if (resp.statusCode != 200) {
-      throw Exception('HTTP ${resp.statusCode}');
-    }
+    if (resp.statusCode != 200) throw Exception('HTTP ${resp.statusCode}');
 
     final root = jsonDecode(resp.body);
     if (root is! Map<String, dynamic>) throw Exception('Bad JSON root');
@@ -123,26 +123,25 @@ class RatesApi {
     final ratesNode = root['rates'];
     if (ratesNode is! Map<String, dynamic>) throw Exception('Bad JSON rates');
 
-    final usd = (ratesNode['USD'] as num?)?.toDouble();
-    final eur = (ratesNode['EUR'] as num?)?.toDouble();
-    if (usd == null || eur == null) throw Exception('USD/EUR missing');
+    final map = <String, double>{};
+    for (final code in kCurrencyCodes) {
+      final v = (ratesNode[code] as num?)?.toDouble();
+      if (v != null) map[code] = v;
+    }
+    if (map.isEmpty) throw Exception('No rates');
 
     DateTime? asOf;
     final ts = root['time_last_update_unix'];
     if (ts is num) asOf = DateTime.fromMillisecondsSinceEpoch(ts.toInt() * 1000);
 
-    return Rates(usd, eur, asOf: asOf ?? DateTime.now(), source: 'open.er-api.com');
+    return Rates(map, asOf: asOf ?? DateTime.now(), source: 'open.er-api.com');
   }
-
-  /// ===== Cache =====
 
   static Future<void> _saveCache(Rates r) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_cacheKey, jsonEncode(r.toJson()));
-    } catch (_) {
-      // молча игнорируем ошибки кэша
-    }
+    } catch (_) {}
   }
 
   static Future<Rates?> _loadCache() async {

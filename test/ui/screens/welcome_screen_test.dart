@@ -14,7 +14,8 @@ void main() {
     expect(find.text('Курсы валют, обменник, портфель и учёт расходов'), findsOneWidget);
 
     await tester.tap(find.text('Начать'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.byType(NavigationBar), findsOneWidget);
   });

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// Дефолтный набор (используется при первом старте)
-const kDefaultCategories = ['Еда', 'Транспорт', 'Дом', 'Досуг', 'Другое'];
+const kDefaultCategories = ['Еда', 'Транспорт', 'Дом', 'Досуг', 'Портфель', 'Другое'];
 
 IconData categoryIcon(String c) {
   switch (c) {
@@ -13,6 +13,8 @@ IconData categoryIcon(String c) {
       return Icons.home_outlined;
     case 'Досуг':
       return Icons.emoji_events_outlined;
+    case 'Портфель':
+      return Icons.account_balance_wallet_outlined;
     default:
       return Icons.category_outlined;
   }
@@ -28,6 +30,8 @@ Color categoryColor(String c) {
       return Colors.teal;
     case 'Досуг':
       return Colors.purple;
+    case 'Портфель':
+      return Colors.indigo;
     default:
       return Colors.grey;
   }

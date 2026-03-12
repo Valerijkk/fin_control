@@ -18,6 +18,7 @@ import 'package:fin_control/ui/screens/add_edit_screen.dart';
 import 'package:fin_control/ui/screens/settings_screen.dart';
 import 'package:fin_control/ui/screens/photo_viewer_screen.dart';
 import 'package:fin_control/ui/screens/exchange_screen.dart';
+import 'package:fin_control/ui/screens/stocks_screen.dart';
 import 'package:fin_control/ui/screens/portfolio_screen.dart';
 
 final routeObserver = RouteObserver<PageRoute<dynamic>>();
@@ -91,6 +92,8 @@ class _FinControlRootState extends State<FinControlRoot> {
         return MaterialPageRoute(builder: (_) => PhotoViewerScreen(path: path), settings: s);
       case Routes.exchange:
         return MaterialPageRoute(builder: (_) => const ExchangeScreen(), settings: s);
+      case Routes.stocks:
+        return MaterialPageRoute(builder: (_) => const StocksScreen(), settings: s);
       case Routes.portfolio:
         return MaterialPageRoute(builder: (_) => const PortfolioScreen(), settings: s);
       default:
