@@ -1,4 +1,5 @@
-/// Операция обмена валюты (одна запись в истории обменника).
+/// Одна операция обмена валюты в истории обменника.
+/// Соответствует строке таблицы [exchange_operations]; id — AUTOINCREMENT.
 class ExchangeOperation {
   final int id;
   final DateTime createdAt;
