@@ -38,5 +38,18 @@ void main() {
       expect(r.rate('USD'), 0.01);
       expect(r.rate('XXX'), isNull);
     });
+
+    test('fromJson с пустым rates', () {
+      final r = Rates.fromJson({'rates': {}, 'asOf': null, 'source': 'cache'});
+      expect(r.rates, isEmpty);
+      expect(r.usd, 0);
+      expect(r.eur, 0);
+    });
+
+    test('fromJson без asOf', () {
+      final r = Rates.fromJson({'rates': {'USD': 0.01}, 'source': 'test'});
+      expect(r.asOf, isNull);
+      expect(r.rates['USD'], 0.01);
+    });
   });
 }
