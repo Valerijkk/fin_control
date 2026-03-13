@@ -1,7 +1,4 @@
-// Конфигурация телеметрии для практик (Sentry, AppMetrica).
-// Задайте свои значения для отправки событий. Если оставить пустыми — инициализация не выполняется.
+// Конфигурация телеметрии: значения берутся из student_env.dart.
+// Чтобы вставить свои DSN/API Key — открой lib/config/student_env.dart.
 
-/// DSN проекта Sentry (из кабинета sentry.io). Нужен для практики 06.
-const String sentryDsn = '';
-/// API Key приложения AppMetrica (из кабинета appmetrica.io). Нужен для практики 07.
-const String appMetricaApiKey = '';
+export 'student_env.dart' show sentryDsn, appMetricaApiKey;
