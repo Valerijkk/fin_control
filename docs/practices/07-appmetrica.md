@@ -17,13 +17,9 @@
 
 ## Шаг 2: Подключение AppMetrica в Flutter
 
-1. В `pubspec.yaml` добавьте пакет AppMetrica для Flutter (актуальное имя уточните на pub.dev, например `appmetrica_sdk` или `yandex_appmetrica`):
-   ```yaml
-   dependencies:
-     appmetrica_sdk: ^3.0.0  # проверьте актуальную версию
-   ```
+1. В FinControl уже подключён пакет `appmetrica_plugin`. Если собираете проект с нуля — добавьте в `pubspec.yaml` зависимость с pub.dev.
 
-2. В проекте FinControl API Key задаётся в `lib/config/telemetry.dart` (константа `appMetricaApiKey`). Заполните её — инициализация выполняется в `lib/main.dart` при непустом ключе (пакет `appmetrica_plugin`).
+2. В проекте FinControl API Key задаётся в одном файле переменных. Нажмите и откройте → [**lib/config/student_env.dart**](../../lib/config/student_env.dart), вставьте API Key в константу `appMetricaApiKey` (в файле капсом подписано). Сохраните и перезапустите — инициализация выполняется в `lib/main.dart` при непустом ключе (пакет `appmetrica_plugin`).
 
 3. Перезапустите приложение и выполните несколько действий (открытие экранов, обмен, портфель), чтобы отправить сессию.
 
