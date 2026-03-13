@@ -19,6 +19,30 @@ class Expense {
     this.imagePath,
   });
 
+  /// Создаёт объект из строки таблицы [expenses] (для [ExpenseRepository]).
+  static Expense fromMap(Map<String, Object?> map) {
+    return Expense(
+      id: map['id'] as String,
+      title: map['title'] as String,
+      amount: (map['amount'] as num).toDouble(),
+      category: map['category'] as String,
+      date: DateTime.fromMillisecondsSinceEpoch(map['date'] as int),
+      isIncome: (map['is_income'] as int) == 1,
+      imagePath: map['image_path'] as String?,
+    );
+  }
+
+  /// Для вставки/обновления в БД (поля совпадают с колонками таблицы expenses).
+  Map<String, Object?> toMap() => {
+        'id': id,
+        'title': title,
+        'amount': amount,
+        'category': category,
+        'date': date.millisecondsSinceEpoch,
+        'is_income': isIncome ? 1 : 0,
+        'image_path': imagePath,
+      };
+
   /// Создаёт копию с заменой указанных полей (для редактирования).
   Expense copyWith({
     String? id,

@@ -8,43 +8,17 @@ class ExpenseRepository {
   /// Все записи, отсортированные по дате (новые сверху).
   Future<List<Expense>> getAll() async {
     final rows = await _db.getAllRaw();
-    return rows.map((r) {
-      return Expense(
-        id: (r['id'] as String),
-        title: (r['title'] as String),
-        amount: (r['amount'] as num).toDouble(),
-        category: (r['category'] as String),
-        date: DateTime.fromMillisecondsSinceEpoch((r['date'] as int)),
-        isIncome: ((r['is_income'] as int) == 1),
-        imagePath: r['image_path'] as String?,
-      );
-    }).toList(growable: false);
+    return rows.map((r) => Expense.fromMap(r)).toList(growable: false);
   }
 
   /// Добавляет запись в БД.
   Future<void> insert(Expense e) async {
-    await _db.insertRaw({
-      'id': e.id,
-      'title': e.title,
-      'amount': e.amount,
-      'category': e.category,
-      'date': e.date.millisecondsSinceEpoch,
-      'is_income': e.isIncome ? 1 : 0,
-      'image_path': e.imagePath,
-    });
+    await _db.insertRaw(e.toMap());
   }
 
   /// Обновляет запись по [id].
   Future<void> update(String id, Expense e) async {
-    await _db.updateRaw(id, {
-      'id': e.id,
-      'title': e.title,
-      'amount': e.amount,
-      'category': e.category,
-      'date': e.date.millisecondsSinceEpoch,
-      'is_income': e.isIncome ? 1 : 0,
-      'image_path': e.imagePath,
-    });
+    await _db.updateRaw(id, e.toMap());
   }
 
   /// Удаляет запись по [id].
