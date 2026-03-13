@@ -25,7 +25,7 @@
      sentry_flutter: ^8.0.0  # актуальную версию смотрите на pub.dev
    ```
 
-2. В проекте FinControl DSN задаётся в `lib/config/telemetry.dart` (константа `sentryDsn`). Заполните её и перезапустите приложение — инициализация выполняется в `lib/main.dart`.
+2. В проекте FinControl DSN задаётся в одном файле переменных. Нажмите и откройте → [**lib/config/student_env.dart**](../../lib/config/student_env.dart), вставьте DSN в константу `sentryDsn` (в файле капсом подписано). Сохраните и перезапустите приложение — инициализация выполняется в `lib/main.dart`. (Ниже — пример кода инициализации для понимания; в FinControl DSN уже подставляется из `student_env`.)
    ```dart
    import 'package:sentry_flutter/sentry_flutter.dart';
 
