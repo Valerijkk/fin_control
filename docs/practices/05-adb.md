@@ -33,7 +33,7 @@ adb install -r build/app/outputs/flutter-apk/app-debug.apk
 
 ## 2. Удаление приложения
 
-По имени пакета (из `AndroidManifest.xml` / `build.gradle`, например `com.yourname.fincontrol.fin_control`):
+По имени пакета (из `AndroidManifest.xml` / `android/app/build.gradle.kts`, например `com.yourname.fincontrol.fin_control`):
 
 ```bash
 adb uninstall com.yourname.fincontrol.fin_control
