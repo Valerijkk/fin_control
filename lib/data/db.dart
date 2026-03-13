@@ -79,8 +79,9 @@ class AppDatabase {
     ''');
   }
 
-  // --- Expenses (сырые запросы для [ExpenseRepository]) ---
+  // --- Expenses: сырые CRUD для [ExpenseRepository] ---
 
+  /// Все записи из таблицы [expenses], сортировка по дате (новые сверху).
   Future<List<Map<String, Object?>>> getAllRaw() async {
     final db = await _open();
     return db.query('expenses', orderBy: 'date DESC');
@@ -106,8 +107,9 @@ class AppDatabase {
     await db.delete('expenses');
   }
 
-  // --- Exchange operations ---
+  // --- Exchange: история операций обменника ---
 
+  /// Все операции обмена, сортировка по дате (новые сверху).
   Future<List<Map<String, Object?>>> getExchangeOperationsRaw() async {
     final db = await _open();
     return db.query('exchange_operations', orderBy: 'created_at DESC');
@@ -118,8 +120,9 @@ class AppDatabase {
     await db.insert('exchange_operations', values);
   }
 
-  // --- Portfolio holdings ---
+  // --- Portfolio: позиции по валютам/тикерам ---
 
+  /// Все позиции в портфеле (одна строка на валюту/тикер).
   Future<List<Map<String, Object?>>> getPortfolioHoldingsRaw() async {
     final db = await _open();
     return db.query('portfolio_holdings');
@@ -156,8 +159,9 @@ class AppDatabase {
     await db.delete('portfolio_holdings', where: 'currency = ?', whereArgs: [currency]);
   }
 
-  // --- Portfolio transactions ---
+  // --- Portfolio: история сделок купли/продажи ---
 
+  /// Все сделки, сортировка по дате (новые сверху).
   Future<List<Map<String, Object?>>> getPortfolioTransactionsRaw() async {
     final db = await _open();
     return db.query('portfolio_transactions', orderBy: 'created_at DESC');
