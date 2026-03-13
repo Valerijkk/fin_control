@@ -81,7 +81,7 @@ flutter build apk --release
 ## Шаг 3b: Загрузка в Firebase App Distribution
 
 1. В [Firebase Console](https://console.firebase.google.com) откройте проект → **App Distribution**.
-2. Подключите Android-приложение (если ещё не подключено), укажите package name из `build.gradle`/манифеста.
+2. Подключите Android-приложение (если ещё не подключено), укажите package name из `android/app/build.gradle.kts`/манифеста.
 3. **Distribute** → загрузите `app-release.apk` (или AAB, если поддерживается).
 4. Добавьте тестеров по email или группу. Тестеры получат письмо со ссылкой на скачивание и установку.
 
@@ -94,4 +94,4 @@ flutter build apk --release
 ## Устранение неполадок
 
 - **Keystore not found**: проверьте путь в `key.properties` (относительно папки `android/`).
-- **Google Play не принимает AAB**: убедитесь, что версия `versionCode` в `build.gradle` выше предыдущей загруженной.
+- **Google Play не принимает AAB**: убедитесь, что версия `versionCode` в `android/app/build.gradle.kts` выше предыдущей загруженной.
