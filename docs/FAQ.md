@@ -1,6 +1,6 @@
 # Часто задаваемые вопросы (FAQ) — FinControl
 
-Ответы на типичные вопросы по установке, практикам и сдаче. Если твоего вопроса нет в списке — посмотри [practices-step-by-step.md](practices-step-by-step.md) и файлы в [practices](practices/).
+Ответы на типичные вопросы по установке, практикам и сдаче. Если нужного вопроса нет в списке — см. [practices-step-by-step.md](practices-step-by-step.md) и файлы в [practices](practices/).
 
 **Содержание:** [Запуск и сборка](#запуск-и-сборка) · [Charles и Proxyman](#charles-и-proxyman-трафик) · [Курсы и приложение](#курсы-валют-и-приложение) · [Sentry и AppMetrica](#sentry-и-appmetrica) · [Тесты](#тесты) · [Firebase](#firebase) · [Дистрибуция](#дистрибуция-и-платформы) · [Сдача и экзамен](#сдача-и-экзамен) · [Разное](#разное)
 
@@ -135,18 +135,18 @@ applicationId = "com.yourname.fincontrol.fin_control"
 
 ### Где в коде задаётся DSN Sentry и API key AppMetrica?
 
-**Ответ:** В одном файле: **`lib/config/telemetry.dart`**. Константы:
+**Ответ:** В одном файле — нажми, откроется: [**lib/config/student_env.dart**](../lib/config/student_env.dart) (в начале файла капсом подписано, что куда вставлять). Константы:
 
 - `sentryDsn` — вставь DSN из кабинета Sentry (практика 06);
 - `appMetricaApiKey` — вставь API Key из кабинета AppMetrica (практика 07).
 
-Если оставить пустые строки `''`, соответствующий SDK не инициализируется (приложение будет работать без Sentry/AppMetrica).
+Если оставить пустые строки `''`, соответствующий SDK не инициализируется (приложение будет работать без Sentry/AppMetrica). Подробнее: [STUDENT_ENV.md](STUDENT_ENV.md).
 
 ---
 
 ### Кнопка «Тест Sentry» в настройках не отправляет событие
 
-**Ответ:** Проверь, что в **`lib/config/telemetry.dart`** в `sentryDsn` вставлен **непустой** DSN (скопирован из проекта на sentry.io). После изменения конфига перезапусти приложение (`flutter run` заново). Если DSN пустой, кнопка может ничего не отправлять. События в Sentry иногда появляются с задержкой 10–30 секунд — обнови страницу Issues в кабинете.
+**Ответ:** Проверь, что в **`lib/config/student_env.dart`** в `sentryDsn` вставлен **непустой** DSN (скопирован из проекта на sentry.io). После изменения конфига перезапусти приложение (`flutter run` заново). Если DSN пустой, кнопка может ничего не отправлять. События в Sentry иногда появляются с задержкой 10–30 секунд — обнови страницу Issues в кабинете.
 
 ---
 
@@ -160,13 +160,13 @@ applicationId = "com.yourname.fincontrol.fin_control"
 
 ### Что такое DSN Sentry и где его взять?
 
-**Ответ:** DSN (Data Source Name) — это строка-адрес твоего проекта в Sentry, по которому приложение отправляет события и краши. Формат вида: `https://xxxx@xxxx.ingest.sentry.io/xxxx`. Взять его нужно в кабинете Sentry: зайди на [sentry.io](https://sentry.io) → свой проект → **Settings → Client Keys (DSN)** или при создании проекта DSN показывается сразу. Скопируй и вставь в **`lib/config/telemetry.dart`** в константу `sentryDsn`.
+**Ответ:** DSN (Data Source Name) — это строка-адрес твоего проекта в Sentry, по которому приложение отправляет события и краши. Формат вида: `https://xxxx@xxxx.ingest.sentry.io/xxxx`. Взять его нужно в кабинете Sentry: зайди на [sentry.io](https://sentry.io) → свой проект → **Settings → Client Keys (DSN)** или при создании проекта DSN показывается сразу. Скопируй и вставь в **`lib/config/student_env.dart`** в константу `sentryDsn`.
 
 ---
 
 ### Что такое API Key AppMetrica и где его взять?
 
-**Ответ:** API Key — это ключ приложения в сервисе AppMetrica (аналитика Яндекса). Нужен для отправки событий и сессий из приложения. Взять: [appmetrica.io](https://appmetrica.io) (или appmetrica.yandex.ru) → войти → создать приложение или открыть существующее → в настройках приложения найти **API Key** (число или строка). Вставить в **`lib/config/telemetry.dart`** в константу `appMetricaApiKey`.
+**Ответ:** API Key — это ключ приложения в сервисе AppMetrica (аналитика Яндекса). Нужен для отправки событий и сессий из приложения. Взять: [appmetrica.io](https://appmetrica.io) (или appmetrica.yandex.ru) → войти → создать приложение или открыть существующее → в настройках приложения найти **API Key** (число или строка). Вставить в **`lib/config/student_env.dart`** в константу `appMetricaApiKey`.
 
 ---
 
@@ -178,7 +178,7 @@ applicationId = "com.yourname.fincontrol.fin_control"
 
 ### В AppMetrica нет данных о сессиях / устройствах
 
-**Ответ:** AppMetrica обрабатывает данные с задержкой, часто **5–20 минут** (при первом запуске может быть дольше). Убедись, что приложение было открыто и им пользовались (несколько экранов, 1–2 минуты). Обнови отчёт в кабинете или зайди позже. Проверь, что API Key вставлен в `lib/config/telemetry.dart` без пробелов и приложение перезапущено после изменения.
+**Ответ:** AppMetrica обрабатывает данные с задержкой, часто **5–20 минут** (при первом запуске может быть дольше). Убедись, что приложение было открыто и им пользовались (несколько экранов, 1–2 минуты). Обнови отчёт в кабинете или зайди позже. Проверь, что API Key вставлен в `lib/config/student_env.dart` без пробелов и приложение перезапущено после изменения.
 
 ---
 
@@ -252,7 +252,7 @@ adb install -r build/app/outputs/flutter-apk/app-debug.apk
 
 ### Где лежат критерии приёмки для преподавателя?
 
-**Ответ:** В папке **[docs/acceptance-criteria](acceptance-criteria/README.md)** — чек-листы по каждой практике для приёмки. Ими может пользоваться преподаватель; ученику полезно пройти их самому перед сдачей, чтобы ничего не упустить.
+**Ответ:** В папке **[docs/acceptance-criteria](acceptance-criteria/README.md)** — чек-листы по каждой практике для приёмки. Ими может пользоваться преподаватель; полезно пройти их самому перед сдачей, чтобы ничего не упустить.
 
 ---
 
@@ -266,7 +266,7 @@ adb install -r build/app/outputs/flutter-apk/app-debug.apk
 
 ### Где посмотреть структуру проекта и что за что отвечает?
 
-**Ответ:** В **[README.md](README.md)** в корне репозитория есть раздел «Структура проекта»: папки `lib/`, `config/`, `core/`, `data/`, `domain/`, `services/`, `state/`, `ui/screens`, `ui/widgets`. Архитектура: UI → state/domain → data; сервисы (HTTP) отдельно.
+**Ответ:** В **[README.md](../README.md)** в корне репозитория есть раздел «Структура проекта»: папки `lib/`, `config/`, `core/`, `data/`, `domain/`, `services/`, `state/`, `ui/screens`, `ui/widgets`. Архитектура: UI → state/domain → data; сервисы (HTTP) отдельно.
 
 ---
 
@@ -278,7 +278,7 @@ adb install -r build/app/outputs/flutter-apk/app-debug.apk
 
 ### Куда смотреть, если вопроса нет в этом FAQ?
 
-**Ответ:**  
+**Ответ:**
 1. [practices-step-by-step.md](practices-step-by-step.md) — подробные пошаговые практики.  
 2. [practices/README.md](practices/README.md) — список всех практик и ссылки на файлы.  
 3. Конкретный файл практики в [practices](practices/) (например 01-charles.md, 06-sentry.md).  
