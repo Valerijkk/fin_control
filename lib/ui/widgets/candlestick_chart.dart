@@ -55,6 +55,7 @@ class _CandlestickPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    // Диапазон цен по Y с отступом 5% сверху/снизу.
     final minP = points.map((e) => e.low).reduce((a, b) => a < b ? a : b);
     final maxP = points.map((e) => e.high).reduce((a, b) => a > b ? a : b);
     final span = (maxP - minP).clamp(1e-9, double.infinity);
@@ -63,8 +64,10 @@ class _CandlestickPainter extends CustomPainter {
     final maxY = maxP + padding;
     final priceSpan = (maxY - minY).clamp(1e-9, double.infinity);
 
+    // Преобразование цены в Y: низ экрана = min, верх = max.
     double priceToY(double price) => size.height * (1 - (price - minY) / priceSpan);
 
+    // Равномерное распределение свечей по ширине; ширина свечи 70% от шага.
     final n = points.length;
     final candleWidth = (size.width / n) * 0.7;
     final gap = size.width / n;
