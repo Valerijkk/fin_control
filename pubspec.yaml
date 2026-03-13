@@ -25,7 +25,7 @@ dependencies:
   # Персист пользовательских категорий
   shared_preferences: ^2.2.2
 
-  # Интеграции для практик тестировщиков (опционально: задайте DSN/API key в config/telemetry.dart)
+  # Интеграции для практик тестировщиков (опционально: задайте DSN/API key в lib/config/student_env.dart)
   sentry_flutter: ^8.0.0
   appmetrica_plugin: ^3.4.0
 
