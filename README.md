@@ -8,7 +8,7 @@
 ![iOS](https://img.shields.io/badge/iOS-✓-000000?logo=apple&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-black)
 
-**Учебное приложение для ручных тестировщиков**: одно мобильное (и при необходимости веб) приложение на Flutter — **инвестиционная платформа с актуальными курсами валют, акций, графиками и курсами обмена**. Учёт расходов, обменник, виртуальный портфель. Трафик к API сниффится в **Charles** и **Proxyman**. В **[docs/practices](docs/practices/)** — практики по всем технологиям: Charles, Proxyman, Android Studio, Xcode, ADB, Sentry, AppMetrica, мобильные сборки (TestFlight, Android), Firebase (Crashlytics, FCM, Analytics, Remote Config, Performance, In-App Messaging).
+**Учебное приложение на Flutter** — инвестиционная платформа с курсами валют, акций и обменником. Учёт расходов, виртуальный портфель, трафик к API перехватывается в **Charles** и **Proxyman**. Практики по технологиям — в **[docs/practices](docs/practices/)**: Charles, Proxyman, Android Studio, Xcode, ADB, Sentry, AppMetrica, сборки (TestFlight, Android), Firebase.
 
 
 ## ✨ Возможности
@@ -20,17 +20,16 @@
 - 🌗 **Тёмная тема** (M3), данные офлайн (SQLite)
 
 
-## 📋 Практики: подробно и с первого раза
+## 📋 Документация по практикам
 
-**Супер детальные пошаговые инструкции** по практикам (клонирование, Android Studio, эмулятор, Charles, Sentry, AppMetrica, Firebase и остальные) — в **[docs/practices-step-by-step.md](docs/practices-step-by-step.md)**. Всё расписано так, чтобы сразу получилось.
-
-**Часто задаваемые вопросы с ответами** (запуск, сотни ошибок в Android Studio, Charles не видит трафик, курсы, Sentry, тесты, Firebase и т.д.) — в **[docs/FAQ.md](docs/FAQ.md)**.
-
-**Карта всей документации** (какой документ для чего, с чего начать) — в **[docs/README.md](docs/README.md)**.
+- **Пошаговые инструкции** (клонирование, Android Studio, Charles, Sentry, Firebase и др.) — [docs/practices-step-by-step.md](docs/practices-step-by-step.md)
+- **Куда вставлять DSN/API Key** (Sentry, AppMetrica) — один файл в коде, описание режимов запуска: [docs/STUDENT_ENV.md](docs/STUDENT_ENV.md)
+- **Частые вопросы и ответы** (запуск, Charles, курсы, Sentry, тесты, Firebase) — [docs/FAQ.md](docs/FAQ.md)
+- **Карта документации** (с чего начать, что где лежит) — [docs/README.md](docs/README.md)
 
 ## 📋 Сдача практик и экзамен
 
-**Что от ученика хотят, что показать на созвоне, чек-листы по каждой практике** — в **[docs/exam-and-submission.md](docs/exam-and-submission.md)**. Там же: пошаговое выполнение, что сказать экзаменатору и итоговый чек-лист перед сдачей.
+**Что показать на созвоне, чек-листы по каждой практике** — в **[docs/exam-and-submission.md](docs/exam-and-submission.md)**. Там же: как готовиться, что сказать экзаменатору, итоговый чек-лист перед сдачей.
 
 ---
 
@@ -40,14 +39,14 @@
 
 - **Фичи** — по каждой фиче: бизнес/функциональные/нефункциональные требования, роли, схема БД, диаграммы состояний ([features](docs/testing/features/)).
 - **Тест-кейсы** — ручные сценарии и таблица автотестов по файлам ([test-cases.md](docs/testing/test-cases.md)).
-- **Практики** — кратко: технология, как используется в проекте, задание ([practices](docs/testing/practices/)).
+- **Практики** — пошаговые инструкции в [docs/practices/](docs/practices/) (из тестовой доки — [testing/practices](docs/testing/practices/README.md) только ссылки туда).
 
 **Критерии приёмки** практик для преподавателя: **[docs/acceptance-criteria](docs/acceptance-criteria/)** — чек-листы по каждой практике.
 
 
-## 📚 Практики для ручных тестеров
+## 📚 Практики по технологиям
 
-Одно и то же приложение FinControl используется во всех практиках (мобильное и при необходимости веб). Индекс: **[docs/practices/README.md](docs/practices/README.md)**.
+Во всех практиках используется одно приложение FinControl. Список и порядок: **[docs/practices/README.md](docs/practices/README.md)**.
 
 | № | Практика |
 |---|----------|
@@ -74,7 +73,8 @@
 ```
 lib/
 ├── main.dart
-├── config/telemetry.dart       # Sentry, AppMetrica (опционально)
+├── config/student_env.dart     # ВАЖНО: сюда вставлять DSN/API Key по практикам (капсом подписано)
+├── config/telemetry.dart       # реэкспорт из student_env (Sentry, AppMetrica)
 ├── core/                       # routes, app_theme, app_router, categories, formatters
 ├── data/                       # db, category_store
 ├── domain/models/              # expense, exchange_operation, portfolio_holding, portfolio_transaction
@@ -91,13 +91,12 @@ lib/
 
 ## 🚀 Быстрый старт
 
-````bash
+```bash
 git clone https://github.com/Valerijkk/fin_control.git
 cd fin_control
-
 flutter pub get
 flutter run
-````
+```
 
 **Требования**: Flutter **3.x** ✅  •  Dart **3.x** ✅
 
@@ -218,4 +217,4 @@ MIT — свободное использование с сохранением 
 
 ---
 
-**FinControl** — учебная инвестиционная платформа для ручных тестеров. Практики по Charles, Proxyman, Android Studio, Xcode, ADB, Sentry, AppMetrica, сборкам и Firebase — в [docs/practices](docs/practices/).
+**FinControl** — учебная инвестиционная платформа. Практики по Charles, Proxyman, Android Studio, Xcode, ADB, Sentry, AppMetrica, сборкам и Firebase — в [docs/practices](docs/practices/).
