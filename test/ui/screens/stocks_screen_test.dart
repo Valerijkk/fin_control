@@ -6,12 +6,14 @@ import 'package:fin_control/ui/screens/stocks_screen.dart';
 import '../../helpers/test_host.dart';
 
 void main() {
-  testWidgets('Stocks: заголовок Акции', (tester) async {
+  testWidgets('Stocks: заголовок и вкладка Акции', (tester) async {
     final state = TestAppState();
     await tester.pumpWidget(makeHost(home: const StocksScreen(), state: state));
     await tester.pumpAndSettle(const Duration(seconds: 2));
 
+    expect(find.text('Акции и крипто'), findsOneWidget);
     expect(find.text('Акции'), findsOneWidget);
+    expect(find.text('Крипто'), findsOneWidget);
   });
 
   testWidgets('Stocks: после загрузки список акций или индикатор', (tester) async {

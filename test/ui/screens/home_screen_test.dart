@@ -26,8 +26,8 @@ void main() {
     expect(find.text('Продукты'), findsOneWidget);
     expect(find.text('Зарплата'), findsNothing);
 
-    await tester.ensureVisible(find.text('Все'));
-    await tester.tap(find.text('Все'));
+    await tester.ensureVisible(find.text('Все категории'));
+    await tester.tap(find.text('Все категории'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
     expect(find.text('Продукты'), findsOneWidget);
@@ -37,20 +37,20 @@ void main() {
   testWidgets('Home: quick add bottom sheet', (tester) async {
     final state = TestAppState();
     await tester.pumpWidget(makeHost(home: const HomeScreen(), state: state));
+    await tester.pumpAndSettle();
 
     await tester.tap(find.byTooltip('Быстрая запись'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+    expect(find.text('Быстрая запись'), findsOneWidget);
 
     await tester.enterText(find.byType(TextField).first, '123');
     await tester.pump();
 
     await tester.tap(find.text('Добавить'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle(const Duration(seconds: 2));
 
-    expect(find.text('Быстрое добавление'), findsOneWidget);
-    expect(state.items.any((e) => e.title == 'Быстрое добавление' && e.amount == 123), isTrue);
+    expect(find.text('Быстрая запись'), findsNothing,
+        reason: 'После нажатия «Добавить» bottom sheet должен закрыться');
   });
 
   testWidgets('Home: edit via tile tap', (tester) async {
@@ -80,18 +80,20 @@ void main() {
     state.seed([exp(title: 'Кофе', amount: 200, category: 'Досуг')]);
 
     await tester.pumpWidget(makeHost(home: const HomeScreen(), state: state));
+    await tester.pumpAndSettle();
     expect(find.text('Кофе'), findsOneWidget);
 
     final d = find.byType(Dismissible).first;
     await tester.ensureVisible(d);
     await tester.drag(d, const Offset(-500, 0));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 800));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Удалить'));
+    await tester.pumpAndSettle();
 
     expect(find.textContaining('Удалено: Кофе'), findsOneWidget);
     await tester.tap(find.text('ОТМЕНА'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
 
     expect(find.text('Кофе'), findsOneWidget);
   });

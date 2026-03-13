@@ -22,12 +22,16 @@ void main() {
   });
 
   group('StocksApi.fetchHistory', () {
-    test('возвращает список точек для периода', () async {
+    test('возвращает список OHLC-свечей для периода', () async {
       const stock = StockQuote(ticker: 'TEST', name: 'Test', priceRub: 100);
       final points = await StocksApi.fetchHistory(stock, StockChartPeriod.day);
       expect(points.length, greaterThanOrEqualTo(2));
-      expect(points.every((p) => p.priceRub > 0), isTrue);
-      expect(points.every((p) => p.time.isBefore(DateTime.now().add(const Duration(seconds: 1)))), isTrue);
+      for (final p in points) {
+        expect(p.open, greaterThan(0));
+        expect(p.high, greaterThanOrEqualTo(p.low));
+        expect(p.close, greaterThan(0));
+        expect(p.time.isBefore(DateTime.now().add(const Duration(seconds: 1))), isTrue);
+      }
     });
 
     test('разные периоды дают разное количество точек или шаг', () async {

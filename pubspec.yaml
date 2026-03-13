@@ -25,9 +25,6 @@ dependencies:
   # Персист пользовательских категорий
   shared_preferences: ^2.2.2
 
-  # Графики (акции)
-  fl_chart: ^0.69.0
-
   # Интеграции для практик тестировщиков (опционально: задайте DSN/API key в config/telemetry.dart)
   sentry_flutter: ^8.0.0
   appmetrica_plugin: ^3.4.0

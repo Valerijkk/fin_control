@@ -1,4 +1,4 @@
-// Экран «Статистика»: полоски по категориям, проценты, «Всего расходов».
+// Экран «Статистика»: полоски по категориям (только расходы), проценты, всего расходов/доходов.
 import 'package:flutter/material.dart';
 import '../../state/app_scope.dart';
 import '../../core/formatters.dart';
@@ -13,25 +13,27 @@ class StatsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = AppScope.of(context);
 
-    // Суммы по категориям (расходы положительные, доходы отрицательные)
+    // Суммы расходов по категориям (только записи с isIncome == false), чтобы сумма по категориям равнялась «Всего расходов»
     final byCat = <String, double>{for (final c in s.categories) c: 0.0};
     for (final e in s.items) {
-      if (!byCat.containsKey(e.category)) byCat[e.category] = 0.0; // вдруг категория новая
-      final sign = e.isIncome ? -1.0 : 1.0;
-      byCat[e.category] = (byCat[e.category] ?? 0.0) + sign * e.amount;
+      if (e.isIncome) continue;
+      if (!byCat.containsKey(e.category)) byCat[e.category] = 0.0;
+      byCat[e.category] = (byCat[e.category] ?? 0.0) + e.amount;
     }
 
-    final maxVal =
-    (byCat.values.isEmpty ? 0.0 : byCat.values.reduce((a, b) => a > b ? a : b)).abs();
+    final totalExpenses = byCat.values.fold<double>(0, (a, b) => a + b);
+    final maxVal = totalExpenses > 0
+        ? byCat.values.reduce((a, b) => a > b ? a : b)
+        : 0.0;
 
-    // Для процентов считаем только расходы
-    final totalExpenses = s.items.where((e) => !e.isIncome).fold<double>(0, (x, e) => x + e.amount);
+    final totalIncome = s.items.where((e) => e.isIncome).fold<double>(0, (x, e) => x + e.amount);
 
     return Scaffold(
       appBar: const AppBarTitle(title: 'Статистика', actions: [ThemeAction()]),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             for (final entry in byCat.entries)
               BarRow(
@@ -42,9 +44,19 @@ class StatsScreen extends StatelessWidget {
               ),
             const SizedBox(height: 16),
             Text(
-              'Всего расходов: ${money(s.items.where((e) => !e.isIncome).fold(0.0, (s, e) => s + e.amount))}',
+              'Всего расходов: ${money(totalExpenses)}',
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
+            if (totalIncome > 0) ...[
+              const SizedBox(height: 4),
+              Text(
+                'Всего доходов: ${money(totalIncome)}',
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            ],
           ],
         ),
       ),

@@ -1,9 +1,18 @@
-/// Точка истории цены для графика.
-class StockPricePoint {
+/// Одна свеча OHLC (open, high, low, close) для свечного графика.
+class CandlePoint {
   final DateTime time;
-  final double priceRub;
+  final double open;
+  final double high;
+  final double low;
+  final double close;
 
-  const StockPricePoint({required this.time, required this.priceRub});
+  const CandlePoint({
+    required this.time,
+    required this.open,
+    required this.high,
+    required this.low,
+    required this.close,
+  });
 }
 
 /// Период графика.
@@ -53,8 +62,8 @@ class StocksApi {
     return List.from(_mockStocks);
   }
 
-  /// Демо-история цен для графика (псевдо-случайная траектория от текущей цены в прошлое).
-  static Future<List<StockPricePoint>> fetchHistory(StockQuote stock, StockChartPeriod period) async {
+  /// Демо-история OHLC для свечного графика (псевдо-случайные свечи от текущей цены в прошлое).
+  static Future<List<CandlePoint>> fetchHistory(StockQuote stock, StockChartPeriod period) async {
     await Future.delayed(const Duration(milliseconds: 50));
     final now = DateTime.now();
     final int count;
@@ -86,16 +95,27 @@ class StocksApi {
         break;
     }
     final seed = stock.ticker.hashCode + period.index;
-    final points = <StockPricePoint>[];
-    double p = stock.priceRub;
+    final points = <CandlePoint>[];
+    double close = stock.priceRub;
     var t = now;
     for (var i = 0; i < count; i++) {
-      points.insert(0, StockPricePoint(time: t, priceRub: p));
+      final open = close;
+      final variation = 0.015 * ((seed + i * 7) % 100) / 100 - 0.0075;
+      close = open * (1 + variation);
+      final low = open < close ? open : close;
+      final high = open > close ? open : close;
+      final range = (high - low).clamp(0.001, double.infinity);
+      final low2 = low - range * 0.2 * ((seed + i * 11) % 50) / 50;
+      final high2 = high + range * 0.2 * ((seed + i * 13) % 50) / 50;
+      points.insert(0, CandlePoint(
+        time: t,
+        open: open,
+        high: high2,
+        low: low2,
+        close: close,
+      ));
       t = t.subtract(step);
-      final variation = 0.02 * ((seed + i * 7) % 100) / 100 - 0.01;
-      p = p * (1 + variation);
     }
-    points.insert(0, StockPricePoint(time: t, priceRub: p));
     return points;
   }
 }
