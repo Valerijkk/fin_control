@@ -22,7 +22,7 @@
 
 ## 4. Роли
 
-- **Пользователь (ученик)** — единственная роль.
+- **Пользователь** — единственная роль.
 
 ## 5. Схема БД
 
@@ -52,4 +52,4 @@ stateDiagram-v2
 ## 8. Связанные файлы
 
 - `lib/ui/screens/settings_screen.dart`
-- `lib/state/theme_controller.dart`, `lib/config/telemetry.dart`
+- `lib/state/theme_controller.dart`, `lib/config/student_env.dart` (и телеметрия через `lib/config/telemetry.dart`)
