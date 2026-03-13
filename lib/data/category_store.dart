@@ -2,6 +2,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/categories.dart';
 
+/// Хранилище пользовательских категорий. При первом запуске возвращает [kDefaultCategories].
 class CategoryStore {
   static const _key = 'user_categories_v1';
 
