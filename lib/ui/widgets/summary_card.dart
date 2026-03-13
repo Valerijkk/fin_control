@@ -1,9 +1,11 @@
+// Карточка «Итоги»: сумма расходов, доходов и итог по списку записей.
 import 'package:flutter/material.dart';
 import '../../core/formatters.dart';
 import '../../domain/models/expense.dart';
 
 class SummaryCard extends StatelessWidget {
-  final List<Expense> items; // уже отфильтрованные/видимые на экране
+  /// Уже отфильтрованные записи (например по категории «Все» или «Еда»).
+  final List<Expense> items;
   const SummaryCard({super.key, required this.items});
 
   @override

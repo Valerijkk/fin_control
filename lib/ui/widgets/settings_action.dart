@@ -1,3 +1,4 @@
+// Кнопка «Настройки» в AppBar: переход на экран настроек.
 import 'package:flutter/material.dart';
 import '../../../core/routes.dart';
 

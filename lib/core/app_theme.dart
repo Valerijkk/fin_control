@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+/// Тема приложения (Material 3): светлая и тёмная. Задаёт цвета, карточки, поля ввода, типографику.
 class AppTheme {
+  /// Базовая тема с [brightness]. Общие настройки для светлой и тёмной версий.
   static ThemeData _base({required Brightness brightness}) {
     final seed = const Color(0xFF6750A4);
     final scheme = ColorScheme.fromSeed(seedColor: seed, brightness: brightness);
@@ -68,6 +70,8 @@ class AppTheme {
     );
   }
 
+  /// Светлая тема.
   static ThemeData buildLight() => _base(brightness: Brightness.light);
+  /// Тёмная тема.
   static ThemeData buildDark() => _base(brightness: Brightness.dark);
 }

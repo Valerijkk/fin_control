@@ -1,3 +1,4 @@
+// Карточка курсов: FutureBuilder, до 6 валют, дата, пометка «офлайн» при кэше.
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../services/rates_api.dart';

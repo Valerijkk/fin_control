@@ -1,3 +1,4 @@
+/// Модель одной записи: расход или доход (название, сумма, категория, дата, опционально фото).
 class Expense {
   final String id;
   final String title;
@@ -17,6 +18,7 @@ class Expense {
     this.imagePath,
   });
 
+  /// Создаёт копию с заменой указанных полей (для редактирования).
   Expense copyWith({
     String? id,
     String? title,

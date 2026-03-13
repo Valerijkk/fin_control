@@ -1,3 +1,4 @@
+// Основная кнопка (FilledButton) с текстом и опциональной иконкой.
 import 'package:flutter/material.dart';
 
 class PrimaryButton extends StatelessWidget {

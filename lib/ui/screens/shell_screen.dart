@@ -1,3 +1,4 @@
+// Главный экран с нижней навигацией: Список, Обменник, Акции, Портфель, Статистика.
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
 import 'stats_screen.dart';

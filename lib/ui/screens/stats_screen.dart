@@ -1,3 +1,4 @@
+// Экран «Статистика»: полоски по категориям, проценты, «Всего расходов».
 import 'package:flutter/material.dart';
 import '../../state/app_scope.dart';
 import '../../core/formatters.dart';

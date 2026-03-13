@@ -6,6 +6,7 @@ import 'state/app_state.dart';
 import 'state/app_scope.dart';
 import 'state/theme_controller.dart';
 
+/// Версия корневого приложения для тестов (без Sentry/AppMetrica), использует [AppRouter.onGenerateRoute].
 class FinControlApp extends StatefulWidget {
   const FinControlApp({super.key});
   @override
@@ -26,6 +27,7 @@ class _FinControlAppState extends State<FinControlApp> {
     _init();
   }
 
+  /// Загрузка данных из БД перед показом основного UI.
   Future<void> _init() async {
     await _state.load();
     if (mounted) setState(() => _loaded = true);

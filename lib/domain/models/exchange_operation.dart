@@ -1,4 +1,4 @@
-/// Операция обмена валюты (запись в истории).
+/// Операция обмена валюты (одна запись в истории обменника).
 class ExchangeOperation {
   final int id;
   final DateTime createdAt;
@@ -18,6 +18,7 @@ class ExchangeOperation {
     required this.rateUsed,
   });
 
+  /// Создаёт объект из строки таблицы [exchange_operations].
   static ExchangeOperation fromMap(Map<String, Object?> map) {
     return ExchangeOperation(
       id: map['id'] as int,
@@ -30,6 +31,7 @@ class ExchangeOperation {
     );
   }
 
+  /// Для вставки в БД (без [id], т.к. AUTOINCREMENT).
   Map<String, Object?> toMap() => {
         'created_at': createdAt.millisecondsSinceEpoch,
         'amount_from': amountFrom,

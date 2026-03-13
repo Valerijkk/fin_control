@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
-/// Дефолтный набор (используется при первом старте)
+/// Дефолтный набор категорий расходов/доходов (используется при первом старте приложения).
 const kDefaultCategories = ['Еда', 'Транспорт', 'Дом', 'Досуг', 'Портфель', 'Другое'];
 
+/// Возвращает иконку Material для категории [c] (для списков и фильтров).
 IconData categoryIcon(String c) {
   switch (c) {
     case 'Еда':
@@ -20,6 +21,7 @@ IconData categoryIcon(String c) {
   }
 }
 
+/// Возвращает цвет для категории [c] (полоски в статистике, чипы и т.д.).
 Color categoryColor(String c) {
   switch (c) {
     case 'Еда':

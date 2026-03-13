@@ -1,3 +1,4 @@
+// Одна строка в списке: иконка категории, название, дата, сумма, кнопка фото.
 import 'package:flutter/material.dart';
 import '../../core/formatters.dart';
 import '../../core/routes.dart';

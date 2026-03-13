@@ -2,7 +2,8 @@
 class PortfolioTransaction {
   final int id;
   final DateTime createdAt;
-  final String type; // 'buy' | 'sell'
+  /// Тип: 'buy' или 'sell'.
+  final String type;
   final String currency;
   final double amount;
   final double rate;
@@ -18,6 +19,7 @@ class PortfolioTransaction {
     required this.totalBase,
   });
 
+  /// Создаёт объект из строки таблицы [portfolio_transactions].
   static PortfolioTransaction fromMap(Map<String, Object?> map) {
     return PortfolioTransaction(
       id: map['id'] as int,
@@ -30,6 +32,7 @@ class PortfolioTransaction {
     );
   }
 
+  /// Для вставки в БД.
   Map<String, Object?> toMap() => {
         'created_at': createdAt.millisecondsSinceEpoch,
         'type': type,

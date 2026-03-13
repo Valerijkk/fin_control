@@ -10,7 +10,9 @@ import '../ui/screens/stocks_screen.dart';
 import '../ui/screens/portfolio_screen.dart';
 import '../domain/models/expense.dart';
 
+/// Роутер приложения: по имени маршрута из [Routes] создаёт [MaterialPageRoute].
 class AppRouter {
+  /// Строит маршрут по [s.name] и опциональным [s.arguments].
   static Route<dynamic> onGenerateRoute(RouteSettings s) {
     switch (s.name) {
       case Routes.welcome:

@@ -1,3 +1,4 @@
+// Экран приветствия: заголовок и кнопка «Начать» → ShellScreen.
 import 'package:flutter/material.dart';
 import '../../core/routes.dart';
 import '../widgets/app_bar_title.dart';

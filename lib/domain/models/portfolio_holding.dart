@@ -1,4 +1,4 @@
-/// Позиция в портфеле по валюте.
+/// Позиция в портфеле: валюта или тикер акции, количество, средняя цена входа.
 class PortfolioHolding {
   final int id;
   final String currency;
@@ -14,6 +14,7 @@ class PortfolioHolding {
     required this.updatedAt,
   });
 
+  /// Создаёт объект из строки таблицы [portfolio_holdings].
   static PortfolioHolding fromMap(Map<String, Object?> map) {
     return PortfolioHolding(
       id: map['id'] as int,
@@ -24,6 +25,7 @@ class PortfolioHolding {
     );
   }
 
+  /// Для вставки/обновления в БД.
   Map<String, Object?> toMap() => {
         'currency': currency,
         'amount': amount,

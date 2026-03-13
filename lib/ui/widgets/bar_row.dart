@@ -1,3 +1,4 @@
+// Строка в статистике: подпись, полоска по value/maxAbs, сумма и опционально процент.
 import 'package:flutter/material.dart';
 import '../../core/formatters.dart';
 
@@ -5,7 +6,8 @@ class BarRow extends StatelessWidget {
   final String label;
   final double value;
   final double maxAbs;
-  final double? percent; // 0..1
+  /// Доля от общего (0..1), выводится в процентах.
+  final double? percent;
 
   const BarRow({
     super.key,

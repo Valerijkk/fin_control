@@ -1,12 +1,14 @@
+// API курсов валют: два провайдера (exchangerate.host, open.er-api.com), кэш в SharedPreferences.
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Коды валют для запроса курсов (база RUB).
+/// Коды валют для запроса курсов (база RUB). Используются в обменнике и портфеле.
 const kCurrencyCodes = [
   'USD', 'EUR', 'GBP', 'CHF', 'CNY', 'JPY', 'KZT', 'TRY', 'BRL', 'INR',
 ];
 
+/// Результат загрузки курсов: карта код → курс от RUB, дата, источник (сеть или кэш).
 class Rates {
   /// Курсы от RUB: 1 RUB = rates[code] в данной валюте (например 1 RUB = 0.011 USD).
   final Map<String, double> rates;
@@ -21,17 +23,21 @@ class Rates {
     this.source = 'unknown',
   });
 
+  /// Курс USD (удобные геттеры для обратной совместимости).
   double get usd => rates['USD'] ?? 0;
   double get eur => rates['EUR'] ?? 0;
 
+  /// Курс по коду валюты или null.
   double? rate(String code) => rates[code];
 
+  /// Для сохранения в кэш (SharedPreferences).
   Map<String, dynamic> toJson() => {
         'rates': rates,
         'asOf': asOf?.millisecondsSinceEpoch,
         'source': source,
       };
 
+  /// Восстановление из кэша (из JSON строки в префах).
   static Rates fromJson(Map<String, dynamic> j) {
     final r = j['rates'];
     final Map<String, double> map = {};
@@ -51,11 +57,13 @@ class Rates {
   }
 }
 
+/// Загрузка курсов: сначала основной провайдер, затем fallback, при неудаче — из кэша.
 class RatesApi {
   static const _cacheKey = 'rates_cache_v2';
   static const _timeout = Duration(seconds: 5);
   static const _symbols = 'USD,EUR,GBP,CHF,CNY,JPY,KZT,TRY,BRL,INR';
 
+  /// Загружает курсы (сеть или кэш). Кидает исключение, если оба провайдера недоступны и кэш пуст.
   static Future<Rates> fetch() async {
     try {
       final r = await _fetchFromExchangeRateHost().timeout(_timeout);
@@ -75,6 +83,7 @@ class RatesApi {
     throw Exception('All providers failed and no cache available');
   }
 
+  /// Запрос к api.exchangerate.host (база RUB, символы [_symbols]).
   static Future<Rates> _fetchFromExchangeRateHost() async {
     final uri = Uri.parse(
       'https://api.exchangerate.host/latest?base=RUB&symbols=$_symbols',
@@ -105,6 +114,7 @@ class RatesApi {
     return Rates(map, asOf: asOf ?? DateTime.now(), source: 'exchangerate.host');
   }
 
+  /// Запрос к open.er-api.com (fallback провайдер).
   static Future<Rates> _fetchFromOpenERApi() async {
     final uri = Uri.parse('https://open.er-api.com/v6/latest/RUB');
     final resp = await http.get(uri, headers: {
@@ -137,6 +147,7 @@ class RatesApi {
     return Rates(map, asOf: asOf ?? DateTime.now(), source: 'open.er-api.com');
   }
 
+  /// Сохраняет курсы в SharedPreferences для офлайн-режима.
   static Future<void> _saveCache(Rates r) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -144,6 +155,7 @@ class RatesApi {
     } catch (_) {}
   }
 
+  /// Читает последние сохранённые курсы из префов.
   static Future<Rates?> _loadCache() async {
     try {
       final prefs = await SharedPreferences.getInstance();

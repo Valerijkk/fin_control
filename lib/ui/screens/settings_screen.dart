@@ -1,3 +1,4 @@
+// Настройки: тёмная тема, очистка данных, кнопка «Тест Sentry».
 import 'package:flutter/material.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 

@@ -1,3 +1,4 @@
+// Экран добавления/редактирования записи: название, сумма, категория, дата, доход/расход, фото.
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -11,6 +12,7 @@ import '../widgets/primary_button.dart';
 import '../widgets/theme_action.dart';
 
 class AddEditScreen extends StatefulWidget {
+  /// Если задано — режим редактирования, иначе создание новой записи.
   final Expense? initial;
   const AddEditScreen({super.key, this.initial});
 

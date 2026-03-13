@@ -1,3 +1,4 @@
+// Экран «Обменник»: выбор валют, конвертация по RatesApi, история операций.
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -8,6 +9,7 @@ import '../widgets/app_bar_title.dart';
 import '../widgets/theme_action.dart';
 import '../widgets/settings_action.dart';
 
+/// Список валют для выпадающих списков: RUB + все коды из API.
 final _currencies = ['RUB', ...kCurrencyCodes];
 
 class ExchangeScreen extends StatefulWidget {
@@ -187,7 +189,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                   const Text('Из валюты'),
                   const SizedBox(height: 4),
                   DropdownButtonFormField<String>(
-                    key: ValueKey(_currencyFrom),
+                    key: const ValueKey('currency_from'),
                     initialValue: _currencyFrom,
                     items: _currencies.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
                     onChanged: (v) => setState(() => _currencyFrom = v ?? _currencyFrom),
@@ -206,7 +208,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                   const Text('В валюту'),
                   const SizedBox(height: 4),
                   DropdownButtonFormField<String>(
-                    key: ValueKey(_currencyTo),
+                    key: const ValueKey('currency_to'),
                     initialValue: _currencyTo,
                     items: _currencies.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
                     onChanged: (v) => setState(() => _currencyTo = v ?? _currencyTo),
@@ -261,6 +263,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
   }
 }
 
+/// Подзаголовок секции (например «История обменов») в стиле темы.
 class _SectionTitle extends StatelessWidget {
   final String title;
 

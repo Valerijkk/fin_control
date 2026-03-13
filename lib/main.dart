@@ -1,3 +1,4 @@
+// Точка входа приложения FinControl. Инициализация телеметрии (Sentry, AppMetrica), локалей, корневой виджет.
 import 'package:appmetrica_plugin/appmetrica_plugin.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -21,8 +22,10 @@ import 'package:fin_control/ui/screens/exchange_screen.dart';
 import 'package:fin_control/ui/screens/stocks_screen.dart';
 import 'package:fin_control/ui/screens/portfolio_screen.dart';
 
+/// Наблюдатель смены маршрутов (для аналитики и т.д.).
 final routeObserver = RouteObserver<PageRoute<dynamic>>();
 
+/// Инициализация биндингов, AppMetrica (если ключ задан), локалей ru_RU, Sentry (если DSN задан), запуск приложения.
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -45,12 +48,14 @@ Future<void> main() async {
   }
 }
 
+/// Активирует AppMetrica с ключом из [appMetricaApiKey].
 Future<void> _initAppMetrica() async {
   try {
     await AppMetrica.activate(AppMetricaConfig(appMetricaApiKey));
   } catch (_) {}
 }
 
+/// Корневой виджет: загрузка данных, тема, маршрутизация, обёртка в [AppScope] и [ThemeController].
 class FinControlRoot extends StatefulWidget {
   const FinControlRoot({super.key});
   @override
@@ -71,11 +76,13 @@ class _FinControlRootState extends State<FinControlRoot> {
     _init();
   }
 
+  /// Загружает расходы и категории из БД; после загрузки [builder] отдаёт [AppScope] и навигацию.
   Future<void> _init() async {
     await _state.load();
     if (mounted) setState(() => _loaded = true);
   }
 
+  /// Строит маршрут по имени и аргументам (аналогично [AppRouter.onGenerateRoute]).
   Route<dynamic> _onGenerateRoute(RouteSettings s) {
     switch (s.name) {
       case Routes.welcome:
@@ -115,6 +122,7 @@ class _FinControlRootState extends State<FinControlRoot> {
       navigatorObservers: [routeObserver],
       onGenerateRoute: _onGenerateRoute,
       initialRoute: Routes.welcome,
+      /// Пока загрузка — показываем индикатор; после — оборачиваем в [AppScope] и [ThemeController].
       builder: (context, child) {
         if (!_loaded) {
           return Theme(

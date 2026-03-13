@@ -1,14 +1,15 @@
+// Хранение пользовательских категорий в SharedPreferences (дополнение к kDefaultCategories).
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/categories.dart';
 
 class CategoryStore {
   static const _key = 'user_categories_v1';
 
+  /// Загружает список категорий. Если пусто — возвращает [kDefaultCategories].
   Future<List<String>> load() async {
     final prefs = await SharedPreferences.getInstance();
     final list = prefs.getStringList(_key);
     if (list == null || list.isEmpty) return List<String>.from(kDefaultCategories);
-    // чистим от пустых/дубликатов
     final clean = <String>{};
     for (final s in list) {
       final name = s.trim();
@@ -17,11 +18,13 @@ class CategoryStore {
     return clean.toList();
   }
 
+  /// Сохраняет полный список категорий в префы.
   Future<void> save(List<String> categories) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList(_key, categories);
   }
 
+  /// Добавляет категорию [name], сохраняет и возвращает обновлённый список.
   Future<List<String>> add(String name) async {
     final list = await load();
     final n = name.trim();

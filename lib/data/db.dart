@@ -1,12 +1,16 @@
+// Локальная БД SQLite: таблицы расходов, операций обмена, портфеля (позиции и сделки).
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 
+/// Единая точка доступа к БД. Версия 3: добавлены exchange_operations, portfolio_holdings, portfolio_transactions.
 class AppDatabase {
   static const _dbName = 'fincontrol.db';
-  static const _dbVersion = 3; // 3: exchange_operations, portfolio_holdings, portfolio_transactions
+  /// При увеличении версии срабатывает [onUpgrade] (миграции).
+  static const _dbVersion = 3;
 
   Database? _db;
 
+  /// Открывает БД (создаёт файл при первом запуске, при апгрейде вызывает [onUpgrade]).
   Future<Database> _open() async {
     if (_db != null) return _db!;
     final dir = await getDatabasesPath();
@@ -40,6 +44,7 @@ class AppDatabase {
     return _db!;
   }
 
+  /// Создаёт таблицы обменника и портфеля (используется в [onCreate] и при апгрейде с версии < 3).
   static Future<void> _createExchangeAndPortfolioTables(Database db) async {
     await db.execute('''
       CREATE TABLE exchange_operations(
@@ -74,6 +79,8 @@ class AppDatabase {
     ''');
   }
 
+  // --- Expenses (сырые запросы для [ExpenseRepository]) ---
+
   Future<List<Map<String, Object?>>> getAllRaw() async {
     final db = await _open();
     return db.query('expenses', orderBy: 'date DESC');
@@ -100,6 +107,7 @@ class AppDatabase {
   }
 
   // --- Exchange operations ---
+
   Future<List<Map<String, Object?>>> getExchangeOperationsRaw() async {
     final db = await _open();
     return db.query('exchange_operations', orderBy: 'created_at DESC');
@@ -111,6 +119,7 @@ class AppDatabase {
   }
 
   // --- Portfolio holdings ---
+
   Future<List<Map<String, Object?>>> getPortfolioHoldingsRaw() async {
     final db = await _open();
     return db.query('portfolio_holdings');
@@ -148,6 +157,7 @@ class AppDatabase {
   }
 
   // --- Portfolio transactions ---
+
   Future<List<Map<String, Object?>>> getPortfolioTransactionsRaw() async {
     final db = await _open();
     return db.query('portfolio_transactions', orderBy: 'created_at DESC');

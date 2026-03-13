@@ -20,6 +20,12 @@
 - 🌗 **Тёмная тема** (M3), данные офлайн (SQLite)
 
 
+## 📋 Сдача практик и экзамен
+
+**Что от ученика хотят, что показать на созвоне, чек-листы по каждой практике** — в **[docs/SDAKA_I_EKZAMEN.md](docs/SDAKA_I_EKZAMEN.md)**. Там же: пошаговое выполнение, что сказать экзаменатору и итоговый чек-лист перед сдачей.
+
+---
+
 ## 📋 Тестовая документация
 
 В **[docs/testovaya-dokumentaciya](docs/testovaya-dokumentaciya/)** — детальная документация для тестирования:
@@ -117,23 +123,25 @@ flutter run
 
 ## 🧪 Тесты
 
+Полноценный тестовый фреймворк: unit, widget, хелперы. Подробно — **[test/README.md](test/README.md)**.
+
 Структура:
 
 ```
 test/
-├─ flutter_test_config.dart            # init sqflite_common_ffi для тестов
-├─ app_boot_test.dart
-├─ helpers/test_host.dart
-├─ unit/formatters_test.dart
-└─ ui/screens/...
+├─ flutter_test_config.dart            # SQLite FFI, intl, SharedPreferences
+├─ helpers/test_host.dart              # TestAppState, makeHost(), exp()
+├─ unit/                               # formatters, rates, stocks_api
+├─ ui/screens/                         # home, exchange, portfolio, stocks, shell, ...
+└─ app_boot_test.dart
 ```
-
-`test/flutter_test_config.dart` — глобальная инициализация перед тестами (SQLite FFI, локали intl, мок SharedPreferences). См. текущее содержимое файла.
 
 Запуск:
 
 ```bash
 flutter test
+flutter test test/unit/
+flutter test test/ui/
 ```
 
 

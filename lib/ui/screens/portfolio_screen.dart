@@ -1,3 +1,4 @@
+// Экран «Портфель»: баланс, активы (валюты и акции), купить/продать, учёт в расходах/доходах.
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 

@@ -1,3 +1,4 @@
+// Общий AppBar экранов: заголовок, кнопки (тема, настройки), опционально «Назад».
 import 'package:flutter/material.dart';
 
 class AppBarTitle extends StatelessWidget implements PreferredSizeWidget {

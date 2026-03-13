@@ -1,3 +1,4 @@
+// Экран просмотра прикреплённого к записи фото по локальному пути.
 import 'dart:io';
 import 'package:flutter/material.dart';
 import '../widgets/app_bar_title.dart';

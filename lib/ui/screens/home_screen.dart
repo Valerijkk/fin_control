@@ -1,3 +1,4 @@
+// Экран «Список»: карточка курсов, итоги, фильтры, список записей, быстрая запись, свайп с UNDO.
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
