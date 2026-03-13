@@ -9,21 +9,8 @@ import 'package:fin_control/core/app_theme.dart';
 import 'package:fin_control/state/app_scope.dart';
 import 'package:fin_control/state/app_state.dart';
 import 'package:fin_control/state/theme_controller.dart';
+import 'package:fin_control/core/app_router.dart';
 import 'package:fin_control/core/routes.dart';
-
-import 'package:fin_control/domain/models/expense.dart';
-
-import 'package:fin_control/ui/screens/welcome_screen.dart';
-import 'package:fin_control/ui/screens/shell_screen.dart';
-import 'package:fin_control/ui/screens/add_edit_screen.dart';
-import 'package:fin_control/ui/screens/settings_screen.dart';
-import 'package:fin_control/ui/screens/photo_viewer_screen.dart';
-import 'package:fin_control/ui/screens/exchange_screen.dart';
-import 'package:fin_control/ui/screens/stocks_screen.dart';
-import 'package:fin_control/ui/screens/portfolio_screen.dart';
-
-/// Наблюдатель смены маршрутов (для аналитики и т.д.).
-final routeObserver = RouteObserver<PageRoute<dynamic>>();
 
 /// Инициализация биндингов, AppMetrica (если ключ задан), локалей ru_RU, Sentry (если DSN задан), запуск приложения.
 Future<void> main() async {
@@ -82,35 +69,6 @@ class _FinControlRootState extends State<FinControlRoot> {
     if (mounted) setState(() => _loaded = true);
   }
 
-  /// Строит маршрут по имени и аргументам (аналогично [AppRouter.onGenerateRoute]).
-  Route<dynamic> _onGenerateRoute(RouteSettings s) {
-    switch (s.name) {
-      case Routes.welcome:
-        return MaterialPageRoute(builder: (_) => const WelcomeScreen(), settings: s);
-      case Routes.shell:
-        return MaterialPageRoute(builder: (_) => const ShellScreen(), settings: s);
-      case Routes.add:
-        final initial = s.arguments is Expense ? s.arguments as Expense? : null;
-        return MaterialPageRoute(builder: (_) => AddEditScreen(initial: initial), settings: s);
-      case Routes.settings:
-        return MaterialPageRoute(builder: (_) => const SettingsScreen(), settings: s);
-      case Routes.photo:
-        final path = s.arguments as String;
-        return MaterialPageRoute(builder: (_) => PhotoViewerScreen(path: path), settings: s);
-      case Routes.exchange:
-        return MaterialPageRoute(builder: (_) => const ExchangeScreen(), settings: s);
-      case Routes.stocks:
-        return MaterialPageRoute(builder: (_) => const StocksScreen(), settings: s);
-      case Routes.portfolio:
-        return MaterialPageRoute(builder: (_) => const PortfolioScreen(), settings: s);
-      default:
-        return MaterialPageRoute(
-          builder: (_) => const Scaffold(body: Center(child: Text('Not found'))),
-          settings: s,
-        );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -120,7 +78,7 @@ class _FinControlRootState extends State<FinControlRoot> {
       theme: AppTheme.buildLight(),
       darkTheme: AppTheme.buildDark(),
       navigatorObservers: [routeObserver],
-      onGenerateRoute: _onGenerateRoute,
+      onGenerateRoute: AppRouter.onGenerateRoute,
       initialRoute: Routes.welcome,
       /// Пока загрузка — показываем индикатор; после — оборачиваем в [AppScope] и [ThemeController].
       builder: (context, child) {
