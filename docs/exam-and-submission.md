@@ -20,7 +20,7 @@
 
 1. **Проходите практики по порядку** (см. [Порядок прохождения](practices/README.md#порядок-прохождения)): сначала инфраструктура (03, 04, 05), затем снифф (01, 02), мониторинг (06, 07), дистрибуция (08, 09), Firebase — после 00-setup.
 2. **Используйте подробные инструкции** в [practices-step-by-step.md](practices-step-by-step.md) — там пошагово расписано, что нажимать и что должно получиться. При ошибках смотри [FAQ.md](FAQ.md).
-3. **Отмечайте чек-листы** в самих практиках и в [критериях приёмки](kriterii-priemki/README.md) — так вы не забудете ни один шаг перед сдачей.
+3. **Отмечайте чек-листы** в самих практиках и в [критериях приёмки](acceptance-criteria/README.md) — так вы не забудете ни один шаг перед сдачей.
 4. **За день до созвона** проверьте по каждой сдаваемой практике:
    - приложение/Charles/Sentry/AppMetrica открываются и работают;
    - можете за 2–5 минут показать результат (запрос в Charles, логи в Logcat, событие в Sentry и т.д.);
@@ -109,7 +109,7 @@
 - [ ] Все практики, которые сдаёте, выполнены по инструкциям.
 - [ ] По каждой можете за 2–5 минут показать результат (запрос в Charles, логи, событие в Sentry, сборка в TestFlight и т.д.).
 - [ ] Можете одним-двумя предложениями объяснить, чему научились в практике.
-- [ ] Критерии приёмки из [kriterii-priemki](kriterii-priemki/README.md) по сдаваемым практикам отмечены (для себя или для преподавателя).
+- [ ] Критерии приёмки из [acceptance-criteria](acceptance-criteria/README.md) по сдаваемым практикам отмечены (для себя или для преподавателя).
 
 ---
 
@@ -118,9 +118,9 @@
 - **Практики (инструкции)**: [docs/practices/README.md](practices/README.md)
 - **Практики подробно (пошагово)**: [practices-step-by-step.md](practices-step-by-step.md)
 - **Частые вопросы и ответы**: [FAQ.md](FAQ.md)
-- **Критерии приёмки (чек-листы для приёмки)**: [docs/kriterii-priemki/README.md](kriterii-priemki/README.md)
-- **Запуск в Android Studio**: [ANDROID_STUDIO_LAUNCH.md](ANDROID_STUDIO_LAUNCH.md)
-- **Тестовая документация (фичи, тест-кейсы)**: [testovaya-dokumentaciya](testovaya-dokumentaciya/)
+- **Критерии приёмки (чек-листы для приёмки)**: [docs/acceptance-criteria/README.md](acceptance-criteria/README.md)
+- **Запуск в Android Studio**: [technical/ANDROID_STUDIO_LAUNCH.md](technical/ANDROID_STUDIO_LAUNCH.md)
+- **Тестовая документация (фичи, тест-кейсы)**: [testing](testing/)
 
 ---
 

@@ -8,7 +8,7 @@
 - **Обменник валют** — калькулятор обмена по актуальным курсам, история операций
 - **Мини-инвестиционная платформа** — виртуальный портфель (покупка/продажа «активов» по курсам валют), без реальных денег
 
-Все сетевые запросы (курсы валют, при необходимости — свой API) должны проходить по HTTP/HTTPS, чтобы ученики могли практиковать **Charles**, **Proxyman**, **ADB**, логирование, **Sentry**, **AppMetrica**, **Firebase** (Crashlytics, FCM, Analytics, Remote Config, Performance, In-App Messaging), а также публикацию в **TestFlight** и Android-дистрибутор.
+Все сетевые запросы (курсы валют, при необходимости — свой API) должны проходить по HTTP/HTTPS, чтобы ученики могли практиковать **Charles**, **Proxyman**, **ADB**, логирование, **Sentry**, **AppMetrica**, **Firebase** (Crashlytics, FCM, Analytics, Remote Config, Performance, In-App Messaging), а также публикацию в **TestFlight** и Android-дистрибьютор.
 
 ---
 

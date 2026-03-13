@@ -70,7 +70,7 @@ await analytics.logEvent(
 2. **DebugView** (включите в приложении через `FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(true)` и в консоли **DebugView** → добавьте устройство по дебаг-токену) — события в реальном времени.
 3. **Funnel analysis** / **Exploration** — постройте воронку, например: `screen_view (Welcome)` → `screen_view (Home)` → `exchange_completed` или `portfolio_buy`.
 
-## Что проверить (чек-лист)
+## Что проверить
 
 - [ ] События вызываются в коде при действиях пользователя.
 - [ ] В разделе Events (или DebugView) видны ваши события.

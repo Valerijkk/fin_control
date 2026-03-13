@@ -156,7 +156,7 @@ adb shell pm list packages | findstr fincontrol
 
 ---
 
-## Чек-лист для ученика (на примере FinControl)
+## Что проверить
 
 - [ ] `adb devices` — устройство/эмулятор виден.
 - [ ] Установить APK через `adb install -r ...`.

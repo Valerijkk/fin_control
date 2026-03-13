@@ -45,7 +45,7 @@ flutter build ipa
 3. Заполните при необходимости **Export Compliance**, **Content Rights**, **Advertising Identifier** (в форме после загрузки).
 4. Добавьте **Internal Testing** или **External Testing** группу, добавьте тестеров по email. Тестеры получат приглашение и смогут установить приложение через приложение TestFlight на устройстве.
 
-## Что проверить (чек-лист)
+## Что проверить
 
 - [ ] Bundle ID совпадает в Xcode и App Store Connect.
 - [ ] Архив успешно создан и загружен.

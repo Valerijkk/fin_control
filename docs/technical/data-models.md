@@ -67,7 +67,7 @@
 |-------------|--------|-----------------------------------|
 | id          | INTEGER | PRIMARY KEY                     |
 | created_at  | TEXT   | ISO8601                           |
-| type        | TEXT   | 'buy' | 'sell'                      |
+| type        | TEXT   | 'buy' \| 'sell'                      |
 | currency    | TEXT   | Валюта актива                    |
 | amount      | REAL   | Количество                        |
 | rate        | REAL   | Курс на момент сделки             |

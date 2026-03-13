@@ -1,4 +1,4 @@
-// Экран «Акции и крипто»: вкладки Акции | Крипто, свечные графики OHLC, покупка в портфель.
+// Экран «Акции и криптовалюта»: вкладки Акции | Криптовалюта, свечные графики OHLC, покупка в портфель.
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -292,13 +292,13 @@ class _StocksScreenState extends State<StocksScreen> with SingleTickerProviderSt
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Акции и крипто'),
+        title: const Text('Акции и криптовалюта'),
         actions: const [ThemeAction(), SettingsAction()],
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
             Tab(text: 'Акции'),
-            Tab(text: 'Крипто'),
+            Tab(text: 'Криптовалюта'),
           ],
         ),
       ),
@@ -415,7 +415,13 @@ class _StocksScreenState extends State<StocksScreen> with SingleTickerProviderSt
               const SizedBox(height: 4),
               SizedBox(
                 height: 180,
-                child: CandlestickChart(points: points, currentPrice: s.priceRub),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: SizedBox(
+                    width: points.length * 6.0,
+                    child: CandlestickChart(points: points, currentPrice: s.priceRub),
+                  ),
+                ),
               ),
             ] else if (points == null) ...[
               const SizedBox(height: 12),
@@ -477,7 +483,13 @@ class _StocksScreenState extends State<StocksScreen> with SingleTickerProviderSt
               const SizedBox(height: 4),
               SizedBox(
                 height: 180,
-                child: CandlestickChart(points: points, currentPrice: c.priceRub),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: SizedBox(
+                    width: points.length * 6.0,
+                    child: CandlestickChart(points: points, currentPrice: c.priceRub),
+                  ),
+                ),
               ),
             ] else if (points == null) ...[
               const SizedBox(height: 12),

@@ -53,7 +53,7 @@
    - `api.exchangerate.host` (путь вида `/latest?base=RUB&symbols=USD,EUR`),
    - или `open.er-api.com` (путь `/v6/latest/RUB`).
 
-## Что проверить (чек-лист)
+## Что проверить
 
 - [ ] Proxyman запущен, на устройстве указан правильный прокси (IP + порт).
 - [ ] Сертификат Proxyman установлен и доверен на устройстве.

@@ -15,7 +15,7 @@
 - Если открыта папка `android/` — IDE считает проект обычным Android-приложением: нет Flutter/Dart, Gradle ругается на отсутствующие модули.
 - **Решение:** File → Close Project → File → Open → выбери папку **fin_control** (корень репозитория). Дождись индексации. Убедись, что установлены плагины Flutter и Dart (File → Settings → Plugins).
 
-Подробно: [ANDROID_STUDIO_LAUNCH.md](ANDROID_STUDIO_LAUNCH.md).
+Подробно: [technical/ANDROID_STUDIO_LAUNCH.md](technical/ANDROID_STUDIO_LAUNCH.md).
 
 ---
 
@@ -252,7 +252,7 @@ adb install -r build/app/outputs/flutter-apk/app-debug.apk
 
 ### Где лежат критерии приёмки для преподавателя?
 
-**Ответ:** В папке **[docs/kriterii-priemki](kriterii-priemki/README.md)** — чек-листы по каждой практике для приёмки. Ими может пользоваться преподаватель; ученику полезно пройти их самому перед сдачей, чтобы ничего не упустить.
+**Ответ:** В папке **[docs/acceptance-criteria](acceptance-criteria/README.md)** — чек-листы по каждой практике для приёмки. Ими может пользоваться преподаватель; ученику полезно пройти их самому перед сдачей, чтобы ничего не упустить.
 
 ---
 
@@ -282,4 +282,4 @@ adb install -r build/app/outputs/flutter-apk/app-debug.apk
 1. [practices-step-by-step.md](practices-step-by-step.md) — подробные пошаговые практики.  
 2. [practices/README.md](practices/README.md) — список всех практик и ссылки на файлы.  
 3. Конкретный файл практики в [practices](practices/) (например 01-charles.md, 06-sentry.md).  
-4. [ANDROID_STUDIO_LAUNCH.md](ANDROID_STUDIO_LAUNCH.md) — только про запуск в Android Studio.
+4. [technical/ANDROID_STUDIO_LAUNCH.md](technical/ANDROID_STUDIO_LAUNCH.md) — только про запуск в Android Studio.

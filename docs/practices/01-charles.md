@@ -62,7 +62,7 @@
    - `api.exchangerate.host` (например `https://api.exchangerate.host/latest?base=RUB&symbols=USD,EUR`),
    - или `open.er-api.com` (fallback, например `https://open.er-api.com/v6/latest/RUB`).
 
-## Что проверить (чек-лист для ученика)
+## Что проверить
 
 - [ ] Charles запущен, прокси на устройстве указан, порт 8888.
 - [ ] Сертификат Charles установлен и доверен на устройстве.

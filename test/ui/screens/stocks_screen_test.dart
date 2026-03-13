@@ -11,9 +11,9 @@ void main() {
     await tester.pumpWidget(makeHost(home: const StocksScreen(), state: state));
     await tester.pumpAndSettle(const Duration(seconds: 2));
 
-    expect(find.text('Акции и крипто'), findsOneWidget);
+    expect(find.text('Акции и криптовалюта'), findsOneWidget);
     expect(find.text('Акции'), findsOneWidget);
-    expect(find.text('Крипто'), findsOneWidget);
+    expect(find.text('Криптовалюта'), findsOneWidget);
   });
 
   testWidgets('Stocks: после загрузки список акций или индикатор', (tester) async {

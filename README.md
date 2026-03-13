@@ -36,13 +36,13 @@
 
 ## 📋 Тестовая документация
 
-В **[docs/testovaya-dokumentaciya](docs/testovaya-dokumentaciya/)** — детальная документация для тестирования:
+В **[docs/testing](docs/testing/)** — детальная документация для тестирования:
 
-- **Фичи** — по каждой фиче: бизнес/функциональные/нефункциональные требования, роли, схема БД, диаграммы состояний ([features](docs/testovaya-dokumentaciya/features/)).
-- **Тест-кейсы** — ручные сценарии и таблица автотестов по файлам ([test-cases.md](docs/testovaya-dokumentaciya/test-cases.md)).
-- **Практики** — кратко: технология, как используется в проекте, задание ([practices](docs/testovaya-dokumentaciya/practices/)).
+- **Фичи** — по каждой фиче: бизнес/функциональные/нефункциональные требования, роли, схема БД, диаграммы состояний ([features](docs/testing/features/)).
+- **Тест-кейсы** — ручные сценарии и таблица автотестов по файлам ([test-cases.md](docs/testing/test-cases.md)).
+- **Практики** — кратко: технология, как используется в проекте, задание ([practices](docs/testing/practices/)).
 
-**Критерии приёмки** практик для преподавателя: **[docs/kriterii-priemki](docs/kriterii-priemki/)** — чек-листы по каждой практике.
+**Критерии приёмки** практик для преподавателя: **[docs/acceptance-criteria](docs/acceptance-criteria/)** — чек-листы по каждой практике.
 
 
 ## 📚 Практики для ручных тестеров
@@ -101,7 +101,7 @@ flutter run
 
 **Требования**: Flutter **3.x** ✅  •  Dart **3.x** ✅
 
-**Запуск в Android Studio:** открывай **корневую папку проекта** (где лежит `pubspec.yaml`), а не папку `android/` — иначе будут сотни ошибок. Подробно: [docs/ANDROID_STUDIO_LAUNCH.md](docs/ANDROID_STUDIO_LAUNCH.md). Эмулятор (например Pixel 9) запускай из Device Manager, затем Run ▶.
+**Запуск в Android Studio:** открывай **корневую папку проекта** (где лежит `pubspec.yaml`), а не папку `android/` — иначе будут сотни ошибок. Подробно: [docs/technical/ANDROID_STUDIO_LAUNCH.md](docs/technical/ANDROID_STUDIO_LAUNCH.md). Эмулятор (например Pixel 9) запускай из Device Manager, затем Run ▶.
 
 
 ## 🔌 Платформенные настройки

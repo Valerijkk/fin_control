@@ -38,27 +38,27 @@ class CryptoApi {
     final Duration step;
     switch (period) {
       case StockChartPeriod.hour:
-        count = 24;
-        step = const Duration(minutes: 2, seconds: 30);
+        count = 120;
+        step = const Duration(seconds: 30);
         break;
       case StockChartPeriod.day:
-        count = 24;
-        step = const Duration(hours: 1);
+        count = 96;
+        step = const Duration(minutes: 15);
         break;
       case StockChartPeriod.week:
-        count = 7;
-        step = const Duration(days: 1);
+        count = 168;
+        step = const Duration(hours: 1);
         break;
       case StockChartPeriod.month:
-        count = 30;
-        step = const Duration(days: 1);
+        count = 120;
+        step = const Duration(hours: 6);
         break;
       case StockChartPeriod.year:
-        count = 12;
-        step = const Duration(days: 30);
+        count = 200;
+        step = const Duration(hours: 43, minutes: 48);
         break;
       case StockChartPeriod.all:
-        count = 24;
+        count = 300;
         step = const Duration(days: 30);
         break;
     }

@@ -10,6 +10,7 @@
 
 | № | Файл | Технология | Краткое описание |
 |---|------|------------|-----------------|
+| — | [00-getting-started.md](00-getting-started.md) | **Перед началом** | Клонирование, первый запуск, открытие в Android Studio — выполнить до любых практик |
 | 00 | [00-firebase-setup.md](00-firebase-setup.md) | **Firebase: первый шаг** | Регистрация своего проекта, добавление своих конфигов (google-services.json, GoogleService-Info.plist) — **обязательно перед практиками 10–15** |
 | 01 | [01-charles.md](01-charles.md) | Charles Proxy | Перехват HTTP/HTTPS трафика мобильного и веб-приложения |
 | 02 | [02-proxyman.md](02-proxyman.md) | Proxyman | Снифф трафика FinControl на Android/iOS |
