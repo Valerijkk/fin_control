@@ -30,5 +30,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200));
 
     expect(find.byType(TextField), findsWidgets);
+    // Дожидаемся завершения асинхронной загрузки (БД/таймеры), чтобы не оставалось pending timers после dispose.
+    await tester.pumpAndSettle(const Duration(seconds: 12));
   });
 }
