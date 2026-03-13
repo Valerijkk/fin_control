@@ -6,7 +6,7 @@
 - **Данные**: локальные SQLite (расходы, категории, история обмена, портфель/сделки) + кэш курсов в shared_preferences.
 - **Сеть**: только запросы к публичным API курсов валют (HTTPS). Трафик рассчитан на перехват Charles/Proxyman.
 
-Компоненты для практик тестировщиков: Sentry, AppMetrica, Firebase (Crashlytics, FCM, Analytics, Remote Config, Performance, In-App Messaging) подключаются через SDK в том же Flutter-приложении.
+Компоненты для практик: Sentry, AppMetrica, Firebase (Crashlytics, FCM, Analytics, Remote Config, Performance, In-App Messaging) подключаются через SDK в том же Flutter-приложении.
 
 ---
 
@@ -118,7 +118,7 @@ lib/
 
 ## 7. Безопасность и прокси
 
-- Сертификаты Charles/Proxyman: на устройстве/эмуляторе устанавливается доверенный CA, трафик к API курсов расшифровывается прокси — это стандартная практика для обучения тестировщиков.
+- Сертификаты Charles/Proxyman: на устройстве/эмуляторе устанавливается доверенный CA, трафик к API курсов расшифровывается прокси — стандартная практика при настройке прокси.
 - В коде не хранить секреты API (публичные API курсов обычно по ключу или без; при добавлении ключа — через конфиг/переменные окружения).
 
 ---
@@ -140,5 +140,5 @@ lib/
 
 ## 10. Документация
 
-- **docs/practices/** — пошаговые практики для учеников: Charles, Proxyman, Android Studio, Xcode, ADB, Sentry, AppMetrica, сборки (TestFlight, Android), Firebase (все перечисленные модули).
-- **README** — цель проекта (учебная платформа для тестировщиков), ссылки на практики, требования (Flutter 3.x, настройка эмуляторов).
+- **docs/practices/** — пошаговые практики: Charles, Proxyman, Android Studio, Xcode, ADB, Sentry, AppMetrica, сборки (TestFlight, Android), Firebase (все перечисленные модули).
+- **README** — цель проекта, ссылки на практики, требования (Flutter 3.x, настройка эмуляторов).
