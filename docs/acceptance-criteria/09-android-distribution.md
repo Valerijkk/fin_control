@@ -2,7 +2,7 @@
 
 ## Обязательно
 
-- [ ] Настроено подписание release (keystore, конфигурация в build.gradle).
+- [ ] Настроено подписание release (keystore, конфигурация в build.gradle.kts).
 - [ ] Собран подписанный APK или AAB (`flutter build apk` / `flutter build appbundle`).
 - [ ] Сборка загружена в выбранный канал (Google Play Internal testing или Firebase App Distribution).
 - [ ] Установка сборки на устройство из этого канала выполнена успешно, приложение запускается.
