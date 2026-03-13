@@ -45,5 +45,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Fin Control использует камеру для съёмки фото чека или документа к записи о расходе.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Fin Control использует доступ к фото для прикрепления снимка к записи о расходе.</string>
 </dict>
 </plist>
