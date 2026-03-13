@@ -42,6 +42,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
     super.dispose();
   }
 
+  /// Загружает курсы с API (или из кэша). При ошибке пишет в [_ratesError].
   Future<void> _loadRates() async {
     setState(() {
       _rates = null;
@@ -51,10 +52,11 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
       final r = await RatesApi.fetch();
       if (mounted) setState(() => _rates = r);
     } catch (e) {
-      setState(() => _ratesError = e is Exception ? e : Exception(e.toString()));
+      if (mounted) setState(() => _ratesError = e is Exception ? e : Exception(e.toString()));
     }
   }
 
+  /// Подгружает историю операций обмена из [ExchangeRepository].
   Future<void> _loadHistory() async {
     final list = await _repo.getAll();
     if (mounted) setState(() => _history = list);
