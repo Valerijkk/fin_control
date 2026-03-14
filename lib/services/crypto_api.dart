@@ -1,4 +1,5 @@
-// Топ-5 криптовалют с демо-ценами в рублях и OHLC-историей для свечных графиков.
+// API криптовалют (демо-данные): топ-5 с ценами в RUB и OHLC-историей для свечных графиков.
+// Вызовы асинхронны (Future); при переходе на реальный API (CoinGecko/Binance и т.д.) сохранять async/await и таймауты.
 import 'stocks_api.dart';
 
 /// Котировка криптовалюты (символ, название, цена в RUB за 1 единицу).
@@ -16,6 +17,8 @@ class CryptoQuote {
 
 /// Топ-5 криптовалют с демо-ценами. В реальном приложении — запрос к CoinGecko/Binance и т.д.
 class CryptoApi {
+  /// Таймаут асинхронных вызовов (при переходе на сетевой API ограничит ожидание).
+  static const _timeout = Duration(seconds: 10);
   static const _mockCrypto = [
     CryptoQuote(symbol: 'BTC', name: 'Bitcoin', priceRub: 6200000),
     CryptoQuote(symbol: 'ETH', name: 'Ethereum', priceRub: 380000),
@@ -26,12 +29,20 @@ class CryptoApi {
 
   /// Список топ-5 криптовалют с демо-ценами в рублях.
   static Future<List<CryptoQuote>> fetch() async {
+    return _fetchImpl().timeout(_timeout);
+  }
+
+  static Future<List<CryptoQuote>> _fetchImpl() async {
     await Future.delayed(const Duration(milliseconds: 300));
     return List.from(_mockCrypto);
   }
 
   /// Демо-история OHLC для свечного графика (псевдо-случайные свечи, волатильность выше чем у акций).
   static Future<List<CandlePoint>> fetchHistory(CryptoQuote crypto, StockChartPeriod period) async {
+    return _fetchHistoryImpl(crypto, period).timeout(_timeout);
+  }
+
+  static Future<List<CandlePoint>> _fetchHistoryImpl(CryptoQuote crypto, StockChartPeriod period) async {
     await Future.delayed(const Duration(milliseconds: 50));
     final now = DateTime.now();
     final int count;

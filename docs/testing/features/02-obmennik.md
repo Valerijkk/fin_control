@@ -16,6 +16,8 @@
 | FR-2.5 | Список истории операций обмена (локально, SQLite) с возможностью прокрутки | Средний |
 | FR-2.6 | Курсы загружаются по HTTPS с публичных API (exchangerate.host, open.er-api.com), кэш в SharedPreferences | Высокий |
 | FR-2.7 | Валидация: сумма > 0 при сохранении операции (граничные случаи — см. задание со звёздочкой) | Высокий |
+| FR-2.8 | Оповещения по курсу: добавление условия (пара валют, целевой курс, ≥/≤), при срабатывании — уведомление и отметка | Средний |
+| FR-2.9 | Отложенные обмены (limit): добавление ордера (сумма, пара, курс исполнения, ≥/≤), при достижении курса — автоисполнение и запись в историю | Средний |
 
 ## 3. Нефункциональные требования
 
@@ -81,12 +83,25 @@ sequenceDiagram
   end
 ```
 
-## 7. Связанные тест-кейсы
+## 7. Ожидаемое поведение UI
 
-См. [test-cases.md](../test-cases.md): ручные тест-кейсы по обменнику; автотесты для обменника при наличии — в соответствующем файле.
+- **Кнопки:** «Обменять» — основное действие; «Обновить» — обновление курсов; подписи полей «Из валюты», «В валюту», «Сумма».
+- **Навигация:** экран в составе нижней навигации Shell; настройки — иконка в AppBar.
+- **Сообщения об ошибках:** при ошибке сети — текст «Курсы: ошибка загрузки» в карточке и возможность «Обновить»; при валидации (сумма ≤ 0 или недоступная пара) — SnackBar с понятным текстом («Введите корректную сумму», «Невозможно выполнить обмен…»).
+- **Загрузка:** пока курсы грузятся — индикатор (CircularProgressIndicator) в блоке формы; кнопка «Обменять» во время сохранения операции — неактивна, с индикатором и текстом «Обмен...».
+- **Обратная связь:** после успешного обмена — SnackBar с итогом операции (сумма из → сумма в).
 
-## 8. Связанные файлы
+## 8. Связанные тест-кейсы
 
-- `lib/ui/screens/exchange_screen.dart`, `lib/ui/widgets/rates_card.dart`
-- `lib/domain/models/exchange_operation.dart`, `lib/domain/repositories/exchange_repository.dart`
-- `lib/data/db.dart` (exchange_operations), `lib/services/rates_api.dart`
+См. [test-cases.md](../test-cases.md): ручные тест-кейсы по обменнику (M-2.0–M-2.6), в т.ч. оповещения по курсу (M-2.5) и отложенные обмены (M-2.6); автотесты для обменника при наличии — в соответствующем файле по шаблонам из `test/`.
+
+## 9. Связанные практики и критерии приёмки
+
+- **Трафик к API курсов** (HTTPS, User-Agent): практики [Charles](../../practices/01-charles.md), [Proxyman](../../practices/02-proxyman.md); критерии [01-charles](../../acceptance-criteria/01-charles.md), [02-proxyman](../../acceptance-criteria/02-proxyman.md).
+
+## 10. Связанные файлы
+
+- `lib/ui/screens/exchange_screen.dart`, виджеты формы обмена
+- `lib/domain/models/exchange_operation.dart`, `price_alert.dart`, `limit_order.dart`
+- `lib/domain/repositories/exchange_repository.dart`, `price_alerts_repository.dart`, `limit_orders_repository.dart`
+- `lib/data/db.dart` (exchange_operations, price_alerts, limit_orders), `lib/services/rates_api.dart`

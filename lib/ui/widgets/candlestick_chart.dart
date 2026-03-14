@@ -40,6 +40,7 @@ class CandlestickChart extends StatelessWidget {
   }
 }
 
+/// Рисует японские свечи: тень (линия low–high), тело (прямоугольник open–close); цвет по направлению (рост/падение).
 class _CandlestickPainter extends CustomPainter {
   final List<CandlePoint> points;
   final double? currentPrice;

@@ -16,7 +16,7 @@ void main() {
   testWidgets('Portfolio: секция Активы', (tester) async {
     final state = TestAppState();
     await tester.pumpWidget(makeHost(home: const PortfolioScreen(), state: state));
-    await tester.pumpAndSettle(const Duration(seconds: 5));
+    await tester.pumpAndSettle(const Duration(seconds: 2));
 
     expect(find.text('Активы'), findsOneWidget);
   });

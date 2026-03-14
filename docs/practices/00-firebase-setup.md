@@ -1,62 +1,93 @@
 # Firebase: регистрация проекта и подключение к FinControl
 
-Все практики по Firebase (Crashlytics, FCM, Analytics, Remote Config, Performance, In-App Messaging) требуют **вашего собственного** проекта Firebase. Ученики сами регистрируют проект и подставляют свои конфиги — так вы сможете работать с консолью и данными без доступа к чужому проекту.
+Все практики по Firebase (Crashlytics, FCM, Analytics, Remote Config, Performance, In-App Messaging) требуют **вашего собственного** проекта Firebase. **Одно приложение** FinControl: регистрируешь его в своей консоли Firebase и подставляешь **только конфиги** в проект (`google-services.json`, `GoogleService-Info.plist`). Ключи Sentry и AppMetrica для практик 06–07 задаются не здесь, а в [STUDENT_ENV.md](../STUDENT_ENV.md) → `lib/config/student_env.dart`.
+
+---
+
+## Цель
+
+Зарегистрировать свой проект в Firebase Console, добавить в него приложение FinControl (Android и при необходимости iOS), скачать конфиги и положить их в проект, подключить Firebase в коде так, чтобы практики 10–15 работали с твоей консолью.
+
+## Ожидаемый результат
+
+- В [Firebase Console](https://console.firebase.google.com) есть твой проект с зарегистрированными приложениями Android и/или iOS (package name / Bundle ID совпадают с FinControl).
+- В проекте лежат **твои** файлы: `android/app/google-services.json` и при необходимости `ios/Runner/GoogleService-Info.plist`.
+- В `lib/main.dart` перед `runApp(...)` вызывается `Firebase.initializeApp()`; приложение запускается без ошибки «No Firebase App '[DEFAULT]' has been created».
+
+---
 
 ## Шаг 1: Создать проект в Firebase
 
-1. Перейдите на [console.firebase.google.com](https://console.firebase.google.com) и войдите (Google-аккаунт).
-2. **Создать проект** (или **Add project**) → укажите название (например `fin-control-practice`).
-3. При необходимости отключите Google Analytics для упрощения или включите — на ваше усмотрение.
-4. Дождитесь создания проекта.
+1. Открой в браузере [console.firebase.google.com](https://console.firebase.google.com) и войди через Google-аккаунт.
+2. Нажми **Создать проект** (или **Add project**).
+3. Укажи название (например `fin-control-practice`), при необходимости отключи или включи Google Analytics — на твоё усмотрение.
+4. Дождись создания проекта. Окажешься в обзоре проекта.
 
 ## Шаг 2: Добавить приложение Android
 
-1. В обзоре проекта нажмите **Добавить приложение** → выберите **Android**.
-2. Укажите **Package name** — он должен совпадать с приложением FinControl:
-   - откройте `android/app/build.gradle.kts` (или `build.gradle`) и найдите `applicationId`;
-   - либо посмотрите в `android/app/src/main/AndroidManifest.xml` атрибут `package`.
-   - Обычно это что-то вроде `com.yourname.fincontrol.fin_control` или `com.example.fin_control`.
-3. Никнейм и SHA-1 можно не заполнять для начала (для FCM и части возможностей они понадобятся позже).
-4. Нажмите **Зарегистрировать приложение**.
-5. **Скачайте** файл **google-services.json** и поместите его в папку **`android/app/`** проекта FinControl (рядом с `build.gradle.kts`).
+1. В обзоре проекта нажми **Добавить приложение** → выбери иконку **Android**.
+2. В поле **Package name** укажи идентификатор приложения FinControl:
+   - открой в проекте файл **`android/app/build.gradle.kts`** и найди строку `applicationId = "..."`;
+   - скопируй значение в кавычках (например `com.yourname.fincontrol.fin_control`) и вставь в форму Firebase.
+3. Никнейм и SHA-1 можно не заполнять для начала (для FCM и подписи понадобятся в практиках 11 и 09).
+4. Нажми **Зарегистрировать приложение**.
+5. На странице «Скачать google-services.json» нажми **Скачать google-services.json**.
+6. Перемести скачанный файл в папку **`android/app/`** проекта FinControl (рядом с `build.gradle.kts`). Имя файла должно остаться `google-services.json`.
+
+**Безопасность:** не коммитьте в репозиторий конфиги с реальными ключами. Файлы `google-services.json` и `GoogleService-Info.plist` содержат идентификаторы и ключи проекта. В учебном проекте их можно держать локально; в реальных проектах не коммитьте их в публичный репозиторий (или добавьте в `.gitignore`, доставка через CI). Общая политика по ключам: [STUDENT_ENV.md](../STUDENT_ENV.md) (раздел «Безопасность ключей»).
 
 ## Шаг 3: Добавить приложение iOS (если нужна практика на iOS)
 
-1. В обзоре проекта снова **Добавить приложение** → выберите **iOS**.
-2. Укажите **Apple bundle ID** — он должен совпадать с Bundle Identifier в Xcode (откройте `ios/Runner.xcworkspace` → Runner → General → Bundle Identifier). Обычно что-то вроде `com.yourname.fincontrol`.
+1. В обзоре проекта снова **Добавить приложение** → выбери **iOS**.
+2. Укажи **Apple bundle ID** — он должен совпадать с Bundle Identifier в Xcode (открой `ios/Runner.xcworkspace` → Runner → General → Bundle Identifier). Обычно что-то вроде `com.yourname.fincontrol`.
 3. Никнейм и App Store ID можно не заполнять для учебного проекта.
-4. **Скачайте** файл **GoogleService-Info.plist** и добавьте его в проект Xcode в папку **Runner** (перетащите в `ios/Runner/` и отметьте добавление в таргет Runner).
+4. **Скачай** файл **GoogleService-Info.plist** и добавь его в проект Xcode в папку **Runner** (перетащи в `ios/Runner/` и отметь добавление в таргет Runner).
 
 ## Шаг 4: Добавить Firebase в проект и инициализировать
 
-1. В `pubspec.yaml` в блок `dependencies` добавьте:
+1. В корне проекта открой **`pubspec.yaml`**. В блок `dependencies` добавь (если ещё нет):
    ```yaml
    firebase_core: ^3.0.0
    ```
-   Выполните `flutter pub get`.
+   В терминале из корня выполни: `flutter pub get`.
 
-2. Настройте платформы (один раз):
-   - **Android**: в `android/build.gradle.kts` (root) добавьте класспуть `com.google.gms:google-services` и в `android/app/build.gradle.kts` в конец файла — `apply(plugin = "com.google.gms.google-services")`. Подробно см. [документацию Flutter Firebase](https://firebase.flutter.dev/docs/installation).
-   - **iOS**: в `ios/Runner/Info.plist` при необходимости добавьте параметры по документации; Xcode подхватит `GoogleService-Info.plist` из папки Runner.
+2. Настрой платформы (один раз) по [официальной документации Flutter Firebase](https://firebase.flutter.dev/docs/installation):
+   - **Android**: в корневом `android/build.gradle.kts` — класс-путь `com.google.gms:google-services`; в `android/app/build.gradle.kts` в конец файла — `apply(plugin = "com.google.gms.google-services")`.
+   - **iOS**: Xcode подхватит `GoogleService-Info.plist` из папки Runner; при необходимости добавь параметры в `ios/Runner/Info.plist` по документации.
 
-3. В `lib/main.dart` перед `runApp(...)` добавьте:
+3. Открой **`lib/main.dart`**. Убедись, что перед `runApp(...)` выполняется:
    ```dart
    import 'package:firebase_core/firebase_core.dart';
 
    Future<void> main() async {
      WidgetsFlutterBinding.ensureInitialized();
-     await Firebase.initializeApp();  // использует ваши google-services.json и GoogleService-Info.plist
+     await Firebase.initializeApp();  // читает ваши google-services.json и GoogleService-Info.plist
      // ... остальная инициализация (Sentry, AppMetrica, локаль)
      runApp(const FinControlRoot());
    }
    ```
-   Если конфигов ещё нет, `Firebase.initializeApp()` выбросит исключение — сначала положите файлы из шагов 2–3, затем запускайте.
+   Если конфигов ещё нет, `Firebase.initializeApp()` выбросит исключение — сначала положи файлы из шагов 2–3, затем запускай.
 
-4. Дальше по практикам 10–15 добавляйте в `pubspec.yaml` только нужные пакеты (firebase_crashlytics, firebase_messaging и т.д.) и код по шагам в каждой практике. Версии подбирайте совместимые с `firebase_core: ^3.0.0` (смотрите pub.dev или `flutter pub add firebase_crashlytics` и т.д.).
+4. Дальше по практикам 10–15 добавляй в `pubspec.yaml` нужные пакеты (`firebase_crashlytics`, `firebase_messaging` и т.д.) и код по шагам в каждой практике. Версии — совместимые с `firebase_core` (см. pub.dev или `flutter pub add firebase_crashlytics`).
 
-## Кратко
+### Проверка
 
-- **Вы** создаёте проект в Firebase.
-- **Вы** добавляете приложение Android (и при необходимости iOS) и скачиваете **свои** `google-services.json` и `GoogleService-Info.plist`.
-- **Вы** кладёте эти файлы в проект FinControl и один раз вызываете `Firebase.initializeApp()` в `main.dart`.
-- Дальше работаете с модулями Firebase по практикам 10–15.
+- [ ] В Firebase Console в проекте отображаются приложения Android (и при необходимости iOS) с правильным package name / Bundle ID.
+- [ ] Файл `android/app/google-services.json` лежит в проекте и соответствует твоему проекту Firebase.
+- [ ] В `lib/main.dart` вызывается `await Firebase.initializeApp()` до `runApp(...)`.
+- [ ] `flutter run` завершается без ошибки «No Firebase App '[DEFAULT]' has been created».
+
+### Траблшутинг
+
+- **«No Firebase App '[DEFAULT]' has been created»** — проверь, что файлы конфигов лежат в `android/app/` и `ios/Runner/` и что `Firebase.initializeApp()` вызывается до любого использования Firebase. Подробнее: [FAQ — Firebase](../FAQ.md#firebase).
+- **Где взять google-services.json и куда класть:** [FAQ — Где взять google-services.json](../FAQ.md#где-взять-google-servicesjson-и-куда-его-класть).
+
+**Ключи Sentry и AppMetrica** для практик 06–07 задаются не здесь, а в [STUDENT_ENV.md](../STUDENT_ENV.md) (файл `lib/config/student_env.dart`). Для Firebase используются только конфиги из этого шага.
+
+---
+
+## Ссылки
+
+- [Критерии приёмки 00 — Firebase setup](../acceptance-criteria/00-firebase-setup.md)
+- [Список практик и порядок](README.md#порядок-прохождения)
+- [FAQ — Firebase](../FAQ.md#firebase)

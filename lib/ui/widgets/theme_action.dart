@@ -1,6 +1,6 @@
 // Кнопка в AppBar для переключения светлой/тёмной темы.
 import 'package:flutter/material.dart';
-import '../../../state/theme_controller.dart';
+import '../../state/theme_controller.dart';
 
 class ThemeAction extends StatelessWidget {
   const ThemeAction({super.key});

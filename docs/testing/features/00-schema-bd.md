@@ -1,6 +1,6 @@
 # Общая схема БД FinControl
 
-Единая схема SQLite для тестовой документации и тест-кейсов.
+Единая схема SQLite для тестовой документации и тест-кейсов. Соответствует [архитектуре приложения](../../technical/architecture.md) (раздел 3).
 
 ## ER (сущности)
 
@@ -44,6 +44,37 @@ erDiagram
     REAL rate
     REAL total_base
   }
+
+  price_alerts {
+    INTEGER id PK
+    TEXT currency_from
+    TEXT currency_to
+    REAL target_rate
+    INTEGER is_above
+    INTEGER created_at
+    INTEGER notified
+  }
+
+  limit_orders {
+    INTEGER id PK
+    TEXT currency_from
+    TEXT currency_to
+    REAL amount_from
+    REAL target_rate
+    INTEGER is_above
+    INTEGER created_at
+    TEXT status
+  }
+
+  savings_goals {
+    INTEGER id PK
+    TEXT title
+    REAL target_amount
+    TEXT base_currency
+    REAL current_amount
+    INTEGER deadline
+    INTEGER created_at
+  }
 ```
 
 ## Таблицы
@@ -54,10 +85,13 @@ erDiagram
 | **exchange_operations** | История операций обменника: created_at, amount_from/to, currency_from/to, rate_used |
 | **portfolio_holdings** | Позиции по валютам: currency (UNIQUE), amount, avg_rate, updated_at |
 | **portfolio_transactions** | История сделок портфеля: type (buy/sell), currency, amount, rate, total_base |
+| **price_alerts** | Оповещения по курсу: currency_from/to, target_rate, is_above, notified |
+| **limit_orders** | Отложенные обмены: currency_from/to, amount_from, target_rate, is_above, status |
+| **savings_goals** | Цели накопления: title, target_amount, base_currency, current_amount, deadline, created_at |
 
 Дополнительно: категории (встроенные в коде + пользовательские в SharedPreferences), кэш курсов и настройки (тема, базовая валюта) — SharedPreferences.
 
 ## Версия БД
 
-- Текущая версия в коде: `_dbVersion = 3` (db.dart).
-- Миграции: v1 → expenses; v2 → image_path; v3 → exchange_operations, portfolio_holdings, portfolio_transactions.
+- Текущая версия в коде: `_dbVersion = 4` (db.dart).
+- Миграции: v1 → expenses; v2 → image_path; v3 → exchange_operations, portfolio_holdings, portfolio_transactions; v4 → price_alerts, limit_orders, savings_goals.

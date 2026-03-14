@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/app_theme.dart';
 import '../../domain/models/expense.dart';
 import '../../domain/models/portfolio_holding.dart';
 import '../../domain/models/portfolio_transaction.dart';
@@ -109,6 +110,7 @@ class _StocksScreenState extends State<StocksScreen> with SingleTickerProviderSt
     final existing = list.isEmpty ? null : list.first;
     double newAmount;
     double newAvgRate;
+    // Средняя цена входа: взвешенная по объёму (старая позиция + новая покупка).
     if (existing != null) {
       newAmount = existing.amount + shares;
       newAvgRate = (existing.avgRate * existing.amount + stock.priceRub * shares) / newAmount;
@@ -168,6 +170,7 @@ class _StocksScreenState extends State<StocksScreen> with SingleTickerProviderSt
     final existing = list.isEmpty ? null : list.first;
     double newAmount;
     double newAvgRate;
+    // Средняя цена входа: взвешенная по объёму (как в _buyStock).
     if (existing != null) {
       newAmount = existing.amount + amount;
       newAvgRate = (existing.avgRate * existing.amount + crypto.priceRub * amount) / newAmount;
@@ -327,7 +330,7 @@ class _StocksScreenState extends State<StocksScreen> with SingleTickerProviderSt
                     : RefreshIndicator(
                         onRefresh: _loadStocks,
                         child: ListView(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(AppTheme.screenPadding),
                           children: [
                             _periodChips(),
                             ..._stocks.map((s) => _buildStockCard(context, s, fmt)),
@@ -339,7 +342,7 @@ class _StocksScreenState extends State<StocksScreen> with SingleTickerProviderSt
                     : RefreshIndicator(
                         onRefresh: _loadCrypto,
                         child: ListView(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(AppTheme.screenPadding),
                           children: [
                             _periodChips(),
                             ..._crypto.map((c) => _buildCryptoCard(context, c, fmt)),

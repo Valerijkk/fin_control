@@ -1,22 +1,29 @@
 # Практика: Firebase Crashlytics — стабильность релиза
 
+**Одно приложение** FinControl. **Сначала [00-firebase-setup.md](00-firebase-setup.md):** свой проект Firebase, конфиги (`google-services.json`, `GoogleService-Info.plist`) в проект, `Firebase.initializeApp()` в коде. Ключи Sentry/AppMetrica — в [STUDENT_ENV.md](../STUDENT_ENV.md), не здесь. Затем шаги этой практики — остальное из коробки (пакет + код по шагам ниже).
+
 ## Цель
 
-Подключить Firebase Crashlytics к приложению FinControl и научиться отслеживать падения и нефатальные ошибки для оценки стабильности релиза.
+Подключить Firebase Crashlytics к приложению FinControl (твой проект Firebase) и отслеживать падения и нефатальные ошибки: тестовый краш или записанная ошибка должны появиться в Firebase Console → Crashlytics → Issues.
 
-## Важно: свой проект Firebase
+## Важно: один проект Firebase для приложения
 
-**Сначала выполните [00-firebase-setup.md](00-firebase-setup.md):** зарегистрируйте свой проект в Firebase Console, добавьте приложение (Android/iOS), скачайте и поместите в проект **свои** `google-services.json` и `GoogleService-Info.plist`, включите в коде `Firebase.initializeApp()`. Без этого Crashlytics не заработает.
+**Сначала выполни [00-firebase-setup.md](00-firebase-setup.md):** зарегистрируй свой проект в Firebase Console, добавь приложение FinControl (Android/iOS), скачай и положи в проект **свои** `google-services.json` и `GoogleService-Info.plist`, вызови в коде `Firebase.initializeApp()`. Конфиги Firebase — не в `student_env.dart`; ключи Sentry/AppMetrica (практики 06–07) задаются в [STUDENT_ENV.md](../STUDENT_ENV.md). Без выполненного [00-firebase-setup.md](00-firebase-setup.md) Crashlytics не заработает.
+
+## Ожидаемый результат
+
+- Crashlytics подключён в коде (перехват Flutter-ошибок и `runZonedGuarded`); тестовый краш или `recordError` отправляются в ваш проект Firebase.
+- В Firebase Console → **Crashlytics** → **Issues** появляется отчёт с стек-трейсом, устройством и контекстом; по отчёту можно понять место в коде и стабильность релиза.
 
 ## Что понадобится
 
-- Ваш Firebase-проект с подключённым приложением (по шагам из 00-firebase-setup.md)
+- Ваш Firebase-проект с подключённым приложением (по шагам из [00-firebase-setup.md](00-firebase-setup.md))
 - Добавьте в `pubspec.yaml` при необходимости `firebase_crashlytics` (совместимую с firebase_core)
 
 ## Шаг 1: Подключение Crashlytics в проекте
 
 1. Убедитесь, что в `main.dart` уже вызван `Firebase.initializeApp()` (по [00-firebase-setup.md](00-firebase-setup.md)).
-2. Добавьте в `pubspec.yaml`: `firebase_crashlytics: ^4.0.0` (и `firebase_core`, если ещё не добавляли по 00-firebase-setup.md). Выполните `flutter pub get`.
+2. Добавьте в `pubspec.yaml`: `firebase_crashlytics: ^4.0.0` (и `firebase_core`, если ещё не добавляли по [00-firebase-setup.md](00-firebase-setup.md)). Выполните `flutter pub get`.
 3. В `lib/main.dart` после `Firebase.initializeApp()` добавьте:
    ```dart
    import 'package:firebase_crashlytics/firebase_crashlytics.dart';
@@ -64,8 +71,21 @@ FirebaseCrashlytics.instance.recordError(
 2. После первого краша или записи ошибки (и перезапуска приложения) отчёт появится в разделе **Issues**.
 3. Откройте issue: видны стек-трейс, устройство, версия ОС, количество затронутых пользователей — это и есть «стабильность релиза».
 
-## Что проверить
+## Проверка
 
-- [ ] Crashlytics подключён, нефатальные и фатальные ошибки перехватываются.
-- [ ] Тестовый краш или записанная ошибка отображаются в Firebase Crashlytics.
-- [ ] По отчёту можно понять место в коде и контекст падения.
+- [ ] Выполнен [00-firebase-setup.md](00-firebase-setup.md): в проекте ваши конфиги Firebase, вызывается `Firebase.initializeApp()`.
+- [ ] Crashlytics подключён в коде; нефатальные и фатальные ошибки перехватываются и отправляются.
+- [ ] Тестовый краш (`FirebaseCrashlytics.instance.crash()`) или записанная ошибка отображаются в Firebase Console → **Crashlytics** → Issues (после перезапуска приложения при фатальном краше).
+- [ ] В отчёте видны стек-трейс, устройство, контекст падения.
+
+## Траблшутинг
+
+- **Crashlytics не видит крашей** — убедись, что выполнен [00-firebase-setup.md](00-firebase-setup.md), конфиги в проекте, `Firebase.initializeApp()` вызывается до Crashlytics. После фатального краша отчёт отправляется при следующем запуске приложения.
+- **Firebase:** [FAQ — Firebase](../FAQ.md#firebase).
+
+## Ссылки
+
+- [00-firebase-setup.md](00-firebase-setup.md) — обязательно перед этой практикой
+- [Критерии приёмки 10 — Firebase Crashlytics](../acceptance-criteria/10-firebase-crashlytics.md)
+- [FAQ — Firebase](../FAQ.md#firebase)
+- [Список практик](README.md)

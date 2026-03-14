@@ -8,10 +8,9 @@ final _numRu = NumberFormat.decimalPattern('ru_RU');
 /// Пример: money(12.34) → "12 ₽".
 String money(double x) => '${_numRu.format(x.round())} ₽';
 
-/// Форматирует дату и время в виде "ДД.ММ.ГГГГ • ЧЧ:ММ".
+/// Форматирует дату и время в виде "ДД.ММ.ГГГГ • ЧЧ:ММ" (русская локаль).
 String formatDate(DateTime d) {
-  String two(int n) => n.toString().padLeft(2, '0');
-  return '${two(d.day)}.${two(d.month)}.${d.year} • ${two(d.hour)}:${two(d.minute)}';
+  return DateFormat('dd.MM.yyyy • HH:mm', 'ru_RU').format(d);
 }
 
 /// Краткий заголовок для дня: "Сегодня", "Вчера" или полная дата (например "2 января 2025").

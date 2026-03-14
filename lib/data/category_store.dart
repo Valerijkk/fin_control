@@ -19,7 +19,7 @@ class CategoryStore {
     return clean.toList();
   }
 
-  /// Сохраняет полный список категорий в префы.
+  /// Сохраняет полный список категорий в SharedPreferences.
   Future<void> save(List<String> categories) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList(_key, categories);

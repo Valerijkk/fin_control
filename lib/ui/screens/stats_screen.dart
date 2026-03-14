@@ -1,10 +1,13 @@
 // Экран «Статистика»: полоски по категориям (только расходы), проценты, всего расходов/доходов.
 import 'package:flutter/material.dart';
+import '../../core/app_theme.dart';
 import '../../state/app_scope.dart';
 import '../../core/formatters.dart';
 import '../widgets/app_bar_title.dart';
 import '../widgets/bar_row.dart';
+import '../widgets/section_title.dart';
 import '../widgets/theme_action.dart';
+import '../widgets/settings_action.dart';
 
 class StatsScreen extends StatelessWidget {
   const StatsScreen({super.key});
@@ -29,12 +32,14 @@ class StatsScreen extends StatelessWidget {
     final totalIncome = s.items.where((e) => e.isIncome).fold<double>(0, (x, e) => x + e.amount);
 
     return Scaffold(
-      appBar: const AppBarTitle(title: 'Статистика', actions: [ThemeAction()]),
+      appBar: const AppBarTitle(title: 'Статистика', actions: [ThemeAction(), SettingsAction()]),
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppTheme.screenPadding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            SectionTitle(title: 'Расходы по категориям'),
+            const SizedBox(height: AppTheme.sectionSpacing),
             for (final entry in byCat.entries)
               BarRow(
                 label: entry.key,
@@ -42,13 +47,13 @@ class StatsScreen extends StatelessWidget {
                 maxAbs: maxVal,
                 percent: totalExpenses > 0 && entry.value > 0 ? (entry.value / totalExpenses) : null,
               ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppTheme.sectionSpacingLarge),
             Text(
               'Всего расходов: ${money(totalExpenses)}',
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
             if (totalIncome > 0) ...[
-              const SizedBox(height: 4),
+              const SizedBox(height: AppTheme.sectionSpacing),
               Text(
                 'Всего доходов: ${money(totalIncome)}',
                 style: TextStyle(

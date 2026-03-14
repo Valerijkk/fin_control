@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../../config/telemetry.dart';
+import '../../core/app_theme.dart';
 import '../../state/theme_controller.dart';
 import '../../state/app_scope.dart';
 import '../widgets/app_bar_title.dart';
@@ -19,7 +20,7 @@ class SettingsScreen extends StatelessWidget {
     return Scaffold(
       appBar: const AppBarTitle(title: 'Настройки', canPop: true, actions: [ThemeAction()]),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppTheme.screenPadding),
         children: [
           SwitchListTile(
             value: isDark,
@@ -36,7 +37,7 @@ class SettingsScreen extends StatelessWidget {
               final ok = await showDialog<bool>(
                 context: context,
                 builder: (_) => AlertDialog(
-                  title: const Text('Подтвердите'),
+                  title: const Text('Подтверждение'),
                   content: const Text('Удалить все записи безвозвратно?'),
                   actions: [
                     TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Отмена')),

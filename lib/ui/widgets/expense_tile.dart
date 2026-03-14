@@ -1,10 +1,12 @@
 // Одна строка в списке: иконка категории, название, дата, сумма, кнопка фото.
 import 'package:flutter/material.dart';
+import '../../core/app_theme.dart';
 import '../../core/formatters.dart';
 import '../../core/routes.dart';
 import '../../core/categories.dart';
 import '../../domain/models/expense.dart';
 
+/// Виджет одной записи расхода/дохода в списке на [HomeScreen].
 class ExpenseTile extends StatelessWidget {
   final Expense expense;
   const ExpenseTile({super.key, required this.expense});
@@ -14,14 +16,10 @@ class ExpenseTile extends StatelessWidget {
     final color = expense.isIncome ? Colors.green : categoryColor(expense.category);
     final sign = expense.isIncome ? '+ ' : '- ';
 
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-      ),
-      child: Row(
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppTheme.cardContentPadding),
+        child: Row(
         children: [
           CircleAvatar(
             radius: 18,
@@ -56,6 +54,7 @@ class ExpenseTile extends StatelessWidget {
             style: TextStyle(fontWeight: FontWeight.w700, color: color),
           ),
         ],
+        ),
       ),
     );
   }

@@ -1,5 +1,6 @@
 // Экран приветствия: заголовок и кнопка «Начать» → ShellScreen.
 import 'package:flutter/material.dart';
+import '../../core/app_theme.dart';
 import '../../core/routes.dart';
 import '../widgets/app_bar_title.dart';
 import '../widgets/primary_button.dart';
@@ -13,7 +14,7 @@ class WelcomeScreen extends StatelessWidget {
       appBar: const AppBarTitle(title: 'Добро пожаловать', actions: [ThemeAction()]),
       body: Center(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(AppTheme.sectionSpacingLarge),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

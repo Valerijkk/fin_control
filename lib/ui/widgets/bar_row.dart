@@ -1,5 +1,6 @@
 // Строка в статистике: подпись, полоска по value/maxAbs, сумма и опционально процент.
 import 'package:flutter/material.dart';
+import '../../core/app_theme.dart';
 import '../../core/formatters.dart';
 
 class BarRow extends StatelessWidget {
@@ -24,7 +25,7 @@ class BarRow extends StatelessWidget {
     final pctText = percent != null ? ' • ${(percent! * 100).toStringAsFixed(0)}%' : '';
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: AppTheme.sectionSpacing),
       child: Row(
         children: [
           SizedBox(width: 96, child: Text(label)),

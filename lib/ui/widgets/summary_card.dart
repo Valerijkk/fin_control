@@ -1,5 +1,6 @@
 // Карточка «Итоги»: сумма расходов, доходов и итог по списку записей.
 import 'package:flutter/material.dart';
+import '../../core/app_theme.dart';
 import '../../core/formatters.dart';
 import '../../domain/models/expense.dart';
 
@@ -17,14 +18,10 @@ class SummaryCard extends StatelessWidget {
 
     Color tr(bool ok) => ok ? Colors.green : Colors.red;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-      ),
-      child: Row(
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppTheme.cardContentPadding),
+        child: Row(
         children: [
           Icon(Icons.account_balance_wallet_outlined, size: 28, color: tr(isOk)),
           const SizedBox(width: 12),
@@ -63,6 +60,7 @@ class SummaryCard extends StatelessWidget {
             ]),
           ),
         ],
+        ),
       ),
     );
   }

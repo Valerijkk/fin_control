@@ -7,7 +7,7 @@ import 'package:fin_control/ui/screens/home_screen.dart';
 import '../../helpers/test_host.dart';
 
 void main() {
-  testWidgets('Home: summary & filters work', (tester) async {
+  testWidgets('Home: отображает итог и фильтрацию по категориям', (tester) async {
     final state = TestAppState();
     state.seed([
       exp(title: 'Продукты', amount: 100, category: 'Еда'),
@@ -15,21 +15,23 @@ void main() {
     ]);
 
     await tester.pumpWidget(makeHost(home: const HomeScreen(), state: state));
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
 
     expect(find.textContaining('— 50 ₽'), findsOneWidget);
 
     await tester.ensureVisible(find.text('Еда'));
     await tester.tap(find.text('Еда'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
     expect(find.text('Продукты'), findsOneWidget);
     expect(find.text('Зарплата'), findsNothing);
 
     await tester.ensureVisible(find.text('Все категории'));
     await tester.tap(find.text('Все категории'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
+    // Прокрутка списка, чтобы лениво построилась вторая запись (Зарплата)
+    final scrollable = find.byType(Scrollable).first;
+    await tester.drag(scrollable, const Offset(0, -200));
+    await tester.pumpAndSettle();
     expect(find.text('Продукты'), findsOneWidget);
     expect(find.text('Зарплата'), findsOneWidget);
   });
@@ -53,11 +55,15 @@ void main() {
         reason: 'После нажатия «Добавить» bottom sheet должен закрыться');
   });
 
-  testWidgets('Home: edit via tile tap', (tester) async {
+  testWidgets('Home: редактирование по тапу на запись', (tester) async {
     final state = TestAppState();
     state.seed([exp(title: 'Такси', amount: 300, category: 'Транспорт')]);
 
     await tester.pumpWidget(makeHost(home: const HomeScreen(), state: state));
+    await tester.pumpAndSettle();
+    final scrollable = find.byType(Scrollable).first;
+    await tester.drag(scrollable, const Offset(0, -200));
+    await tester.pumpAndSettle();
 
     await tester.tap(find.text('Такси'));
     await tester.pump();
@@ -73,13 +79,18 @@ void main() {
     }
     expect(find.byType(AddEditScreen), findsNothing);
     expect(find.text('Такси (исправлено)'), findsAtLeastNWidgets(1));
+    // Дожидаемся завершения таймера SavingsGoalCard (10 с), чтобы не оставалось pending timers после dispose.
+    await tester.pumpAndSettle(const Duration(seconds: 11));
   });
 
-  testWidgets('Home: dismiss delete + UNDO', (tester) async {
+  testWidgets('Home: свайп удаление и отмена (UNDO)', (tester) async {
     final state = TestAppState();
     state.seed([exp(title: 'Кофе', amount: 200, category: 'Досуг')]);
 
     await tester.pumpWidget(makeHost(home: const HomeScreen(), state: state));
+    await tester.pumpAndSettle();
+    final scrollable = find.byType(Scrollable).first;
+    await tester.drag(scrollable, const Offset(0, -200));
     await tester.pumpAndSettle();
     expect(find.text('Кофе'), findsOneWidget);
 
@@ -89,10 +100,10 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Удалить'));
-    await tester.pumpAndSettle();
+    await tester.pumpAndSettle(const Duration(seconds: 2));
 
     expect(find.textContaining('Удалено: Кофе'), findsOneWidget);
-    await tester.tap(find.text('ОТМЕНА'));
+    await tester.tap(find.text('Отмена'));
     await tester.pumpAndSettle();
 
     expect(find.text('Кофе'), findsOneWidget);

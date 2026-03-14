@@ -34,6 +34,7 @@ class PortfolioRepository {
     await prefs.setDouble(_keyBalance, value);
   }
 
+  /// Устанавливает базовую валюту портфеля (для отображения сумм).
   Future<void> setBaseCurrency(String currency) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keyBaseCurrency, currency);

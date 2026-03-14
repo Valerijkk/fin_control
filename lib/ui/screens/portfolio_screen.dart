@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/app_theme.dart';
 import '../../domain/models/expense.dart';
 import '../../domain/models/portfolio_holding.dart';
 import '../../domain/models/portfolio_transaction.dart';
@@ -9,6 +10,7 @@ import '../../domain/repositories/portfolio_repository.dart';
 import '../../services/rates_api.dart';
 import '../../state/app_scope.dart';
 import '../widgets/app_bar_title.dart';
+import '../widgets/section_title.dart';
 import '../widgets/theme_action.dart';
 import '../widgets/settings_action.dart';
 
@@ -40,6 +42,7 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
     final base = await _repo.getBaseCurrency();
     final holdings = await _repo.getHoldings();
     final transactions = await _repo.getTransactions();
+    if (!mounted) return;
     setState(() {
       _balance = balance;
       _baseCurrency = base;
@@ -70,6 +73,74 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
   double? _costInBase(double amount, String currency) {
     final rate = _rateToBase(currency);
     return rate == null ? null : amount * rate;
+  }
+
+  /// Общая стоимость портфеля (баланс + текущая стоимость активов).
+  double _totalEquity() {
+    double sum = _balance;
+    for (final h in _holdings) {
+      final worth = _costInBase(h.amount, h.currency);
+      if (worth != null) {
+        sum += worth;
+      } else {
+        sum += h.amount * h.avgRate;
+      }
+    }
+    return sum;
+  }
+
+  /// Средняя цена входа (cost basis) по всем активам.
+  double _costBasis() {
+    return _holdings.fold(0.0, (s, h) => s + h.amount * h.avgRate);
+  }
+
+  /// Нереализованный PnL: текущая стоимость активов минус cost basis.
+  double _unrealizedPnl() {
+    double marketValue = 0;
+    double cost = 0;
+    for (final h in _holdings) {
+      final worth = _costInBase(h.amount, h.currency);
+      marketValue += worth ?? (h.amount * h.avgRate);
+      cost += h.amount * h.avgRate;
+    }
+    return marketValue - cost;
+  }
+
+  /// Реализованный PnL: всего выведено от продаж минус всего вложено в покупки.
+  double _realizedPnl() {
+    double bought = 0, sold = 0;
+    for (final t in _transactions) {
+      if (t.type == 'buy') {
+        bought += t.totalBase;
+      } else {
+        sold += t.totalBase;
+      }
+    }
+    return sold - bought;
+  }
+
+  /// ROI % от начального баланса (100_000 по умолчанию).
+  double _roiPercent() {
+    const initial = 100000.0;
+    final equity = _totalEquity();
+    if (initial <= 0) return 0;
+    return (equity - initial) / initial * 100;
+  }
+
+  /// Доли активов в % от общей стоимости (для аллокации).
+  List<({String currency, double percent, double value})> _allocation() {
+    final total = _totalEquity();
+    if (total <= 0) return [];
+    final list = <({String currency, double percent, double value})>[];
+    for (final h in _holdings) {
+      final value = _costInBase(h.amount, h.currency) ?? (h.amount * h.avgRate);
+      list.add((currency: h.currency, percent: value / total * 100, value: value));
+    }
+    final balanceShare = _balance / total * 100;
+    if (balanceShare > 0.5) {
+      list.insert(0, (currency: _baseCurrency, percent: balanceShare, value: _balance));
+    }
+    return list;
   }
 
   Future<void> _buy(String currency, double amount) async {
@@ -182,6 +253,28 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
     }
   }
 
+  Widget _pnlRow(BuildContext context, String label, double value, bool? positive, {String suffix = ''}) {
+    final fmt = NumberFormat('##0.00', 'ru_RU');
+    final isPositive = positive == true;
+    final isNegative = positive == false;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: Theme.of(context).textTheme.bodyMedium),
+          Text(
+            '${fmt.format(value)}$suffix',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: isPositive ? Colors.green.shade700 : (isNegative ? Colors.red.shade700 : null),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showSnack(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
@@ -207,11 +300,11 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
               ),
             )
           : ListView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppTheme.screenPadding),
               children: [
                 Card(
                   child: Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(AppTheme.cardContentPadding),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -230,14 +323,68 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
-                _SectionTitle(title: 'Активы'),
-                const SizedBox(height: 10),
-                if (_holdings.isEmpty)
-                  const Card(
+                if (_rates != null && (_holdings.isNotEmpty || _transactions.isNotEmpty)) ...[
+                  const SizedBox(height: AppTheme.sectionSpacing),
+                  Card(
                     child: Padding(
-                      padding: EdgeInsets.all(24),
-                      child: Center(child: Text('Нет позиций. Купите валюту по текущему курсу.')),
+                      padding: const EdgeInsets.all(AppTheme.cardContentPadding),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Доходность (PnL)', style: Theme.of(context).textTheme.titleSmall),
+                          const SizedBox(height: 8),
+                          _pnlRow(context, 'Общая стоимость', _totalEquity(), null),
+                          _pnlRow(context, 'Cost basis (вложения)', _costBasis(), null),
+                          _pnlRow(context, 'Нереализ. PnL', _unrealizedPnl(), _unrealizedPnl() >= 0),
+                          _pnlRow(context, 'Реализ. PnL', _realizedPnl(), _realizedPnl() >= 0),
+                          _pnlRow(context, 'ROI', _roiPercent(), _roiPercent() >= 0, suffix: '%'),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+                if (_rates != null && _holdings.isNotEmpty) ...[
+                  const SizedBox(height: AppTheme.sectionSpacing),
+                  SectionTitle(title: 'Аллокация активов'),
+                  const SizedBox(height: AppTheme.sectionSpacing),
+                  ..._allocation().map((a) {
+                    final color = a.currency == _baseCurrency
+                        ? Theme.of(context).colorScheme.primaryContainer
+                        : Theme.of(context).colorScheme.secondaryContainer;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 60,
+                            child: Text(a.currency, style: Theme.of(context).textTheme.labelMedium),
+                          ),
+                          Expanded(
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(
+                                value: (a.percent / 100).clamp(0.0, 1.0),
+                                minHeight: 20,
+                                backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                                valueColor: AlwaysStoppedAnimation<Color>(color),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text('${fmt.format(a.percent)}%', style: Theme.of(context).textTheme.labelMedium),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
+                const SizedBox(height: AppTheme.sectionSpacingLarge),
+                SectionTitle(title: 'Активы'),
+                const SizedBox(height: AppTheme.sectionSpacing),
+                if (_holdings.isEmpty)
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppTheme.cardContentPadding),
+                      child: const Center(child: Text('Нет позиций. Купите валюту по текущему курсу.')),
                     ),
                   )
                 else
@@ -246,7 +393,7 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
                     final displayWorth = worth ?? (h.amount * h.avgRate);
                     final isStock = _rates == null || !_rates!.rates.containsKey(h.currency);
                     return Card(
-                      margin: const EdgeInsets.only(bottom: 8),
+                      margin: const EdgeInsets.only(bottom: AppTheme.sectionSpacing),
                       child: ListTile(
                         title: Text('${h.currency}: ${fmt.format(h.amount)}${isStock ? ' (акции)' : ''}'),
                         subtitle: Text(
@@ -264,10 +411,10 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
                       ),
                     );
                   }),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppTheme.sectionSpacingLarge),
                 if (_rates != null) ...[
-                  _SectionTitle(title: 'Купить валюту'),
-                  const SizedBox(height: 10),
+                  SectionTitle(title: 'Купить валюту'),
+                  const SizedBox(height: AppTheme.sectionSpacing),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
@@ -281,21 +428,21 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
                     }).toList(),
                   ),
                 ],
-                const SizedBox(height: 28),
-                _SectionTitle(title: 'История сделок'),
-                const SizedBox(height: 10),
+                const SizedBox(height: AppTheme.sectionSpacingLarge),
+                SectionTitle(title: 'История сделок'),
+                const SizedBox(height: AppTheme.sectionSpacing),
                 if (_transactions.isEmpty)
-                  const Card(
+                  Card(
                     child: Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Text('Пока нет сделок'),
+                      padding: const EdgeInsets.all(AppTheme.cardContentPadding),
+                      child: const Text('Пока нет сделок'),
                     ),
                   )
                 else
                   ..._transactions.take(15).map((t) {
                     final d = DateFormat('dd.MM HH:mm').format(t.createdAt);
                     return Card(
-                      margin: const EdgeInsets.only(bottom: 8),
+                      margin: const EdgeInsets.only(bottom: AppTheme.sectionSpacing),
                       child: ListTile(
                         title: Text('${t.type == 'buy' ? 'Покупка' : 'Продажа'} ${t.currency}: ${fmt.format(t.amount)}'),
                         subtitle: Text('$d • ${fmt.format(t.totalBase)} $_baseCurrency'),
@@ -321,7 +468,7 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
             TextField(
               controller: c,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: InputDecoration(labelText: 'Сумма в $currency', border: const OutlineInputBorder()),
+              decoration: InputDecoration(labelText: 'Сумма в $currency'),
             ),
           ],
         ),
@@ -355,7 +502,7 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
             TextField(
               controller: c,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(labelText: 'Сумма к продаже', border: OutlineInputBorder()),
+              decoration: const InputDecoration(labelText: 'Сумма к продаже'),
             ),
           ],
         ),
@@ -370,26 +517,6 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
             child: const Text('Продать'),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _SectionTitle extends StatelessWidget {
-  final String title;
-
-  const _SectionTitle({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 4),
-      child: Text(
-        title,
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-          fontWeight: FontWeight.w700,
-          color: Theme.of(context).colorScheme.primary,
-        ),
       ),
     );
   }

@@ -2,7 +2,9 @@
 
 ## 1. Обзор
 
-- **Клиент**: одно приложение Flutter (Android, iOS, при необходимости Web).
+- **Клиент**: одно приложение **FinControl** на Flutter — для всех мобильных и веб-практик (Android, iOS, при необходимости Web). Одна кодовая база, одни и те же экраны и интеграции. Актуальная структура — в `lib/`.
+- **Запуск из коробки:** приложение собирается и запускается из корня репозитория без дополнительной настройки; базовый функционал (расходы, обменник, портфель, статистика) работает с локальной БД.
+- **Интеграции по токенам:** метрики и Firebase подключаются только подстановкой ключей в указанный файл: Sentry и AppMetrica — в `lib/config/student_env.dart`; Firebase — конфиги проекта (`google-services.json`, `GoogleService-Info.plist`). Без ключей приложение корректно работает без инициализации этих SDK. См. [STUDENT_ENV.md](../STUDENT_ENV.md).
 - **Данные**: локальные SQLite (расходы, категории, история обмена, портфель/сделки) + кэш курсов в shared_preferences.
 - **Сеть**: только запросы к публичным API курсов валют (HTTPS). Трафик рассчитан на перехват Charles/Proxyman.
 
@@ -12,10 +14,15 @@
 
 ## 2. Структура проекта Flutter
 
+Актуальная структура — в папке `lib/`. Ниже — ориентировочная схема; экраны и сервисы могут дополняться (например Акции, крипто-API).
+
 ```
 lib/
 ├── main.dart
 ├── app.dart
+├── config/
+│   ├── student_env.dart        # DSN/API Key по практикам (не коммитить секреты)
+│   └── telemetry.dart          # Sentry, AppMetrica
 ├── core/
 │   ├── routes.dart
 │   ├── app_theme.dart
@@ -23,22 +30,30 @@ lib/
 │   ├── categories.dart
 │   └── formatters.dart
 ├── data/
-│   ├── db.dart                 # SQLite: расходы, таблицы обмена/портфеля
-│   ├── category_store.dart
-│   └── (при необходимости) exchange_store.dart / portfolio_store.dart
+│   ├── db.dart
+│   └── category_store.dart
 ├── domain/
 │   ├── models/
 │   │   ├── expense.dart
-│   │   ├── exchange_operation.dart   # новая сущность
-│   │   └── portfolio_holding.dart   # новая сущность
+│   │   ├── exchange_operation.dart
+│   │   ├── portfolio_holding.dart
+│   │   ├── portfolio_transaction.dart
+│   │   ├── price_alert.dart
+│   │   ├── limit_order.dart
+│   │   └── savings_goal.dart
 │   └── repositories/
 │       ├── expense_repository.dart
-│       ├── exchange_repository.dart  # новая
-│       └── portfolio_repository.dart # новая
+│       ├── exchange_repository.dart
+│       ├── portfolio_repository.dart
+│       ├── price_alerts_repository.dart
+│       ├── limit_orders_repository.dart
+│       └── savings_goal_repository.dart
 ├── services/
-│   └── rates_api.dart          # существующий, доработать при необходимости
+│   ├── rates_api.dart          # курсы валют
+│   ├── stocks_api.dart         # при наличии экрана акций
+│   └── crypto_api.dart         # при наличии
 ├── state/
-│   ├── app_state.dart          # расширить под обмен и портфель или отдельные контроллеры
+│   ├── app_state.dart
 │   ├── app_scope.dart
 │   └── theme_controller.dart
 └── ui/
@@ -50,12 +65,11 @@ lib/
     │   ├── stats_screen.dart
     │   ├── settings_screen.dart
     │   ├── photo_viewer_screen.dart
-    │   ├── exchange_screen.dart   # новый — обменник
-    │   └── portfolio_screen.dart  # новый — портфель
+    │   ├── exchange_screen.dart
+    │   ├── stocks_screen.dart
+    │   └── portfolio_screen.dart
     └── widgets/
-        ├── ... (существующие)
-        ├── exchange_form.dart     # форма обмена
-        └── portfolio_list.dart    # список активов
+        └── app_bar_title, primary_button, summary_card, expense_tile, bar_row, rates_card, candlestick_chart, settings_action, theme_action, section_title, savings_goal_card
 ```
 
 ---
@@ -96,8 +110,8 @@ lib/
 
 ## 5. Навигация и маршруты
 
-- Добавить маршруты: `/exchange` (обменник), `/portfolio` (портфель).
-- В shell (bottom navigation или drawer) — пункты «Обменник» и «Портфель» рядом с «Расходы» и «Статистика».
+- Маршруты заданы в `lib/core/routes.dart` и обрабатываются в `app_router.dart`: `/` (welcome), `/home` (shell), `/add`, `/settings`, `/photo`, `/exchange`, `/stocks`, `/portfolio`.
+- В shell (нижняя навигация) — пункты: Список (расходы), Обменник, Акции, Портфель, Статистика.
 
 ---
 
@@ -116,14 +130,22 @@ lib/
 
 ---
 
-## 7. Безопасность и прокси
+## 7. Производительность
+
+- **Тяжёлые операции не блокируют UI:** запросы к SQLite (`data/db.dart`), к API курсов (`services/rates_api.dart`) и к API акций/крипты (`services/stocks_api.dart`, `services/crypto_api.dart`) выполняются асинхронно (`Future`/`async`). sqflite выполняет запросы в фоновом потоке; сетевые вызовы и чтение кэша из SharedPreferences также асинхронны. Не запускайте длительные синхронные вычисления на main isolate без `compute()`.
+- **Метрики и регрессии:** для отслеживания скорости ключевых сценариев используется Firebase Performance Monitoring (практика [14-firebase-performance](../practices/14-firebase-performance.md)): автоматические метрики (App start, сеть) и кастомный трейс загрузки курсов (`load_rates`). Рекомендуется сравнивать метрики между версиями приложения, чтобы выявлять регрессии по скорости.
+- **Таймауты:** в `RatesApi` задан таймаут сетевого запроса (5 с); при медленной сети или недоступности API показывается кэш с пометкой «офлайн» или сообщение об ошибке. Рекомендации для пользователя при медленной загрузке — в [FAQ](../FAQ.md) и [README](../../README.md).
+
+---
+
+## 8. Безопасность и прокси
 
 - Сертификаты Charles/Proxyman: на устройстве/эмуляторе устанавливается доверенный CA, трафик к API курсов расшифровывается прокси — стандартная практика при настройке прокси.
 - В коде не хранить секреты API (публичные API курсов обычно по ключу или без; при добавлении ключа — через конфиг/переменные окружения).
 
 ---
 
-## 8. Логирование
+## 9. Логирование
 
 - Android: стандартный вывод + logcat (документация в практиках: фильтры по тегу приложения).
 - iOS: вывод в консоль Xcode (документация в практиках).
@@ -131,14 +153,15 @@ lib/
 
 ---
 
-## 9. Сборки и дистрибуция
+## 10. Сборки и дистрибуция
 
 - **Android**: сборка release (APK/AAB), подписание, загрузка в выбранный дистрибьютор (Google Play Internal testing или Firebase App Distribution) — шаги в практиках.
 - **iOS**: сборка для симулятора и устройство, загрузка в TestFlight — шаги в практиках.
 
 ---
 
-## 10. Документация
+## 11. Документация
 
 - **docs/practices/** — пошаговые практики: Charles, Proxyman, Android Studio, Xcode, ADB, Sentry, AppMetrica, сборки (TestFlight, Android), Firebase (все перечисленные модули).
-- **README** — цель проекта, ссылки на практики, требования (Flutter 3.x, настройка эмуляторов).
+- **docs/technical/** — [architecture.md](architecture.md), [data-models.md](data-models.md), [api-spec.md](api-spec.md), [ANDROID_STUDIO_LAUNCH.md](ANDROID_STUDIO_LAUNCH.md).
+- **Корневой README** — цель проекта, ссылки на практики, требования (Flutter 3.x, настройка эмуляторов).

@@ -87,11 +87,23 @@ sequenceDiagram
   UI-->>U: возврат на список
 ```
 
-## 7. Связанные тест-кейсы
+## 7. Ожидаемое поведение UI
 
-См. [test-cases.md](../test-cases.md): разделы по `home_screen_test.dart`, `add_edit_screen_test.dart`, `photo_viewer_screen_test.dart`.
+- **Кнопки:** основные действия — «Сохранить» / «Сохранить изменения», «Добавить», «Удалить» в диалоге; подписи однозначны (например «Быстрая запись», «Новая запись» в FAB). Отмена — «Отмена» в диалогах.
+- **Навигация:** переход в запись по тапу на элемент списка; назад — кнопка «Назад» в AppBar; после сохранения — возврат на список.
+- **Сообщения об ошибках:** валидация полей — текст под полем (например «Введите название», «Введите неотрицательную сумму»); камера — SnackBar с текстом ошибки.
+- **Загрузка:** список и форма открываются без искусственной задержки; при длительных операциях (если появятся) — индикатор или блокировка кнопки.
+- **Обратная связь:** после удаления — SnackBar «Удалено: …» с действием «ОТМЕНА»; после сохранения — возврат на список с обновлёнными данными.
 
-## 8. Связанные файлы
+## 8. Связанные тест-кейсы
+
+См. [test-cases.md](../test-cases.md): ручные M-1.1–M-1.5; автотесты — `home_screen_test.dart`, `add_edit_screen_test.dart`, `photo_viewer_screen_test.dart`.
+
+## 9. Связанные практики и критерии приёмки
+
+Практики по телеметрии (Sentry, AppMetrica, Firebase) и чек-листы приёмки — см. [README тестовой документации](../README.md) и [acceptance-criteria](../../acceptance-criteria/README.md). Ключи для Sentry/AppMetrica — только в `lib/config/student_env.dart` ([STUDENT_ENV.md](../../STUDENT_ENV.md)).
+
+## 10. Связанные файлы
 
 - `lib/ui/screens/home_screen.dart`, `add_edit_screen.dart`, `photo_viewer_screen.dart`
 - `lib/domain/models/expense.dart`, `lib/domain/repositories/expense_repository.dart`

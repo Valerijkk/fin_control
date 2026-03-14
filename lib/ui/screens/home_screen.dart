@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../core/app_theme.dart';
 import '../../state/app_scope.dart';
 import '../../state/app_state.dart';
 import '../../core/routes.dart';
@@ -15,10 +16,12 @@ import '../widgets/settings_action.dart';
 import '../widgets/summary_card.dart';
 import '../widgets/expense_tile.dart';
 import '../widgets/rates_card.dart';
+import '../widgets/savings_goal_card.dart';
 import '../widgets/theme_action.dart';
 
 enum _DateFilter { all, today, d7, d30 }
 
+/// Экран списка расходов/доходов: карточка курсов, итоги, фильтры по категории и периоду, быстрая запись, свайп с отменой удаления.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
   @override
@@ -97,83 +100,89 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          const SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: RatesCard(future: _ratesFuture),
-          ),
-          const SizedBox(height: 8),
-          // Поиск
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: TextField(
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.search),
-                hintText: 'Поиск по названию…',
-              ),
-              onChanged: (v) => setState(() => _query = v),
-            ),
-          ),
-          const SizedBox(height: 8),
-          // Итоги по выборке
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: SummaryCard(items: visible),
-          ),
-          const SizedBox(height: 8),
-          // Фильтры: категория + период + добавить
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Row(
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                ChoiceChip(
-                  label: const Text('Все категории'),
-                  selected: _categoryFilter == null,
-                  onSelected: (_) => setState(() => _categoryFilter = null),
-                ),
-                const SizedBox(width: 8),
-                ...cats.map((c) => Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: ChoiceChip(
-                    label: Text(c),
-                    selected: _categoryFilter == c,
-                    onSelected: (_) => setState(() => _categoryFilter = c),
-                  ),
-                )),
+                const SizedBox(height: AppTheme.sectionSpacing),
                 Padding(
-                  padding: const EdgeInsets.only(left: 4),
-                  child: ActionChip(
-                    avatar: const Icon(Icons.add),
-                    label: const Text('Категория'),
-                    onPressed: () async {
-                      final created = await _askNewCategory(context, s);
-                      if (created != null) setState(() => _categoryFilter = created);
-                    },
+                  padding: const EdgeInsets.symmetric(horizontal: AppTheme.screenPadding),
+                  child: RatesCard(future: _ratesFuture),
+                ),
+                const SizedBox(height: AppTheme.sectionSpacing),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: AppTheme.screenPadding),
+                  child: const SavingsGoalCard(),
+                ),
+                const SizedBox(height: AppTheme.sectionSpacing),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: AppTheme.screenPadding),
+                  child: TextField(
+                    decoration: const InputDecoration(
+                      prefixIcon: Icon(Icons.search),
+                      hintText: 'Поиск по названию…',
+                    ),
+                    onChanged: (v) => setState(() => _query = v),
                   ),
                 ),
-                const SizedBox(width: 16),
-                _periodChip(_DateFilter.all, 'Все'),
-                const SizedBox(width: 8),
-                _periodChip(_DateFilter.today, 'Сегодня'),
-                const SizedBox(width: 8),
-                _periodChip(_DateFilter.d7, '7 дней'),
-                const SizedBox(width: 8),
-                _periodChip(_DateFilter.d30, '30 дней'),
+                const SizedBox(height: AppTheme.sectionSpacing),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: AppTheme.screenPadding),
+                  child: SummaryCard(items: visible),
+                ),
+                const SizedBox(height: AppTheme.sectionSpacing),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: AppTheme.sectionSpacing),
+                  child: Row(
+                    children: [
+                      ChoiceChip(
+                        label: const Text('Все категории'),
+                        selected: _categoryFilter == null,
+                        onSelected: (_) => setState(() => _categoryFilter = null),
+                      ),
+                      const SizedBox(width: 8),
+                      ...cats.map((c) => Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ChoiceChip(
+                          label: Text(c),
+                          selected: _categoryFilter == c,
+                          onSelected: (_) => setState(() => _categoryFilter = c),
+                        ),
+                      )),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4),
+                        child: ActionChip(
+                          avatar: const Icon(Icons.add),
+                          label: const Text('Категория'),
+                          onPressed: () async {
+                            final created = await _askNewCategory(context, s);
+                            if (created != null && mounted) setState(() => _categoryFilter = created);
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      _periodChip(_DateFilter.all, 'Все'),
+                      const SizedBox(width: 8),
+                      _periodChip(_DateFilter.today, 'Сегодня'),
+                      const SizedBox(width: 8),
+                      _periodChip(_DateFilter.d7, '7 дней'),
+                      const SizedBox(width: 8),
+                      _periodChip(_DateFilter.d30, '30 дней'),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppTheme.sectionSpacing),
               ],
             ),
           ),
-          const SizedBox(height: 8),
-          // Список
-          Expanded(
-            child: grouped.isEmpty
-                ? const Center(child: Text('Нет записей'))
-                : ListView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              itemCount: grouped.length,
-              itemBuilder: (_, i) {
+          grouped.isEmpty
+              ? const SliverFillRemaining(child: Center(child: Text('Нет записей')))
+              : SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (_, i) {
                 final entry = grouped[i];
                 if (entry is _Header) {
                   return Padding(
@@ -188,7 +197,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   final e = entry.expense;
                   final realIndex = s.items.indexOf(e);
                   return Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.only(bottom: AppTheme.sectionSpacing),
                     child: Dismissible(
                       key: ValueKey(e.id),
                       background: _dismissBg(left: true),
@@ -212,9 +221,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 }
                 return const SizedBox.shrink();
-              },
-            ),
-          ),
+                    },
+                    childCount: grouped.length,
+                  ),
+                ),
         ],
       ),
     );
@@ -228,6 +238,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Группирует записи по дням: для каждого дня добавляется заголовок (Сегодня/Вчера/дата), затем строки записей.
   List<_Entry> _groupByDay(List<Expense> list) {
     if (list.isEmpty) return const [];
 
@@ -255,10 +266,10 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (ctx) {
         return Padding(
           padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 16,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+            left: AppTheme.screenPadding,
+            right: AppTheme.screenPadding,
+            top: AppTheme.screenPadding,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + AppTheme.screenPadding,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -349,7 +360,7 @@ class _HomeScreenState extends State<HomeScreen> {
       SnackBar(
         content: Text('Удалено: ${removed.title}'),
         action: SnackBarAction(
-          label: 'ОТМЕНА',
+          label: 'Отмена',
           onPressed: () async {
             await s.undoLastRemove();
             try {

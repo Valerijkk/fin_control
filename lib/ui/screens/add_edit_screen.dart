@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../core/app_theme.dart';
 import '../../state/app_scope.dart';
 import '../../core/routes.dart';
 import '../../domain/models/expense.dart';
@@ -53,7 +54,7 @@ class _AddEditScreenState extends State<AddEditScreen> {
     super.didChangeDependencies();
     if (_depsInitialized) return;
 
-    // Читаем категории из состояния только здесь (合法но)
+    // Читаем категории из состояния только здесь (корректно)
     final s = AppScope.of(context);
     if (widget.initial == null) {
       // для новой записи — дефолтная категория из списка, иначе оставим ту, что была в initial
@@ -169,7 +170,7 @@ class _AddEditScreenState extends State<AddEditScreen> {
       appBar: const AppBarTitle(title: 'Запись', canPop: true, actions: [ThemeAction()]),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppTheme.screenPadding),
           child: Form(
             key: _form,
             child: ListView(

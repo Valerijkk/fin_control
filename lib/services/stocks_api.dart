@@ -1,3 +1,6 @@
+// API акций (демо-данные). Все вызовы асинхронны (Future), UI не блокируется;
+// при переходе на реальный сетевой API сохранять async/await и не выполнять тяжёлое на main isolate.
+
 /// Одна свеча OHLC (open, high, low, close) для свечного графика.
 class CandlePoint {
   final DateTime time;
@@ -43,7 +46,10 @@ class StockQuote {
 
 /// Список акций с демо-ценами в рублях (для практик тестировщиков).
 /// В реальном приложении здесь был бы запрос к API (Finnhub, Alpha Vantage и т.д.).
+/// Вызовы асинхронны (Future), не блокируют UI; при переходе на реальный API сохранять async/await и таймауты.
 class StocksApi {
+  static const _timeout = Duration(seconds: 10);
+
   static const _mockStocks = [
     StockQuote(ticker: 'AAPL', name: 'Apple Inc.', priceRub: 18500),
     StockQuote(ticker: 'GOOGL', name: 'Alphabet (Google)', priceRub: 16500),
@@ -58,12 +64,20 @@ class StocksApi {
 
   /// Возвращает список акций с демо-ценами в рублях (имитация задержки сети).
   static Future<List<StockQuote>> fetch() async {
+    return _fetchImpl().timeout(_timeout);
+  }
+
+  static Future<List<StockQuote>> _fetchImpl() async {
     await Future.delayed(const Duration(milliseconds: 300));
     return List.from(_mockStocks);
   }
 
   /// Демо-история OHLC для свечного графика (псевдо-случайные свечи от текущей цены в прошлое).
   static Future<List<CandlePoint>> fetchHistory(StockQuote stock, StockChartPeriod period) async {
+    return _fetchHistoryImpl(stock, period).timeout(_timeout);
+  }
+
+  static Future<List<CandlePoint>> _fetchHistoryImpl(StockQuote stock, StockChartPeriod period) async {
     await Future.delayed(const Duration(milliseconds: 50));
     final now = DateTime.now();
     final int count;

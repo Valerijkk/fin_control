@@ -1,8 +1,19 @@
 # Практика: iOS — сборка и публикация в TestFlight
 
+**Одно приложение** FinControl. Задача: собрать iOS-сборку, подписать в Xcode, загрузить в App Store Connect и раздать через TestFlight (тестеры устанавливают по приглашению). Требуется Mac и Xcode — см. [FAQ — Нужен ли Mac](../FAQ.md#нужен-ли-mac-для-практик-по-ios-и-testflight).
+
 ## Цель
 
-Собрать iOS-приложение FinControl, подписать его, загрузить в App Store Connect и раздать тестовую сборку через TestFlight.
+Собрать приложение FinControl для iOS, подписать его в Xcode, загрузить архив в App Store Connect и раздать тестовую сборку через TestFlight так, чтобы тестер мог установить приложение на устройство по приглашению.
+
+## Ожидаемый результат
+
+- В App Store Connect создано приложение с Bundle ID, совпадающим с FinControl; в Xcode настроено подписание (Signing & Capabilities).
+- Собран архив (Product → Archive), загружен в App Store Connect (Distribute App → Upload).
+- После обработки (10–30 минут) сборка появляется в **TestFlight → iOS Builds**; заполнены при необходимости Export Compliance и др.
+- Добавлена группа Internal или External Testing, тестеры по email получили приглашение и могут установить приложение через приложение TestFlight на устройстве.
+
+---
 
 ## Что понадобится
 
@@ -12,23 +23,23 @@
 
 ## Шаг 1: Подготовка в App Store Connect
 
-1. Зайдите на [appstoreconnect.apple.com](https://appstoreconnect.apple.com).
-2. **My Apps** → **+** → **New App**. Укажите название (FinControl), язык, Bundle ID (должен совпадать с `ios/Runner` — например `com.yourname.fincontrol`).
-3. Запомните **Bundle ID** — он должен быть указан в Xcode в настройках проекта Runner.
+1. Зайди на [appstoreconnect.apple.com](https://appstoreconnect.apple.com).
+2. **My Apps** → **+** → **New App**. Укажи название (FinControl), язык, Bundle ID (должен совпадать с `ios/Runner` — например `com.yourname.fincontrol`).
+3. Запомни **Bundle ID** — он должен быть указан в Xcode в настройках проекта Runner.
 
 ## Шаг 2: Настройка подписания в Xcode
 
-1. Откройте `ios/Runner.xcworkspace` в Xcode.
-2. Выберите таргет **Runner** → вкладка **Signing & Capabilities**.
-3. Включите **Automatically manage signing**, выберите вашу **Team** (Apple Developer).
-4. Убедитесь, что **Bundle Identifier** совпадает с заведённым в App Store Connect.
-5. Выберите устройство для сборки — **Any iOS Device (arm64)** для архива.
+1. Открой `ios/Runner.xcworkspace` в Xcode.
+2. Выбери таргет **Runner** → вкладка **Signing & Capabilities**.
+3. Включи **Automatically manage signing**, выбери свою **Team** (Apple Developer).
+4. Убедись, что **Bundle Identifier** совпадает с заведённым в App Store Connect.
+5. Выбери устройство для сборки — **Any iOS Device (arm64)** для архива.
 
 ## Шаг 3: Сборка архива
 
 1. В Xcode: **Product → Archive**.
-2. Дождитесь окончания сборки. Откроется окно **Organizer** с архивом.
-3. Нажмите **Distribute App** → **App Store Connect** → **Upload** → выберите опции (включите при необходимости Bitcode по требованию Apple) → **Upload**.
+2. Дождись окончания сборки. Откроется окно **Organizer** с архивом.
+3. Нажми **Distribute App** → **App Store Connect** → **Upload** → выбери опции (включи при необходимости Bitcode по требованию Apple) → **Upload**.
 
 Либо из терминала (из корня проекта):
 
@@ -40,19 +51,25 @@ flutter build ipa
 
 ## Шаг 4: Обработка и TestFlight
 
-1. В App Store Connect → ваше приложение → **TestFlight**.
+1. В App Store Connect → твоё приложение → **TestFlight**.
 2. После обработки сборки (10–30 минут) она появится в разделе **iOS Builds**.
-3. Заполните при необходимости **Export Compliance**, **Content Rights**, **Advertising Identifier** (в форме после загрузки).
-4. Добавьте **Internal Testing** или **External Testing** группу, добавьте тестеров по email. Тестеры получат приглашение и смогут установить приложение через приложение TestFlight на устройстве.
+3. Заполни при необходимости **Export Compliance**, **Content Rights**, **Advertising Identifier** (в форме после загрузки).
+4. Добавь **Internal Testing** или **External Testing** группу, добавь тестеров по email. Тестеры получат приглашение и смогут установить приложение через приложение TestFlight на устройстве.
 
-## Что проверить
+## Проверка
 
-- [ ] Bundle ID совпадает в Xcode и App Store Connect.
-- [ ] Архив успешно создан и загружен.
-- [ ] Сборка обработана и отображается в TestFlight.
-- [ ] Тестер может установить приложение через TestFlight на реальном устройстве.
+- [ ] Bundle ID в Xcode (Runner → General → Bundle Identifier) совпадает с заведённым в App Store Connect.
+- [ ] Архив успешно создан (Product → Archive) и загружен через Distribute App → App Store Connect → Upload.
+- [ ] В App Store Connect → приложение → **TestFlight** сборка обработана и отображается в iOS Builds.
+- [ ] Добавлена группа тестеров (Internal или External); тестер может установить приложение через приложение TestFlight на реальном устройстве.
 
-## Устранение неполадок
+## Траблшутинг
 
-- **No signing certificate**: создайте сертификат в Apple Developer → Certificates или дайте Xcode создать его автоматически.
-- **Provisioning profile**: при автоматическом подписании Xcode создаст профиль сам; при ручном — создайте App ID и профиль дистрибуции в Developer Portal.
+- **No signing certificate** — создай сертификат в [Apple Developer → Certificates](https://developer.apple.com/account/resources/certificates) или включи в Xcode **Automatically manage signing** — Xcode создаст сертификат сам.
+- **Provisioning profile** — при автоматическом подписании Xcode создаёт профиль сам; при ручном создай App ID и профиль дистрибуции в Developer Portal.
+
+## Ссылки
+
+- [Критерии приёмки 08 — TestFlight](../acceptance-criteria/08-testflight.md)
+- [FAQ — Нужен ли Mac для практик iOS](../FAQ.md#нужен-ли-mac-для-практик-по-ios-и-testflight)
+- [Список практик](README.md)

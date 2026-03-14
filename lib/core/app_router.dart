@@ -25,7 +25,10 @@ class AppRouter {
       case Routes.settings:
         return MaterialPageRoute(builder: (_) => const SettingsScreen(), settings: s);
       case Routes.photo:
-        final path = s.arguments as String;
+        final path = s.arguments is String ? s.arguments as String : null;
+        if (path == null || path.isEmpty) {
+          return _notFoundRoute(s);
+        }
         return MaterialPageRoute(builder: (_) => PhotoViewerScreen(path: path), settings: s);
       case Routes.exchange:
         return MaterialPageRoute(builder: (_) => const ExchangeScreen(), settings: s);
@@ -34,10 +37,14 @@ class AppRouter {
       case Routes.portfolio:
         return MaterialPageRoute(builder: (_) => const PortfolioScreen(), settings: s);
       default:
-        return MaterialPageRoute(
-          builder: (_) => const Scaffold(body: Center(child: Text('Not found'))),
-          settings: s,
-        );
+        return _notFoundRoute(s);
     }
+  }
+
+  static MaterialPageRoute<dynamic> _notFoundRoute(RouteSettings s) {
+    return MaterialPageRoute(
+      builder: (_) => const Scaffold(body: Center(child: Text('Страница не найдена'))),
+      settings: s,
+    );
   }
 }

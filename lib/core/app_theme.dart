@@ -1,7 +1,17 @@
 import 'package:flutter/material.dart';
 
 /// Тема приложения (Material 3): светлая и тёмная. Задаёт цвета, карточки, поля ввода, типографику.
+/// Константы отступов используются в экранах и виджетах для единообразия.
 class AppTheme {
+  /// Горизонтальный отступ экрана от краёв (padding контента).
+  static const double screenPadding = 16;
+  /// Вертикальный отступ между блоками (мелкий).
+  static const double sectionSpacing = 8;
+  /// Вертикальный отступ между крупными секциями.
+  static const double sectionSpacingLarge = 24;
+  /// Внутренний отступ контента внутри карточки (Card child padding).
+  static const double cardContentPadding = 16;
+
   /// Базовая тема с [brightness]. Общие настройки для светлой и тёмной версий.
   static ThemeData _base({required Brightness brightness}) {
     final seed = const Color(0xFF6750A4);

@@ -1,6 +1,6 @@
 // Кнопка «Настройки» в AppBar: переход на экран настроек.
 import 'package:flutter/material.dart';
-import '../../../core/routes.dart';
+import '../../core/routes.dart';
 
 class SettingsAction extends StatelessWidget {
   const SettingsAction({super.key});

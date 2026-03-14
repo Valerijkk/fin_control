@@ -1,16 +1,24 @@
 # Практика: Firebase Remote Config — фичефлаги и rollout
 
+**Одно приложение** FinControl. **Сначала [00-firebase-setup.md](00-firebase-setup.md):** свой проект Firebase, конфиги в проект, `Firebase.initializeApp()`. Затем добавляешь параметры в консоли и в коде читаешь их через `fetchAndActivate()` — поведение приложения меняется без обновления сборки.
+
 ## Цель
 
-Подключить Remote Config в FinControl, добавить параметр (фичефлаг или значение), изменить его в консоли и проверить, что приложение после fetch/activate получает новое значение и меняет поведение.
+Подключить Firebase Remote Config к приложению FinControl (твой проект Firebase), добавить параметр (фичефлаг или значение) в консоли, изменить его и проверить, что приложение после `fetchAndActivate()` получает новое значение и меняет поведение (например скрытие вкладки «Портфель» или отображение комиссии).
 
-## Важно: свой проект Firebase
+## Важно: один проект Firebase
 
-**Сначала [00-firebase-setup.md](00-firebase-setup.md):** свой проект, свои конфиги, `Firebase.initializeApp()`.
+**Сначала [00-firebase-setup.md](00-firebase-setup.md):** свой проект, свои конфиги, `Firebase.initializeApp()`. Ключи Sentry/AppMetrica (практики 06–07) — в [STUDENT_ENV.md](../STUDENT_ENV.md), не здесь.
+
+## Ожидаемый результат
+
+- Параметры созданы в Firebase Console → **Remote Config** и опубликованы.
+- Приложение при старте (или по кнопке «Обновить конфиг») вызывает `fetchAndActivate()` и читает значения (например `show_portfolio`, `commission_percent`).
+- Изменение значения в консоли и повторный fetch в приложении приводят к изменению поведения (скрытие/показ вкладки, подпись о комиссии и т.п.).
 
 ## Что понадобится
 
-- Ваш Firebase-проект (по 00-firebase-setup.md)
+- Ваш Firebase-проект (по [00-firebase-setup.md](00-firebase-setup.md))
 - Добавьте в `pubspec.yaml` при необходимости `firebase_remote_config` (совместимую с firebase_core)
 
 ## Шаг 1: Подключение
@@ -55,8 +63,20 @@ double get commissionPercent => remoteConfig.getDouble('commission_percent');
 1. В консоли измените значение параметра (например выключите `show_portfolio`) и опубликуйте.
 2. В приложении вызовите снова `fetchAndActivate()` (перезапуск или кнопка «Обновить конфиг») и проверьте, что поведение изменилось.
 
-## Что проверить
+## Проверка
 
-- [ ] Параметры созданы в Remote Config и опубликованы.
-- [ ] Приложение получает значения после fetchAndActivate.
-- [ ] Изменение в консоли приводит к изменению поведения в приложении после обновления конфига.
+- [ ] Выполнен [00-firebase-setup.md](00-firebase-setup.md).
+- [ ] Параметры созданы в Firebase Console → **Remote Config** и опубликованы (Publish changes).
+- [ ] Приложение получает значения после `fetchAndActivate()` (при старте или по кнопке).
+- [ ] Изменение значения в консоли и повторный fetch в приложении приводят к изменению поведения в UI.
+
+## Траблшутинг
+
+- **Значения не обновляются** — убедись, что вызван `fetchAndActivate()` при старте или по кнопке; в консоли изменения опубликованы (Publish changes). [FAQ — Firebase](../FAQ.md#firebase).
+
+## Ссылки
+
+- [00-firebase-setup.md](00-firebase-setup.md) — обязательно перед этой практикой
+- [Критерии приёмки 13 — Firebase Remote Config](../acceptance-criteria/13-firebase-remote-config.md)
+- [FAQ — Firebase](../FAQ.md#firebase)
+- [Список практик](README.md)

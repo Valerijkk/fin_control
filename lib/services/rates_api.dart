@@ -1,4 +1,5 @@
 // API курсов валют: два провайдера (exchangerate.host, open.er-api.com), кэш в SharedPreferences.
+// Все вызовы асинхронны (Future/async); сеть и SharedPreferences не блокируют UI.
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -58,10 +59,12 @@ class Rates {
 }
 
 /// Загрузка курсов: сначала основной провайдер, затем fallback, при неудаче — из кэша.
+/// Все операции асинхронны (сеть, SharedPreferences), UI не блокируется.
 class RatesApi {
   static const _cacheKey = 'rates_cache_v2';
+  /// Таймаут одного сетевого запроса; при превышении переходим к следующему провайдеру или кэшу.
   static const _timeout = Duration(seconds: 5);
-  static const _symbols = 'USD,EUR,GBP,CHF,CNY,JPY,KZT,TRY,BRL,INR';
+  static String get _symbols => kCurrencyCodes.join(',');
 
   /// Загружает курсы (сеть или кэш). Кидает исключение, если оба провайдера недоступны и кэш пуст.
   static Future<Rates> fetch() async {
@@ -69,13 +72,17 @@ class RatesApi {
       final r = await _fetchFromExchangeRateHost().timeout(_timeout);
       await _saveCache(r);
       return r;
-    } catch (_) {}
+    } catch (_) {
+      // Провайдер недоступен или таймаут — пробуем следующий или кэш.
+    }
 
     try {
       final r = await _fetchFromOpenERApi().timeout(_timeout);
       await _saveCache(r);
       return r;
-    } catch (_) {}
+    } catch (_) {
+      // Fallback-провайдер недоступен — используем кэш при наличии.
+    }
 
     final cached = await _loadCache();
     if (cached != null) return cached;
@@ -152,7 +159,9 @@ class RatesApi {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_cacheKey, jsonEncode(r.toJson()));
-    } catch (_) {}
+    } catch (_) {
+      // Не критично: при следующем успешном fetch кэш обновится.
+    }
   }
 
   /// Читает последние сохранённые курсы из префов.

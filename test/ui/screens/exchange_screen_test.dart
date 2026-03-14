@@ -24,13 +24,13 @@ void main() {
     expect(find.textContaining('Обмен'), findsAtLeastNWidgets(1));
   });
 
-  testWidgets('Exchange: поле суммы', (tester) async {
+  testWidgets('Exchange: поля ввода суммы', (tester) async {
     final state = TestAppState();
     await tester.pumpWidget(makeHost(home: const ExchangeScreen(), state: state));
     await tester.pump(const Duration(milliseconds: 200));
 
     expect(find.byType(TextField), findsWidgets);
-    // Дожидаемся завершения асинхронной загрузки (БД/таймеры), чтобы не оставалось pending timers после dispose.
-    await tester.pumpAndSettle(const Duration(seconds: 12));
+    // Короткое ожидание завершения асинхронной загрузки (БД/таймеры), чтобы не оставалось pending timers после dispose.
+    await tester.pumpAndSettle(const Duration(seconds: 2));
   });
 }

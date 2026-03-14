@@ -1,16 +1,23 @@
 # Практика: Firebase Cloud Messaging (FCM) — push-флоу
 
+**Одно приложение** FinControl. **Сначала [00-firebase-setup.md](00-firebase-setup.md):** свой проект Firebase, конфиги в проект, `Firebase.initializeApp()`. Ключи Sentry/AppMetrica (практики 06–07) — в [STUDENT_ENV.md](../STUDENT_ENV.md), не здесь. Для iOS дополнительно — APNs в Apple Developer и ключ в Firebase. Затем шаги этой практики.
+
 ## Цель
 
-Подключить FCM в приложении FinControl: запрос разрешений, получение токена, обработка уведомлений. Отправить тестовое push-уведомление из Firebase Console и проверить получение в приложении.
+Подключить FCM к приложению FinControl (твой проект Firebase): запрос разрешений, получение FCM-токена, обработка уведомлений в foreground/background. Отправить тестовое push из Firebase Console и убедиться, что приложение его получает.
 
-## Важно: свой проект Firebase
+## Важно: один проект Firebase
 
-**Сначала выполните [00-firebase-setup.md](00-firebase-setup.md):** зарегистрируйте свой проект, добавьте свои конфиги (`google-services.json`, `GoogleService-Info.plist`) и `Firebase.initializeApp()` в коде.
+**Сначала выполни [00-firebase-setup.md](00-firebase-setup.md):** свой проект, свои конфиги (`google-services.json`, `GoogleService-Info.plist`), `Firebase.initializeApp()` в коде. Для iOS дополнительно нужна настройка APNs в Apple Developer и загрузка ключа в Firebase.
+
+## Ожидаемый результат
+
+- FCM инициализирован в приложении; разрешения запрошены (iOS); FCM-токен получается и выводится в лог (для теста можно отправить сообщение на этот токен).
+- Из Firebase Console (Engage → Messaging) отправлено тестовое уведомление на устройство; приложение получает его (в foreground — через `onMessage`; в background — через системный трей).
 
 ## Что понадобится
 
-- Ваш Firebase-проект (по 00-firebase-setup.md)
+- Ваш Firebase-проект (по [00-firebase-setup.md](00-firebase-setup.md))
 - Добавьте в `pubspec.yaml` зависимость `firebase_messaging` (актуальную версию смотрите на pub.dev, совместимую с вашим firebase_core)
 
 ## Шаг 1: Права и настройка платформ
@@ -66,8 +73,20 @@ FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
 4. В **Targeting** выберите «Single device» и вставьте FCM-токен (скопированный из логов приложения) или отправьте на все тестовые устройства.
 5. Отправьте. Приложение должно получить уведомление (в foreground — через `onMessage`; в background — через системный трей).
 
-## Что проверить
+## Проверка
 
-- [ ] Разрешения запрошены, токен получается и выводится в лог.
-- [ ] Тестовое сообщение из консоли доставлено в приложение.
+- [ ] Выполнен [00-firebase-setup.md](00-firebase-setup.md).
+- [ ] Разрешения запрошены (iOS); FCM-токен получается и выводится в лог (например `debugPrint('FCM Token: $token')`).
+- [ ] Тестовое сообщение из Firebase Console (Engage → Messaging) доставлено в приложение на выбранное устройство (по токену или тестовой группе).
 - [ ] При открытии уведомления срабатывает обработчик (если настроен).
+
+## Траблшутинг
+
+- **Уведомления не приходят** — проверь, что FCM-токен выводится в лог и подставлен в консоль при отправке; на iOS — настроены APNs и ключ в Firebase. [FAQ — Firebase](../FAQ.md#firebase).
+
+## Ссылки
+
+- [00-firebase-setup.md](00-firebase-setup.md) — обязательно перед этой практикой
+- [Критерии приёмки 11 — Firebase FCM](../acceptance-criteria/11-firebase-fcm.md)
+- [FAQ — Firebase](../FAQ.md#firebase)
+- [Список практик](README.md)

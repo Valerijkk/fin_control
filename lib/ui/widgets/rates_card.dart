@@ -1,6 +1,7 @@
 // Карточка курсов: FutureBuilder, до 6 валют, дата, пометка «офлайн» при кэше.
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../core/app_theme.dart';
 import '../../services/rates_api.dart';
 
 class RatesCard extends StatelessWidget {
@@ -29,14 +30,14 @@ class RatesCard extends StatelessWidget {
         Widget child;
         if (snap.connectionState == ConnectionState.waiting) {
           child = const Padding(
-            padding: EdgeInsets.all(12),
+            padding: EdgeInsets.all(AppTheme.cardContentPadding),
             child: Center(child: CircularProgressIndicator()),
           );
         } else if (snap.hasError) {
           child = Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(AppTheme.cardContentPadding),
             child: Text(
-              'Курс валют: ошибка загрузки',
+              'Ошибка загрузки курсов',
               style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
           );
@@ -45,7 +46,7 @@ class RatesCard extends StatelessWidget {
           final ts = r.asOf != null ? ' • от ${formatTs(r.asOf!)}' : '';
           final offline = r.fromCache ? ' • офлайн' : '';
           child = Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(AppTheme.cardContentPadding),
             child: Row(
               children: [
                 const Icon(Icons.currency_exchange),
@@ -59,9 +60,7 @@ class RatesCard extends StatelessWidget {
                 IconButton(
                   tooltip: 'Обновить',
                   onPressed: () {
-                    // Переинициализируем Future и перерисуемся через родителя, если нужно —
-                    // но чаще всего карточка живёт коротко, так что просто вызовем setState вне.
-                    // Здесь безопасно: FutureBuilder получит новый future, если родитель передаст его.
+                    // Обновление курсов выполняет родитель (передаёт новый future в RatesCard).
                   },
                   icon: const Icon(Icons.refresh),
                 ),
@@ -69,14 +68,7 @@ class RatesCard extends StatelessWidget {
             ),
           );
         }
-        return Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-          ),
-          child: child,
-        );
+        return Card(child: child);
       },
     );
   }

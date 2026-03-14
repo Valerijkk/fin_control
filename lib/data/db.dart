@@ -1,12 +1,14 @@
 // Локальная БД SQLite: таблицы расходов, операций обмена, портфеля (позиции и сделки).
+// Асинхронность: все методы возвращают Future; sqflite выполняет запросы в фоне — UI не блокируется.
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 
-/// Единая точка доступа к БД. Версия 3: добавлены exchange_operations, portfolio_holdings, portfolio_transactions.
+/// Единая точка доступа к БД. Версия 4: price_alerts, limit_orders, savings_goals (оповещения по курсу, отложенные обмены, цели накопления).
+/// Все методы асинхронны; sqflite выполняет запросы в фоновом потоке, UI не блокируется.
 class AppDatabase {
   static const _dbName = 'fincontrol.db';
   /// При увеличении версии срабатывает [onUpgrade] (миграции).
-  static const _dbVersion = 3;
+  static const _dbVersion = 4;
 
   Database? _db;
 
@@ -31,6 +33,7 @@ class AppDatabase {
           )
         ''');
         await _createExchangeAndPortfolioTables(db);
+        await _createAlertsLimitOrdersSavingsTables(db);
       },
       onUpgrade: (db, oldV, newV) async {
         if (oldV < 2) {
@@ -38,6 +41,9 @@ class AppDatabase {
         }
         if (oldV < 3) {
           await _createExchangeAndPortfolioTables(db);
+        }
+        if (oldV < 4) {
+          await _createAlertsLimitOrdersSavingsTables(db);
         }
       },
     );
@@ -170,5 +176,110 @@ class AppDatabase {
   Future<void> insertPortfolioTransactionRaw(Map<String, Object?> values) async {
     final db = await _open();
     await db.insert('portfolio_transactions', values);
+  }
+
+  // --- Price alerts: оповещение при достижении курса ---
+
+  static Future<void> _createAlertsLimitOrdersSavingsTables(Database db) async {
+    await db.execute('''
+      CREATE TABLE price_alerts(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        currency_from TEXT NOT NULL,
+        currency_to TEXT NOT NULL,
+        target_rate REAL NOT NULL,
+        is_above INTEGER NOT NULL,
+        created_at INTEGER NOT NULL,
+        notified INTEGER NOT NULL DEFAULT 0
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE limit_orders(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        currency_from TEXT NOT NULL,
+        currency_to TEXT NOT NULL,
+        amount_from REAL NOT NULL,
+        target_rate REAL NOT NULL,
+        is_above INTEGER NOT NULL,
+        created_at INTEGER NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending'
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE savings_goals(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        target_amount REAL NOT NULL,
+        base_currency TEXT NOT NULL,
+        current_amount REAL NOT NULL DEFAULT 0,
+        deadline INTEGER,
+        created_at INTEGER NOT NULL
+      )
+    ''');
+  }
+
+  Future<List<Map<String, Object?>>> getPriceAlertsRaw({bool onlyPending = true}) async {
+    final db = await _open();
+    if (onlyPending) {
+      return db.query('price_alerts', where: 'notified = 0', orderBy: 'created_at DESC');
+    }
+    return db.query('price_alerts', orderBy: 'created_at DESC');
+  }
+
+  Future<int> insertPriceAlertRaw(Map<String, Object?> values) async {
+    final db = await _open();
+    return await db.insert('price_alerts', values);
+  }
+
+  Future<void> markPriceAlertNotified(int id) async {
+    final db = await _open();
+    await db.update('price_alerts', {'notified': 1}, where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> deletePriceAlert(int id) async {
+    final db = await _open();
+    await db.delete('price_alerts', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<List<Map<String, Object?>>> getLimitOrdersRaw({String? status}) async {
+    final db = await _open();
+    if (status != null) {
+      return db.query('limit_orders', where: 'status = ?', whereArgs: [status], orderBy: 'created_at DESC');
+    }
+    return db.query('limit_orders', orderBy: 'created_at DESC');
+  }
+
+  Future<void> insertLimitOrderRaw(Map<String, Object?> values) async {
+    final db = await _open();
+    await db.insert('limit_orders', values);
+  }
+
+  Future<void> updateLimitOrderStatus(int id, String status) async {
+    final db = await _open();
+    await db.update('limit_orders', {'status': status}, where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> deleteLimitOrder(int id) async {
+    final db = await _open();
+    await db.delete('limit_orders', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<List<Map<String, Object?>>> getSavingsGoalsRaw() async {
+    final db = await _open();
+    return db.query('savings_goals', orderBy: 'created_at DESC');
+  }
+
+  Future<void> insertSavingsGoalRaw(Map<String, Object?> values) async {
+    final db = await _open();
+    await db.insert('savings_goals', values);
+  }
+
+  Future<void> updateSavingsGoalRaw(int id, Map<String, Object?> values) async {
+    final db = await _open();
+    await db.update('savings_goals', values, where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> deleteSavingsGoal(int id) async {
+    final db = await _open();
+    await db.delete('savings_goals', where: 'id = ?', whereArgs: [id]);
   }
 }
