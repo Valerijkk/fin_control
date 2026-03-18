@@ -45,11 +45,13 @@ class _SavingsGoalCardState extends State<SavingsGoalCard> {
           children: [
             TextField(
               controller: titleCtrl,
+              maxLength: 50,
               decoration: const InputDecoration(labelText: 'Название'),
             ),
             const SizedBox(height: 8),
             TextField(
               controller: targetCtrl,
+              maxLength: 15,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               decoration: InputDecoration(labelText: 'Цель ($base)'),
             ),

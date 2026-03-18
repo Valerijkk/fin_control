@@ -31,4 +31,12 @@ class LimitOrdersRepository {
   Future<void> delete(int id) async {
     await _db.deleteLimitOrder(id);
   }
+
+  /// Удаляет все ордера (используется в тестах).
+  Future<void> clear() async {
+    final all = await getAll();
+    for (final o in all) {
+      await _db.deleteLimitOrder(o.id);
+    }
+  }
 }

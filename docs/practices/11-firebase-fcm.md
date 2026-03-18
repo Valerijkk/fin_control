@@ -84,6 +84,42 @@ FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
 
 - **Уведомления не приходят** — проверь, что FCM-токен выводится в лог и подставлен в консоль при отправке; на iOS — настроены APNs и ключ в Firebase. [FAQ — Firebase](../FAQ.md#firebase).
 
+## Что показать на экзамене / созвоне
+
+1. Покажи в логах FCM-токен (debugPrint).
+2. Открой Firebase Console → Engage → Messaging → создай тестовое уведомление.
+3. Отправь на устройство по токену.
+4. Покажи: уведомление пришло (в foreground — через обработчик onMessage; в background — в системном трее).
+5. Нажми на уведомление — приложение открывается (onMessageOpenedApp).
+6. Кратко скажи: «Подключил FCM, получил токен, отправил тестовый push из консоли — уведомление пришло и обрабатывается в обоих режимах.»
+
+## Дополнительно: сценарии для FinControl
+
+### Data Messages vs Notification Messages
+- **Notification Messages** — показываются системой автоматически (в background).
+- **Data Messages** — обрабатываются только кодом, не показываются автоматически.
+
+В консоли Firebase при создании кампании можно добавить **Custom data** (key-value):
+```
+action: open_exchange
+currency: USD
+```
+В обработчике:
+```dart
+FirebaseMessaging.onMessageOpenedApp.listen((message) {
+  if (message.data['action'] == 'open_exchange') {
+    Navigator.of(context).pushNamed('/exchange');
+  }
+});
+```
+
+### Topic Messaging
+Подпиши устройство на тему и отправляй push по группам:
+```dart
+await FirebaseMessaging.instance.subscribeToTopic('rate_alerts');
+```
+В консоли Firebase отправь push на тему `rate_alerts` — все подписанные получат.
+
 ## Ссылки
 
 - [00-firebase-setup.md](00-firebase-setup.md) — обязательно перед этой практикой

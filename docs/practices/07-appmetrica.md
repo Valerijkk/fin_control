@@ -63,6 +63,75 @@
 - **Данные не появляются** — задержка 5–20 минут нормальна; обнови отчёт или зайди позже. Убедись, что API Key вставлен без пробелов, приложение перезапущено после изменения `student_env.dart`. [FAQ — В AppMetrica нет данных о сессиях](../FAQ.md#в-appmetrica-нет-данных-о-сессиях--устройствах).
 - **Где взять API Key** — [FAQ — Что такое API Key AppMetrica](../FAQ.md#что-такое-api-key-appmetrica-и-где-его-взять). Не коммить ключ в репозиторий: [STUDENT_ENV.md](../STUDENT_ENV.md), [FAQ — Безопасность ключей](../FAQ.md#можно-ли-коммитить-в-git-файл-student_envdart-с-вставленными-dsn-и-api-key).
 
+## Дополнительно: углублённая работа с AppMetrica
+
+### Отправка кастомных событий
+
+AppMetrica позволяет отслеживать конкретные действия пользователя:
+
+```dart
+import 'package:appmetrica_plugin/appmetrica_plugin.dart';
+
+// Событие обмена валюты
+AppMetrica.reportEvent('exchange_completed');
+
+// Событие с параметрами
+AppMetrica.reportEventWithMap('portfolio_buy', {
+  'currency': 'USD',
+  'amount': '100',
+  'rate': '92.5',
+});
+
+// Событие добавления расхода
+AppMetrica.reportEventWithMap('expense_added', {
+  'category': 'Еда',
+  'amount': '500',
+  'is_income': 'false',
+});
+```
+
+В кабинете AppMetrica → **Отчёты → События** увидишь все события с параметрами.
+
+### User Profile — профиль пользователя
+
+```dart
+// Идентификация пользователя (анонимная для учебного проекта)
+AppMetrica.setUserProfileID('student-001');
+```
+
+### Экраны и сессии
+
+AppMetrica автоматически отслеживает сессии. Для трекинга экранов:
+
+```dart
+// При открытии экрана
+AppMetrica.reportEvent('screen_view_exchange');
+AppMetrica.reportEvent('screen_view_portfolio');
+```
+
+### Отчёты в консоли
+
+В кабинете AppMetrica доступны:
+- **Стандартные отчёты:** установки, сессии, устройства, ОС, география.
+- **События:** список всех отправленных событий с параметрами.
+- **Профили:** информация об отдельных пользователях.
+- **Когорты:** удержание пользователей по дням.
+- **Воронки:** можно построить по событиям (например screen_view_exchange → exchange_completed).
+
+### Revenue — отслеживание «покупок»
+
+Для учебного сценария (покупка валюты в портфеле):
+
+```dart
+AppMetrica.reportEventWithMap('revenue', {
+  'currency': 'RUB',
+  'amount': '5000',
+  'product': 'USD',
+});
+```
+
+В реальных проектах используется `AppMetrica.reportRevenue()` с SDK-методом для точного учёта.
+
 ## Ссылки
 
 - [STUDENT_ENV.md](../STUDENT_ENV.md) — куда вставлять API Key и про ключи

@@ -76,7 +76,82 @@
 - [FAQ — Sentry и AppMetrica](../FAQ.md#sentry-и-appmetrica)
 - [Список практик](README.md)
 
-## Дополнительно
+## Дополнительно: углублённая работа с Sentry
 
-- **Release health**: в настройках Sentry можно включить отслеживание «здоровья» релиза (частота крашей, затронутые пользователи).
-- **Breadcrumbs**: добавление своих записей перед важными действиями помогает воспроизвести сценарий падения.
+### Breadcrumbs — хлебные крошки
+
+Breadcrumbs — цепочка действий пользователя перед ошибкой. Sentry SDK автоматически записывает некоторые (HTTP-запросы, навигация), но можно добавить свои:
+
+```dart
+import 'package:sentry_flutter/sentry_flutter.dart';
+
+Sentry.addBreadcrumb(Breadcrumb(
+  message: 'Пользователь открыл экран Обменник',
+  category: 'navigation',
+  level: SentryLevel.info,
+));
+```
+
+**Зачем:** при падении в Sentry увидишь полную цепочку действий — «открыл Обменник → нажал Конвертировать → ввёл сумму → ошибка». Это критически важно для воспроизведения бага.
+
+### Контекст пользователя
+
+Добавь информацию о пользователе (анонимную для учебного проекта):
+
+```dart
+Sentry.configureScope((scope) {
+  scope.setUser(SentryUser(
+    id: 'student-001',
+    username: 'test_student',
+  ));
+  scope.setTag('screen', 'exchange');
+  scope.setExtra('portfolio_balance', 100000.0);
+});
+```
+
+В событии Sentry увидишь: кто столкнулся с ошибкой, на каком экране, с какими данными.
+
+### Performance Monitoring — трейсы
+
+Sentry SDK поддерживает трейсы производительности (tracesSampleRate = 1.0 уже установлен в FinControl):
+
+```dart
+final transaction = Sentry.startTransaction('loadRates', 'task');
+try {
+  await RatesApi.fetch();
+  transaction.status = const SpanStatus.ok();
+} catch (e) {
+  transaction.status = const SpanStatus.internalError();
+  transaction.throwable = e;
+} finally {
+  await transaction.finish();
+}
+```
+
+В Sentry → **Performance** увидишь время выполнения операций, можно искать регрессии.
+
+### Release Tracking — отслеживание версий
+
+В инициализации добавь версию:
+
+```dart
+options.release = 'fin_control@1.0.0+1';
+options.dist = '1';
+```
+
+В Sentry → **Releases** увидишь: какая версия стабильна, в какой версии больше ошибок, adoption rate.
+
+### Фильтры и поиск в Sentry UI
+
+В кабинете Sentry:
+- **Issues** → фильтр по уровню (`error`, `fatal`, `warning`).
+- **Assign** — назначь issue на себя для отслеживания.
+- **Merge** — объедини дубликаты одной и той же ошибки.
+- **Resolve** → ошибка исправлена; если повторится — Sentry автоматически переоткроет.
+- **Ignore** — игнорировать известную ошибку (не спамить уведомлениями).
+
+### Alerts — уведомления
+
+1. **Settings → Alerts** → **Create Alert Rule**.
+2. Настрой: «при появлении нового issue уровня error → отправить email/Slack».
+3. Для учебного проекта — настрой email-уведомление и покажи его на экзамене.

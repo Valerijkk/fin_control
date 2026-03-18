@@ -106,6 +106,51 @@ flutter build apk --release
 - **Keystore not found** — проверь путь в `key.properties` (относительно папки `android/`); файл `key.properties` не коммить в репозиторий.
 - **Google Play не принимает AAB** — убедись, что `versionCode` в `android/app/build.gradle.kts` выше ранее загруженной версии.
 
+## Что показать на экзамене / созвоне
+
+1. Покажи подписанную release-сборку: `flutter build apk --release` завершается без ошибок.
+2. Покажи Google Play Console → Internal testing (или Firebase App Distribution) с загруженной сборкой.
+3. Покажи, что тестер может установить приложение по ссылке.
+4. Запусти установленное приложение — покажи, что оно работает.
+5. Кратко скажи: «Настроил keystore, подписал release-сборку, загрузил в дистрибьютор — тестер может установить по ссылке.»
+
+## Дополнительно: полезные детали
+
+### AAB vs APK
+- **AAB** (Android App Bundle) — рекомендуется для Google Play. Google Play сам генерирует оптимизированные APK для каждого устройства (меньший размер).
+- **APK** — универсальный файл, подходит для Firebase App Distribution, прямой установки и тестирования.
+
+### SHA-1 для Firebase
+Если используешь Firebase (практики 10–15), добавь SHA-1 отпечаток в Firebase Console:
+
+```bash
+keytool -list -v -keystore fincontrol-release.keystore -alias fincontrol
+```
+
+Скопируй SHA-1 → Firebase Console → Project Settings → Your apps → Add fingerprint.
+
+Для debug-ключа:
+```bash
+keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android
+```
+
+### Firebase App Distribution — подробнее
+
+1. Установи CLI: `npm install -g firebase-tools` и `firebase login`.
+2. Загрузи APK через CLI:
+   ```bash
+   firebase appdistribution:distribute build/app/outputs/flutter-apk/app-release.apk \
+     --app YOUR_FIREBASE_APP_ID \
+     --groups "testers" \
+     --release-notes "Версия 1.0 — первый релиз для тестирования"
+   ```
+3. Тестеры получат email со ссылкой и инструкцией по установке.
+
+### Версионирование
+В `pubspec.yaml`: `version: 1.0.0+1` — формат `major.minor.patch+buildNumber`.
+- Каждая загрузка в Google Play требует увеличения `buildNumber`.
+- Увеличивай `buildNumber` при каждой сборке: `+1` → `+2` → `+3`.
+
 ## Ссылки
 
 - [Критерии приёмки 09 — Android-дистрибуция](../acceptance-criteria/09-android-distribution.md)

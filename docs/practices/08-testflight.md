@@ -68,6 +68,35 @@ flutter build ipa
 - **No signing certificate** — создай сертификат в [Apple Developer → Certificates](https://developer.apple.com/account/resources/certificates) или включи в Xcode **Automatically manage signing** — Xcode создаст сертификат сам.
 - **Provisioning profile** — при автоматическом подписании Xcode создаёт профиль сам; при ручном создай App ID и профиль дистрибуции в Developer Portal.
 
+## Что показать на экзамене / созвоне
+
+1. Покажи App Store Connect → твоё приложение → **TestFlight** → iOS Builds: сборка обработана.
+2. Покажи группу тестеров (Internal или External) с добавленными email.
+3. На устройстве покажи приложение TestFlight со списком доступных сборок FinControl.
+4. Запусти приложение из TestFlight — покажи, что оно работает.
+5. Кратко скажи: «Собрал архив в Xcode, загрузил в App Store Connect, добавил тестеров — приложение доступно через TestFlight.»
+
+## Дополнительно: полезные возможности TestFlight
+
+### Feedback от тестеров
+- Тестеры могут отправлять feedback (скриншот + текст) прямо из приложения TestFlight → ты получишь его в App Store Connect.
+- Полезно для сбора баг-репортов от ручных тестировщиков.
+
+### Несколько сборок
+- Каждая новая сборка (с увеличенным build number) появляется в TestFlight.
+- Тестеры могут переключаться между сборками — удобно для A/B-тестирования и проверки регрессий.
+
+### External Testing
+- Internal — до 100 тестеров (членов команды Apple Developer).
+- External — до 10 000 тестеров по email; требуется проверка Apple (Beta App Review, 1-2 дня).
+- Для учебного проекта достаточно Internal.
+
+### Срок действия
+- Сборки в TestFlight доступны **90 дней** с момента загрузки. После этого нужно загрузить новую.
+
+### Export Compliance
+- При загрузке Apple спросит об использовании шифрования. Для FinControl: стандартный HTTPS — отвечай **Yes, uses encryption** и **Yes, exempt under standard exemption** (стандартное исключение).
+
 ## Ссылки
 
 - [Критерии приёмки 08 — TestFlight](../acceptance-criteria/08-testflight.md)

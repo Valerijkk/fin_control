@@ -89,6 +89,43 @@ await analytics.logEvent(
 
 - **События не видны** — проверь, что выполнен [00-firebase-setup.md](00-firebase-setup.md) и события вызываются в коде; для реального времени включи DebugView и добавь устройство по дебаг-токену. [FAQ — Firebase](../FAQ.md#firebase).
 
+## Что показать на экзамене / созвоне
+
+1. Покажи код: вызовы `logEvent` и `logScreenView` в приложении.
+2. Выполни действия: открой Обменник, сделай обмен, открой Портфель, купи валюту.
+3. Открой Firebase Console → Analytics → **DebugView** — покажи события в реальном времени.
+4. Открой **Events** — покажи список событий с количеством срабатываний.
+5. Покажи построенную воронку (если доступно в Exploration).
+6. Кратко скажи: «Подключил Analytics, логирую экраны и ключевые действия. В DebugView вижу события в реальном времени, в Events — статистику.»
+
+## Дополнительно: рекомендуемые события для FinControl
+
+| Событие | Когда срабатывает | Параметры |
+|---------|-------------------|-----------|
+| `screen_view` | Открытие любого экрана | `screen_name`, `screen_class` |
+| `expense_added` | Добавление расхода/дохода | `category`, `amount`, `is_income` |
+| `exchange_completed` | Конвертация валюты | `currency_from`, `currency_to`, `amount` |
+| `portfolio_buy` | Покупка валюты/акций в портфеле | `currency`, `amount`, `rate` |
+| `portfolio_sell` | Продажа из портфеля | `currency`, `amount`, `rate` |
+| `alert_created` | Создание ценового алерта | `currency_pair`, `target_rate` |
+| `goal_created` | Создание цели накоплений | `title`, `target_amount` |
+| `theme_toggled` | Переключение темы | `theme` (`light`/`dark`) |
+| `data_cleared` | Очистка всех данных | — |
+
+### DebugView — события в реальном времени
+
+Для просмотра событий без задержки:
+
+**Android:**
+```bash
+adb shell setprop debug.firebase.analytics.app com.yourname.fincontrol.fin_control
+```
+
+**iOS:**
+В Xcode добавь аргумент запуска: `-FIRDebugEnabled`.
+
+После этого события появляются в Firebase Console → Analytics → **DebugView** мгновенно.
+
 ## Ссылки
 
 - [00-firebase-setup.md](00-firebase-setup.md) — обязательно перед этой практикой

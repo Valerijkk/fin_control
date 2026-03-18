@@ -58,7 +58,7 @@
 
 ### «flutter.sdk not set in local.properties»
 
-В корне проекта выполни в терминале (в Cursor или в Android Studio: **View → Tool Windows → Terminal**):
+В корне проекта выполни в терминале (в Android Studio: **View → Tool Windows → Terminal** или в системном терминале):
 
 ```bash
 flutter pub get

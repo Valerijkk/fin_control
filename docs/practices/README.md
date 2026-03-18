@@ -22,21 +22,21 @@
 |---|------|------------|-----------------|
 | — | [00-getting-started.md](00-getting-started.md) | **Перед началом** | Клонирование, первый запуск, открытие в Android Studio — выполнить до любых практик |
 | 00 | [00-firebase-setup.md](00-firebase-setup.md) | **Firebase: первый шаг** | Регистрация своего проекта, добавление своих конфигов (google-services.json, GoogleService-Info.plist) — **обязательно перед практиками 10–15** |
-| 01 | [01-charles.md](01-charles.md) | Charles Proxy | Перехват HTTP/HTTPS трафика мобильного и веб-приложения |
-| 02 | [02-proxyman.md](02-proxyman.md) | Proxyman | Снифф трафика FinControl на Android/iOS |
-| 03 | [03-android-studio.md](03-android-studio.md) | Android Studio | Установка в эмуляторе, настройка logcat |
-| 04 | [04-xcode.md](04-xcode.md) | Xcode | Установка в симуляторе iOS, логи в Console |
-| 05 | [05-adb.md](05-adb.md) | ADB | Мануал по возможностям ADB на основе FinControl |
-| 06 | [06-sentry.md](06-sentry.md) | Sentry | Настройка проекта, DSN, проверка событий и крашей |
-| 07 | [07-appmetrica.md](07-appmetrica.md) | AppMetrica | Заведение приложения, проверка сессий и устройств |
-| 08 | [08-testflight.md](08-testflight.md) | TestFlight | Сборка и публикация iOS-приложения в TestFlight |
-| 09 | [09-android-distribution.md](09-android-distribution.md) | Android-дистрибуция | Сборка, подпись, Google Play / Firebase App Distribution |
-| 10 | [10-firebase-crashlytics.md](10-firebase-crashlytics.md) | Firebase Crashlytics | Стабильность релиза, отчёты о падениях |
-| 11 | [11-firebase-fcm.md](11-firebase-fcm.md) | Firebase FCM | Push-уведомления, токен, тестовое сообщение |
-| 12 | [12-firebase-analytics.md](12-firebase-analytics.md) | Firebase Analytics | События и воронки |
-| 13 | [13-firebase-remote-config.md](13-firebase-remote-config.md) | Firebase Remote Config | Фичефлаги и rollout |
-| 14 | [14-firebase-performance.md](14-firebase-performance.md) | Firebase Performance | Регресс по скорости, трейсы |
-| 15 | [15-firebase-in-app-messaging.md](15-firebase-in-app-messaging.md) | Firebase In-App Messaging | In-app сообщения и кампании |
+| 01 | [01-charles.md](01-charles.md) | Charles Proxy | Перехват HTTP/HTTPS трафика, Breakpoints, Map Remote/Local, Rewrite, Throttling |
+| 02 | [02-proxyman.md](02-proxyman.md) | Proxyman | Снифф трафика, Breakpoint, Map Local, Scripting, Network Conditions, Diff |
+| 03 | [03-android-studio.md](03-android-studio.md) | Android Studio | Эмулятор, Logcat, Layout Inspector, App Inspection (DB), Memory/CPU/Network Profiler |
+| 04 | [04-xcode.md](04-xcode.md) | Xcode | Симулятор iOS, Console, Instruments, View Debugger, Network Link Conditioner |
+| 05 | [05-adb.md](05-adb.md) | ADB | install, logcat, screencap, screenrecord, monkey, разрешения, авиарежим, Wi-Fi debug, БД |
+| 06 | [06-sentry.md](06-sentry.md) | Sentry | DSN, события, breadcrumbs, контекст пользователя, Performance Monitoring, Alerts |
+| 07 | [07-appmetrica.md](07-appmetrica.md) | AppMetrica | API Key, сессии, устройства, кастомные события, профили, воронки |
+| 08 | [08-testflight.md](08-testflight.md) | TestFlight | Архив, подписание, загрузка в App Store Connect, раздача тестерам, feedback |
+| 09 | [09-android-distribution.md](09-android-distribution.md) | Android-дистрибуция | Keystore, подпись, AAB/APK, Google Play Internal / Firebase App Distribution |
+| 10 | [10-firebase-crashlytics.md](10-firebase-crashlytics.md) | Firebase Crashlytics | Фатальные и нефатальные ошибки, Custom Keys, Crash-Free Users |
+| 11 | [11-firebase-fcm.md](11-firebase-fcm.md) | Firebase FCM | Разрешения, FCM-токен, foreground/background, Data Messages, Topic Messaging |
+| 12 | [12-firebase-analytics.md](12-firebase-analytics.md) | Firebase Analytics | Кастомные события, экраны, DebugView, воронки, рекомендуемые события |
+| 13 | [13-firebase-remote-config.md](13-firebase-remote-config.md) | Firebase Remote Config | Параметры, фичефлаги, Conditions, rollout, A/B тесты |
+| 14 | [14-firebase-performance.md](14-firebase-performance.md) | Firebase Performance | Кастомные трейсы, HTTP Monitoring, Custom Attributes, поиск регрессий |
+| 15 | [15-firebase-in-app-messaging.md](15-firebase-in-app-messaging.md) | Firebase In-App Messaging | Кампании, триггеры, шаблоны (Modal/Banner/Card), Test Mode |
 
 ---
 

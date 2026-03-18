@@ -120,6 +120,7 @@ class _AddEditScreenState extends State<AddEditScreen> {
         content: TextField(
           controller: ctrl,
           autofocus: true,
+          maxLength: 30,
           decoration: const InputDecoration(hintText: 'Например, Здоровье'),
         ),
         actions: [
@@ -198,6 +199,7 @@ class _AddEditScreenState extends State<AddEditScreen> {
 
                 TextFormField(
                   controller: _title,
+                  maxLength: 100,
                   decoration: const InputDecoration(
                     labelText: 'Название',
                     hintText: 'Например, Продукты',

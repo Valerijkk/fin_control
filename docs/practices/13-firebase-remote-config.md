@@ -74,6 +74,47 @@ double get commissionPercent => remoteConfig.getDouble('commission_percent');
 
 - **Значения не обновляются** — убедись, что вызван `fetchAndActivate()` при старте или по кнопке; в консоли изменения опубликованы (Publish changes). [FAQ — Firebase](../FAQ.md#firebase).
 
+## Что показать на экзамене / созвоне
+
+1. Покажи параметры в Firebase Console → Remote Config (например `show_portfolio`, `commission_percent`).
+2. Запусти приложение — покажи, что параметры читаются (портфель виден/скрыт, комиссия отображается/нет).
+3. Измени значение в консоли → Publish → в приложении вызови fetchAndActivate → покажи изменение поведения.
+4. Кратко скажи: «Настроил Remote Config с двумя параметрами. Изменил значение в консоли — приложение обновило поведение после fetch без обновления сборки.»
+
+## Дополнительно: сценарии для FinControl
+
+### Рекомендуемые параметры
+
+| Параметр | Тип | Описание | Как использовать |
+|----------|-----|----------|------------------|
+| `show_portfolio` | Boolean | Показывать вкладку Портфель | Скрывать/показывать tab в навигации |
+| `show_stocks` | Boolean | Показывать вкладку Акции | Скрывать/показывать tab |
+| `commission_percent` | Number | Комиссия при обмене (%) | Показывать подпись «Комиссия: N%» на экране обмена |
+| `maintenance_mode` | Boolean | Режим обслуживания | Показывать баннер «Приложение на обслуживании» |
+| `welcome_message` | String | Текст на приветственном экране | Менять текст без обновления |
+| `max_expense_amount` | Number | Максимальная сумма расхода | Валидация формы |
+
+### Conditions — целевые аудитории
+
+В Firebase Console → Remote Config → **Conditions**:
+- По стране (Geo targeting)
+- По версии приложения
+- По платформе (Android/iOS)
+- По проценту пользователей (rollout: 10% → 50% → 100%)
+
+**Сценарий:** показывай `commission_percent = 1.5` для 50% пользователей, `0` для остальных — A/B тест.
+
+### minimumFetchInterval
+
+В debug для быстрого тестирования уменьши интервал:
+```dart
+await remoteConfig.setConfigSettings(RemoteConfigSettings(
+  fetchTimeout: const Duration(seconds: 10),
+  minimumFetchInterval: Duration.zero, // мгновенное обновление в debug
+));
+```
+**В production** оставь 1 час или больше — иначе Firebase заблокирует запросы (throttling).
+
 ## Ссылки
 
 - [00-firebase-setup.md](00-firebase-setup.md) — обязательно перед этой практикой

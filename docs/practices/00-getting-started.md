@@ -22,7 +22,7 @@
 
 ### Шаг 1. Открой терминал
 
-- **Windows:** PowerShell (Win + X → Windows PowerShell) или cmd. Можно также встроенный терминал в Cursor/VS Code (Ctrl+`).
+- **Windows:** PowerShell (Win + X → Windows PowerShell) или cmd. Можно также встроенный терминал в VS Code (Ctrl+`).
 - **Mac/Linux:** Terminal или встроенный терминал в IDE.
 
 ### Шаг 2. Перейди в папку для проектов

@@ -31,7 +31,7 @@ class ExpenseTile extends StatelessWidget {
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(children: [
                 Expanded(
-                  child: Text(expense.title, style: const TextStyle(fontWeight: FontWeight.w600)),
+                  child: Text(expense.title, style: const TextStyle(fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis, maxLines: 1),
                 ),
                 if (expense.imagePath != null)
                   IconButton(

@@ -30,4 +30,12 @@ class SavingsGoalRepository {
   Future<void> delete(int id) async {
     await _db.deleteSavingsGoal(id);
   }
+
+  /// Удаляет все цели (используется в тестах).
+  Future<void> clear() async {
+    final all = await getAll();
+    for (final g in all) {
+      await _db.deleteSavingsGoal(g.id);
+    }
+  }
 }

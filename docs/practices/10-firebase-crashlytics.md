@@ -83,6 +83,43 @@ FirebaseCrashlytics.instance.recordError(
 - **Crashlytics не видит крашей** — убедись, что выполнен [00-firebase-setup.md](00-firebase-setup.md), конфиги в проекте, `Firebase.initializeApp()` вызывается до Crashlytics. После фатального краша отчёт отправляется при следующем запуске приложения.
 - **Firebase:** [FAQ — Firebase](../FAQ.md#firebase).
 
+## Что показать на экзамене / созвоне
+
+1. Покажи Firebase Console → свой проект → **Crashlytics**.
+2. В приложении вызови тестовый краш (кнопка или код) → перезапусти приложение.
+3. В Crashlytics → Issues покажи появившийся отчёт.
+4. Открой issue: покажи стек-трейс, устройство, версию ОС.
+5. Покажи нефатальную ошибку (recordError) — она должна быть в списке Issues отдельно.
+6. Кратко скажи: «Подключил Crashlytics, настроил перехват Flutter-ошибок и runZonedGuarded. Тестовый краш и нефатальная ошибка видны в консоли с полным контекстом.»
+
+## Дополнительно: сценарии тестирования Crashlytics в FinControl
+
+### Сценарий 1: Краш при конвертации валюты
+Добавь тестовый краш при обмене с нулевым курсом — Crashlytics поймает и покажет стек.
+
+### Сценарий 2: Нефатальная ошибка сети
+При ошибке загрузки курсов (offline, таймаут) запиши нефатальную ошибку через `recordError` с контекстом:
+```dart
+FirebaseCrashlytics.instance.recordError(
+  error,
+  stackTrace,
+  reason: 'Ошибка загрузки курсов: offline',
+  fatal: false,
+);
+```
+
+### Сценарий 3: Custom Keys
+Добавь ключи для контекста перед потенциально опасной операцией:
+```dart
+FirebaseCrashlytics.instance.setCustomKey('screen', 'exchange');
+FirebaseCrashlytics.instance.setCustomKey('currency_pair', 'RUB/USD');
+FirebaseCrashlytics.instance.setCustomKey('amount', amountText);
+```
+В отчёте Crashlytics увидишь эти ключи — поможет воспроизвести баг.
+
+### Сценарий 4: Crash-Free Users
+В Firebase Console → Crashlytics → Dashboard — показатель **Crash-free users** (процент пользователей без крашей). Это ключевая метрика стабильности релиза.
+
 ## Ссылки
 
 - [00-firebase-setup.md](00-firebase-setup.md) — обязательно перед этой практикой

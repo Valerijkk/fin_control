@@ -25,4 +25,12 @@ class PriceAlertsRepository {
   Future<void> delete(int id) async {
     await _db.deletePriceAlert(id);
   }
+
+  /// Удаляет все оповещения (используется в тестах).
+  Future<void> clear() async {
+    final all = await getAll(onlyPending: false);
+    for (final a in all) {
+      await _db.deletePriceAlert(a.id);
+    }
+  }
 }

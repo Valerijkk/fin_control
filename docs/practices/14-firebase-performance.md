@@ -84,6 +84,50 @@ try {
 
 - **Данные не появляются** — задержка до 24 ч для части отчётов нормальна; убедись, что выполнен [00-firebase-setup.md](00-firebase-setup.md) и трейсы вызываются в коде. [FAQ — Firebase](../FAQ.md#firebase).
 
+## Что показать на экзамене / созвоне
+
+1. Покажи Firebase Console → **Performance** → Dashboard: метрики запуска приложения.
+2. Покажи **Traces** — кастомный трейс `load_rates` (или другой) с метриками.
+3. Расскажи: какие метрики отслеживаются, как искать регрессии между версиями.
+4. Кратко скажи: «Подключил Performance Monitoring, добавил кастомный трейс загрузки курсов. В консоли вижу время операций и могу сравнить сборки на регрессии.»
+
+## Дополнительно: HTTP Monitoring
+
+Для автоматического отслеживания HTTP-запросов используй `HttpMetric`:
+
+```dart
+final metric = FirebasePerformance.instance.newHttpMetric(
+  'https://api.exchangerate.host/latest?base=RUB',
+  HttpMethod.Get,
+);
+await metric.start();
+try {
+  final response = await http.get(uri);
+  metric
+    ..responsePayloadSize = response.contentLength ?? 0
+    ..httpResponseCode = response.statusCode
+    ..responseContentType = response.headers['content-type'];
+} finally {
+  await metric.stop();
+}
+```
+
+В Firebase Console → Performance → **Network** увидишь: URL, время ответа, размер, статус — для каждого запроса.
+
+### Custom Attributes
+
+Добавь атрибуты к трейсу для детализации:
+
+```dart
+final trace = FirebasePerformance.instance.newTrace('load_rates');
+trace.putAttribute('provider', 'exchangerate.host');
+trace.putAttribute('from_cache', 'false');
+await trace.start();
+// ... загрузка
+trace.incrementMetric('rates_count', rates.length);
+await trace.stop();
+```
+
 ## Ссылки
 
 - [00-firebase-setup.md](00-firebase-setup.md) — обязательно перед этой практикой

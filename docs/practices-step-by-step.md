@@ -36,17 +36,41 @@
 
 ---
 
-## 2. Чек-лист перед сдачей
+## 2. Что должен уметь ученик после каждой практики
+
+| Практика | Ключевой навык |
+|----------|----------------|
+| 00 Getting Started | Клонировать, собрать и запустить Flutter-приложение на эмуляторе/устройстве |
+| 01 Charles | Перехватывать и расшифровывать HTTPS-трафик, использовать Breakpoints и Map Local для модификации ответов |
+| 02 Proxyman | Настроить снифф трафика, использовать Breakpoint, Map Local и Network Conditions |
+| 03 Android Studio | Работать с эмулятором, Logcat, Layout Inspector, App Inspection (DB Inspector), Profiler |
+| 04 Xcode | Запустить на симуляторе iOS, просмотреть логи в Console, использовать Instruments и View Debugger |
+| 05 ADB | Выполнять команды ADB: install, logcat, screencap, screenrecord, monkey, управление разрешениями |
+| 06 Sentry | Подключить SDK, отправить тестовое событие, читать стек-трейсы и breadcrumbs |
+| 07 AppMetrica | Подключить SDK, проверить сессии и устройства в отчётах |
+| 08 TestFlight | Собрать iOS-архив, загрузить в App Store Connect, раздать через TestFlight |
+| 09 Android-дистрибуция | Подписать release-сборку keystore, загрузить в Google Play / Firebase App Distribution |
+| 10 Crashlytics | Перехватывать Flutter-ошибки, отправлять нефатальные ошибки, читать crash reports |
+| 11 FCM | Запрашивать разрешения, получать FCM-токен, обрабатывать push в foreground/background |
+| 12 Analytics | Логировать кастомные события и экраны, использовать DebugView, строить воронки |
+| 13 Remote Config | Создавать параметры, менять поведение приложения без обновления, понимать rollout |
+| 14 Performance | Добавлять кастомные трейсы, отслеживать метрики, искать регрессии по скорости |
+| 15 In-App Messaging | Создавать кампании, настраивать триггеры, проверять показ in-app сообщений |
+
+---
+
+## 3. Чек-лист перед сдачей
 
 - [ ] Проект клонирован, `flutter pub get` и `flutter run` выполняются без ошибок.
 - [ ] В Android Studio открыта **корневая** папка проекта (где `pubspec.yaml`), а не папка `android/`.
 - [ ] По каждой сдаваемой практике: выполнены все шаги из соответствующего файла в [practices/](practices/) и из этого документа.
 - [ ] Можешь за 2–5 минут показать результат: запрос в Charles, логи в Logcat, событие в Sentry, сессию в AppMetrica и т.д.
 - [ ] Можешь одним-двумя предложениями объяснить, что делал в практике.
+- [ ] По продвинутым функциям (Breakpoints, Map Local, monkey, Network Conditions и др.) — можешь продемонстрировать хотя бы один сценарий модификации данных или стресс-тестирования.
 
 ---
 
-## 3. Ссылки
+## 4. Ссылки
 
 - **Практики:** [practices/](practices/), [practices/README.md](practices/README.md)
 - **Критерии приёмки:** [acceptance-criteria/](acceptance-criteria/), [acceptance-criteria/README.md](acceptance-criteria/README.md)
