@@ -273,6 +273,12 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
         ));
       }
       if (mounted) _showSnack('Продано $amount ${holding.currency}');
+      if (appMetricaApiKey.isNotEmpty) {
+        AppMetrica.reportEventWithMap('portfolio_sell', {
+          'currency': holding.currency,
+          'amount': amount.toString(),
+        });
+      }
       debugPrint('[FinControl] PortfolioScreen: продажа $amount ${holding.currency} по ${rate.toStringAsFixed(2)} ₽, итого ${creditInBase.toStringAsFixed(2)} ₽');
     } finally {
       if (mounted) setState(() => _loading = false);

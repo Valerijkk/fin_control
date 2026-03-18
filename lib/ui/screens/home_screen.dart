@@ -18,6 +18,8 @@ import '../widgets/expense_tile.dart';
 import '../widgets/rates_card.dart';
 import '../widgets/savings_goal_card.dart';
 import '../widgets/theme_action.dart';
+import 'package:appmetrica_plugin/appmetrica_plugin.dart';
+import '../../config/telemetry.dart';
 
 enum _DateFilter { all, today, d7, d30 }
 
@@ -37,6 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    debugPrint('[FinControl] HomeScreen: initState — загрузка курсов и списка расходов');
     _ratesFuture = RatesApi.fetch();
   }
 
@@ -95,6 +98,14 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () async {
               final e = await Navigator.of(context).pushNamed(Routes.add) as Expense?;
               if (e != null) await s.add(e);
+              if (e != null && appMetricaApiKey.isNotEmpty) {
+                AppMetrica.reportEventWithMap('expense_added', {
+                  'category': e.category,
+                  'amount': e.amount.toString(),
+                  'is_income': e.isIncome.toString(),
+                  'source': 'full_form',
+                });
+              }
             },
             child: const Icon(Icons.add),
           ),
@@ -336,7 +347,18 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       },
     );
-    if (res != null) await s.add(res);
+    if (res != null) {
+      await s.add(res);
+      if (appMetricaApiKey.isNotEmpty) {
+        AppMetrica.reportEventWithMap('expense_added', {
+          'category': res.category,
+          'amount': res.amount.toString(),
+          'is_income': res.isIncome.toString(),
+          'source': 'quick_add',
+        });
+      }
+      debugPrint('[FinControl] HomeScreen: быстрая запись — ${res.title}, ${res.amount} ₽, категория: ${res.category}');
+    }
   }
 
   Future<bool> _confirmDelete(String title) async {
@@ -381,6 +403,7 @@ class _HomeScreenState extends State<HomeScreen> {
         content: TextField(
           controller: ctrl,
           autofocus: true,
+          maxLength: 30,
           decoration: const InputDecoration(hintText: 'Например, Здоровье'),
         ),
         actions: [

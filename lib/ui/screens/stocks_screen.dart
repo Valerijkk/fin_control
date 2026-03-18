@@ -13,6 +13,8 @@ import '../../state/app_scope.dart';
 import '../widgets/candlestick_chart.dart';
 import '../widgets/theme_action.dart';
 import '../widgets/settings_action.dart';
+import 'package:appmetrica_plugin/appmetrica_plugin.dart';
+import '../../config/telemetry.dart';
 
 class StocksScreen extends StatefulWidget {
   const StocksScreen({super.key});
@@ -51,6 +53,7 @@ class _StocksScreenState extends State<StocksScreen> with SingleTickerProviderSt
       final list = await StocksApi.fetch();
       if (mounted) {
         setState(() => _stocks = list);
+        debugPrint('[FinControl] StocksScreen: загружено ${list.length} акций');
         _loadStockHistory();
       }
     } catch (e) {
@@ -71,6 +74,7 @@ class _StocksScreenState extends State<StocksScreen> with SingleTickerProviderSt
       final list = await CryptoApi.fetch();
       if (mounted) {
         setState(() => _crypto = list);
+        debugPrint('[FinControl] StocksScreen: загружено ${list.length} криптовалют');
         _loadCryptoHistory();
       }
     } catch (e) {
@@ -150,6 +154,14 @@ class _StocksScreenState extends State<StocksScreen> with SingleTickerProviderSt
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Куплено ${NumberFormat('##0.##', 'ru_RU').format(shares)} ${stock.ticker}')),
       );
+      debugPrint('[FinControl] StocksScreen: покупка ${stock.ticker} x$shares за ${costRub.toStringAsFixed(2)} ₽');
+      if (appMetricaApiKey.isNotEmpty) {
+        AppMetrica.reportEventWithMap('stock_buy', {
+          'ticker': stock.ticker,
+          'shares': shares.toString(),
+          'cost_rub': costRub.toString(),
+        });
+      }
     }
   }
 
@@ -210,6 +222,13 @@ class _StocksScreenState extends State<StocksScreen> with SingleTickerProviderSt
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Куплено ${NumberFormat('##0.####', 'ru_RU').format(amount)} ${crypto.symbol}')),
       );
+      if (appMetricaApiKey.isNotEmpty) {
+        AppMetrica.reportEventWithMap('crypto_buy', {
+          'symbol': crypto.symbol,
+          'amount': amount.toString(),
+          'cost_rub': costRub.toString(),
+        });
+      }
     }
   }
 

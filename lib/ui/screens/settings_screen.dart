@@ -1,6 +1,7 @@
 // Настройки: тёмная тема, очистка данных, кнопка «Тест Sentry».
 import 'package:flutter/material.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
+import 'package:appmetrica_plugin/appmetrica_plugin.dart';
 
 import '../../config/telemetry.dart';
 import '../../core/app_theme.dart';
@@ -24,7 +25,14 @@ class SettingsScreen extends StatelessWidget {
         children: [
           SwitchListTile(
             value: isDark,
-            onChanged: (_) => ctrl.toggle(),
+            onChanged: (_) {
+              ctrl.toggle();
+              if (appMetricaApiKey.isNotEmpty) {
+                AppMetrica.reportEventWithMap('theme_toggled', {
+                  'new_theme': isDark ? 'light' : 'dark',
+                });
+              }
+            },
             title: const Text('Тёмная тема'),
             subtitle: const Text('Переключить оформление приложения'),
           ),
@@ -32,7 +40,7 @@ class SettingsScreen extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.cleaning_services_outlined),
             title: const Text('Очистить все данные'),
-            subtitle: const Text('Удаляет все записи расходов/доходов из локальной БД'),
+            subtitle: const Text('Удаляет записи расходов и доходов из локальной БД'),
             onTap: () async {
               final ok = await showDialog<bool>(
                 context: context,
@@ -48,6 +56,10 @@ class SettingsScreen extends StatelessWidget {
                   false;
               if (ok) {
                 await state.clearAll();
+                if (appMetricaApiKey.isNotEmpty) {
+                  AppMetrica.reportEvent('data_cleared');
+                }
+                debugPrint('[FinControl] SettingsScreen: все данные очищены');
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Данные очищены')),
@@ -63,6 +75,7 @@ class SettingsScreen extends StatelessWidget {
               title: const Text('Тест Sentry'),
               subtitle: const Text('Отправить тестовое исключение в Sentry'),
               onTap: () {
+                debugPrint('[FinControl] SettingsScreen: отправка тестового исключения в Sentry');
                 Sentry.captureException(Exception('Тестовое исключение из FinControl (Настройки)'));
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
