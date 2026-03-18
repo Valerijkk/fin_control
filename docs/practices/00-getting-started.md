@@ -97,11 +97,18 @@ flutter run
 
 ---
 
-## Дальше
+## Что показать на экзамене / созвоне
 
-- **Порядок практик:** [README — список практик](README.md#порядок-прохождения).
-- **Пошаговые инструкции по каждой практике:** [01-charles](01-charles.md), [02-proxyman](02-proxyman.md), [03-android-studio](03-android-studio.md) и далее по списку.
-- **Сводный пошаговый гайд (оглавление):** [practices-step-by-step.md](../practices-step-by-step.md).
-- **Ключи Sentry/AppMetrica (практики 06–07):** [STUDENT_ENV.md](../STUDENT_ENV.md) → `lib/config/student_env.dart`.
-- **Firebase (практики 10–15):** [00-firebase-setup.md](00-firebase-setup.md); критерии приёмки — [acceptance-criteria/README.md](../acceptance-criteria/README.md).
-- **FAQ и типичные ошибки:** [FAQ.md](../FAQ.md).
+1. Покажи терминал: `flutter doctor` без критических ошибок, `flutter pub get` завершается.
+2. Запусти приложение: `flutter run` → приветственный экран «FinControl» → кнопка «Начать» → главный экран с навигацией.
+3. В Android Studio покажи открытый проект: в дереве видны `lib/`, `android/`, `ios/`, `pubspec.yaml`.
+4. Кратко скажи: «Склонировал репозиторий, установил зависимости, запустил приложение на эмуляторе, в Android Studio проект открыт корректно — Flutter/Dart подсветка работает.»
+
+## Ссылки
+
+- [Порядок практик и пошаговый гайд](../practices-step-by-step.md)
+- [Список всех практик](README.md#порядок-прохождения)
+- [Ключи Sentry/AppMetrica (практики 06–07)](../STUDENT_ENV.md)
+- [Firebase (практики 10–15)](00-firebase-setup.md)
+- [Критерии приёмки](../acceptance-criteria/README.md)
+- [FAQ и типичные ошибки](../FAQ.md)

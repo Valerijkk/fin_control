@@ -89,6 +89,40 @@ await analytics.logEvent(
 
 - **События не видны** — проверь, что выполнен [00-firebase-setup.md](00-firebase-setup.md) и события вызываются в коде; для реального времени включи DebugView и добавь устройство по дебаг-токену. [FAQ — Firebase](../FAQ.md#firebase).
 
+## Практические сценарии Analytics в FinControl
+
+### Сценарий 1: Логирование полного пользовательского пути
+
+1. Добавь логирование экранов через `FirebaseAnalyticsObserver` (см. код выше).
+2. Пройди путь: **Welcome → Начать → Список → Обменник → обмен валюты → Портфель → покупка → Статистика**.
+3. В Firebase Console → **Analytics → DebugView** (если настроен) увидишь поток событий в реальном времени:
+   - `screen_view (WelcomeScreen)`
+   - `screen_view (ShellScreen)`
+   - `screen_view (ExchangeScreen)`
+   - `exchange_completed`
+   - `screen_view (PortfolioScreen)`
+   - `portfolio_buy`
+   - `screen_view (StatsScreen)`
+
+### Сценарий 2: Построение воронки конверсии
+
+1. В Firebase Console → **Analytics → Explore** (или **Explorations**).
+2. Создай **Funnel Analysis**:
+   - Шаг 1: `screen_view` (параметр `firebase_screen: ExchangeScreen`)
+   - Шаг 2: `exchange_completed`
+3. Вопрос: какой процент пользователей, открывших Обменник, совершает обмен?
+4. Добавь ещё воронку:
+   - Шаг 1: `screen_view (PortfolioScreen)`
+   - Шаг 2: `portfolio_buy`
+
+### Сценарий 3: Сравнение способов добавления расходов
+
+1. Добавь расходы обоими способами (быстрая запись и полная форма).
+2. В **Events → expense_added** фильтруй по параметру `source`:
+   - `quick_add` — быстрая запись
+   - `full_form` — полная форма
+3. **Вывод для продакта:** какой способ популярнее? Нужно ли упрощать полную форму?
+
 ## Что показать на экзамене / созвоне
 
 1. Покажи код: вызовы `logEvent` и `logScreenView` в приложении.

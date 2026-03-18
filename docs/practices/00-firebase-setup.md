@@ -70,17 +70,27 @@
 
 4. Дальше по практикам 10–15 добавляй в `pubspec.yaml` нужные пакеты (`firebase_crashlytics`, `firebase_messaging` и т.д.) и код по шагам в каждой практике. Версии — совместимые с `firebase_core` (см. pub.dev или `flutter pub add firebase_crashlytics`).
 
-### Проверка
+## Проверка
 
 - [ ] В Firebase Console в проекте отображаются приложения Android (и при необходимости iOS) с правильным package name / Bundle ID.
 - [ ] Файл `android/app/google-services.json` лежит в проекте и соответствует твоему проекту Firebase.
 - [ ] В `lib/main.dart` вызывается `await Firebase.initializeApp()` до `runApp(...)`.
 - [ ] `flutter run` завершается без ошибки «No Firebase App '[DEFAULT]' has been created».
 
-### Траблшутинг
+## Что показать на экзамене / созвоне
+
+1. Открой Firebase Console → покажи свой проект с добавленными приложениями Android/iOS (package name совпадает).
+2. Покажи файл `android/app/google-services.json` в проекте.
+3. Покажи `lib/main.dart` — строку `await Firebase.initializeApp()`.
+4. Запусти приложение — покажи, что стартует без ошибок Firebase.
+5. Кратко скажи: «Создал проект Firebase, добавил приложение с правильным package name, скачал конфиги, инициализировал в коде — приложение подключается к Firebase.»
+
+## Траблшутинг
 
 - **«No Firebase App '[DEFAULT]' has been created»** — проверь, что файлы конфигов лежат в `android/app/` и `ios/Runner/` и что `Firebase.initializeApp()` вызывается до любого использования Firebase. Подробнее: [FAQ — Firebase](../FAQ.md#firebase).
 - **Где взять google-services.json и куда класть:** [FAQ — Где взять google-services.json](../FAQ.md#где-взять-google-servicesjson-и-куда-его-класть).
+- **Gradle sync failed после добавления google-services.json** — проверь, что в `android/build.gradle.kts` добавлен classpath `com.google.gms:google-services`, а в `android/app/build.gradle.kts` — `apply(plugin = "com.google.gms.google-services")`.
+- **iOS: CocoaPods ошибка** — из корня проекта выполни `cd ios && pod install && cd ..`, затем снова `flutter run`.
 
 **Ключи Sentry и AppMetrica** для практик 06–07 задаются не здесь, а в [STUDENT_ENV.md](../STUDENT_ENV.md) (файл `lib/config/student_env.dart`). Для Firebase используются только конфиги из этого шага.
 

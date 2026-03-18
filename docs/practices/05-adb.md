@@ -327,6 +327,108 @@ adb exec-out run-as com.yourname.fincontrol.fin_control cat databases/fin_contro
 
 ---
 
+## Практические сценарии тестирования FinControl через ADB
+
+### Сценарий 1: Полный цикл установки и проверки
+
+1. Собери APK: `flutter build apk --debug`
+2. Установи: `adb install -r build/app/outputs/flutter-apk/app-debug.apk`
+3. Запусти: `adb shell am start -n com.yourname.fincontrol.fin_control/.MainActivity`
+4. Проверь логи: `adb logcat | grep "\[FinControl\]"` — должны появиться строки `[FinControl] Запуск приложения...` и `[FinControl] Данные загружены`.
+5. В приложении перейди на Обменник — в логах появится `[FinControl] ExchangeScreen: курсы загружены`.
+
+### Сценарий 2: Тестирование offline-режима
+
+1. Включи авиарежим через ADB:
+   ```bash
+   adb shell settings put global airplane_mode_on 1
+   adb shell am broadcast -a android.intent.action.AIRPLANE_MODE
+   ```
+2. В приложении открой Обменник — курсы должны загрузиться из кэша (или показать ошибку).
+3. В логах проверь: `[FinControl] ExchangeScreen: ошибка загрузки курсов` (или кэш).
+4. Выключи авиарежим:
+   ```bash
+   adb shell settings put global airplane_mode_on 0
+   adb shell am broadcast -a android.intent.action.AIRPLANE_MODE
+   ```
+5. Обнови курсы — должны загрузиться с API.
+
+### Сценарий 3: Тестирование разрешения камеры
+
+1. Отзови разрешение камеры:
+   ```bash
+   adb shell pm revoke com.yourname.fincontrol.fin_control android.permission.CAMERA
+   ```
+2. В приложении: Добавить запись → нажми **Прикрепить фото**.
+3. **Ожидание:** приложение должно показать запрос разрешения или сообщение об ошибке, не упасть.
+4. Верни разрешение:
+   ```bash
+   adb shell pm grant com.yourname.fincontrol.fin_control android.permission.CAMERA
+   ```
+
+### Сценарий 4: Стресс-тестирование monkey
+
+1. Запусти monkey на 1000 событий с логированием:
+   ```bash
+   adb shell monkey -p com.yourname.fincontrol.fin_control --throttle 50 -v -v 1000 2>&1 | tee monkey_results.txt
+   ```
+2. Дождись завершения (1-2 минуты).
+3. Проверь результат:
+   - `grep CRASH monkey_results.txt` — если пусто, крашей нет.
+   - `grep ANR monkey_results.txt` — если пусто, зависаний нет.
+4. **Если нашёл краш:** в файле будет стек-трейс — скопируй его для баг-репорта.
+
+### Сценарий 5: Проверка очистки данных
+
+1. Добавь несколько записей расходов в приложении.
+2. Сделай скриншот списка:
+   ```bash
+   adb exec-out screencap -p > before_clear.png
+   ```
+3. Очисти данные:
+   ```bash
+   adb shell pm clear com.yourname.fincontrol.fin_control
+   ```
+4. Запусти приложение:
+   ```bash
+   adb shell am start -n com.yourname.fincontrol.fin_control/.MainActivity
+   ```
+5. Сделай скриншот:
+   ```bash
+   adb exec-out screencap -p > after_clear.png
+   ```
+6. Сравни: после очистки приложение показывает приветственный экран, данных нет.
+
+### Сценарий 6: Запись видео для баг-репорта
+
+1. Начни запись:
+   ```bash
+   adb shell screenrecord --time-limit 15 /sdcard/bug_demo.mp4
+   ```
+2. В течение 15 секунд воспроизведи баг в приложении.
+3. Скачай видео:
+   ```bash
+   adb pull /sdcard/bug_demo.mp4
+   ```
+4. Прикрепи видео к баг-репорту — гораздо нагляднее скриншота.
+
+### Сценарий 7: Извлечение и проверка базы данных
+
+1. Добавь запись расхода: «Кофе, 350 ₽, категория Еда».
+2. Извлеки БД:
+   ```bash
+   adb exec-out run-as com.yourname.fincontrol.fin_control cat databases/fin_control.db > fin_control.db
+   ```
+3. Открой в [DB Browser for SQLite](https://sqlitebrowser.org/).
+4. Выполни запрос:
+   ```sql
+   SELECT title, amount, category FROM expenses ORDER BY date DESC LIMIT 5;
+   ```
+5. Проверь: запись «Кофе» с суммой 350 и категорией «Еда» присутствует.
+6. **Для продвинутого тестирования:** проверь другие таблицы — `exchange_operations`, `portfolio_holdings`, `savings_goals`.
+
+---
+
 ## Проверка
 
 - [ ] `adb devices` показывает устройство или эмулятор (например `emulator-5554 device`).

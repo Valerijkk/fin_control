@@ -36,6 +36,7 @@ class _SavingsGoalCardState extends State<SavingsGoalCard> {
     final titleCtrl = TextEditingController();
     final targetCtrl = TextEditingController(text: '100000');
     final base = await _portfolioRepo.getBaseCurrency();
+    if (!mounted) return;
     final result = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (ctx) => AlertDialog(

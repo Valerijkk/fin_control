@@ -84,6 +84,45 @@ FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
 
 - **Уведомления не приходят** — проверь, что FCM-токен выводится в лог и подставлен в консоль при отправке; на iOS — настроены APNs и ключ в Firebase. [FAQ — Firebase](../FAQ.md#firebase).
 
+## Практические сценарии FCM в FinControl
+
+### Сценарий 1: Получение и проверка FCM-токена
+
+1. Запусти приложение с подключённым FCM.
+2. В логах (`adb logcat | grep FCM` или Xcode Console) найди строку:
+   ```
+   FCM Token: eAbCd...очень_длинная_строка...xYz
+   ```
+3. Скопируй токен — он понадобится для отправки тестового push.
+4. **Важно:** токен может меняться (при переустановке, обновлении Google Play Services). Используй `onTokenRefresh` для отслеживания.
+
+### Сценарий 2: Отправка push из консоли
+
+1. Firebase Console → **Engage → Messaging** → **Create your first campaign**.
+2. Выбери **Firebase Notification messages**.
+3. Заполни:
+   - Заголовок: `Курсы обновлены!`
+   - Текст: `USD: 92.50 ₽ (+0.5%). Откройте обменник.`
+4. **Targeting → Single device** → вставь FCM-токен.
+5. Отправь.
+6. **Проверь:**
+   - Если приложение в foreground — обработчик `onMessage` сработает (показать SnackBar или локальное уведомление).
+   - Если в background — уведомление появится в системном трее.
+   - При нажатии — `onMessageOpenedApp` сработает.
+
+### Сценарий 3: Push с данными (deep link)
+
+1. В консоли при создании push добавь **Custom data**:
+   - Key: `action`, Value: `open_exchange`
+   - Key: `currency`, Value: `USD`
+2. В обработчике `onMessageOpenedApp`:
+   ```dart
+   if (message.data['action'] == 'open_exchange') {
+     Navigator.of(context).pushNamed('/exchange');
+   }
+   ```
+3. **Результат:** при нажатии на push приложение открывает экран Обменник.
+
 ## Что показать на экзамене / созвоне
 
 1. Покажи в логах FCM-токен (debugPrint).

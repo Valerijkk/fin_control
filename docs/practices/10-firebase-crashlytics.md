@@ -83,6 +83,40 @@ FirebaseCrashlytics.instance.recordError(
 - **Crashlytics не видит крашей** — убедись, что выполнен [00-firebase-setup.md](00-firebase-setup.md), конфиги в проекте, `Firebase.initializeApp()` вызывается до Crashlytics. После фатального краша отчёт отправляется при следующем запуске приложения.
 - **Firebase:** [FAQ — Firebase](../FAQ.md#firebase).
 
+## Практические сценарии Crashlytics
+
+### Сценарий 1: Тестовый краш и анализ отчёта
+
+1. Добавь в Настройки кнопку (или используй существующую) для вызова `FirebaseCrashlytics.instance.crash()`.
+2. Нажми — приложение упадёт.
+3. **Перезапусти** приложение (Crashlytics отправляет отчёт при следующем запуске).
+4. Открой Firebase Console → **Crashlytics** → **Issues**.
+5. Найди issue — открой:
+   - **Stack trace** — точное место краша.
+   - **Device** — модель, ОС, свободная память.
+   - **Keys** — кастомные ключи (если добавлены).
+   - **Logs** — логи перед крашем.
+   - **Affected users** — количество затронутых пользователей.
+
+### Сценарий 2: Нефатальная ошибка с контекстом
+
+1. При ошибке загрузки курсов (offline) запиши нефатальную ошибку:
+   ```dart
+   FirebaseCrashlytics.instance.setCustomKey('screen', 'exchange');
+   FirebaseCrashlytics.instance.setCustomKey('action', 'load_rates');
+   FirebaseCrashlytics.instance.recordError(error, stack, reason: 'Ошибка загрузки курсов');
+   ```
+2. В Firebase Console → Crashlytics → Issues — ошибка появится как **Non-fatal**.
+3. Открой — увидишь кастомные ключи `screen: exchange`, `action: load_rates`.
+4. **Зачем:** в реальном проекте это помогает понять, на каком экране и при каком действии происходят ошибки.
+
+### Сценарий 3: Отслеживание Crash-Free Users
+
+1. После нескольких запусков без крашей проверь **Dashboard** → **Crash-free users**.
+2. Значение должно быть ~100% (нет крашей).
+3. Сделай краш → перезапусти → процент упадёт.
+4. **Зачем:** в реальных проектах Crash-free users > 99.5% считается хорошим показателем. Ниже 99% — критично.
+
 ## Что показать на экзамене / созвоне
 
 1. Покажи Firebase Console → свой проект → **Crashlytics**.

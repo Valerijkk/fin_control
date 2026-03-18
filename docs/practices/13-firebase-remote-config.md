@@ -74,6 +74,37 @@ double get commissionPercent => remoteConfig.getDouble('commission_percent');
 
 - **Значения не обновляются** — убедись, что вызван `fetchAndActivate()` при старте или по кнопке; в консоли изменения опубликованы (Publish changes). [FAQ — Firebase](../FAQ.md#firebase).
 
+## Практические сценарии Remote Config в FinControl
+
+### Сценарий 1: Фичефлаг — скрытие вкладки
+
+1. В Firebase Console → Remote Config → добавь параметр `show_portfolio` (Boolean, default: `true`).
+2. Publish changes.
+3. В коде приложения после `fetchAndActivate()` читай:
+   ```dart
+   final showPortfolio = remoteConfig.getBool('show_portfolio');
+   ```
+4. Используй в ShellScreen для скрытия/показа вкладки Портфель.
+5. В консоли измени `show_portfolio` на `false` → Publish → в приложении сделай fetchAndActivate → вкладка исчезнет.
+
+### Сценарий 2: A/B тест комиссии
+
+1. Добавь параметр `commission_percent` (Number, default: `0`).
+2. Добавь **Condition**: «50% пользователей» → значение `1.5`.
+3. Publish.
+4. В коде при обмене умножай результат на `(1 - commission/100)`:
+   ```dart
+   final commission = remoteConfig.getDouble('commission_percent');
+   final finalAmount = toAmount * (1 - commission / 100);
+   ```
+5. **Результат:** 50% пользователей видят комиссию 1.5%, 50% — без комиссии.
+
+### Сценарий 3: Динамический текст
+
+1. Добавь параметр `welcome_message` (String, default: `Добро пожаловать в FinControl!`).
+2. В WelcomeScreen подставь значение из Remote Config.
+3. Меняй текст в консоли — приложение обновляет его при следующем запуске без обновления в магазине.
+
 ## Что показать на экзамене / созвоне
 
 1. Покажи параметры в Firebase Console → Remote Config (например `show_portfolio`, `commission_percent`).
