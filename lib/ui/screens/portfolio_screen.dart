@@ -13,6 +13,9 @@ import '../widgets/app_bar_title.dart';
 import '../widgets/section_title.dart';
 import '../widgets/theme_action.dart';
 import '../widgets/settings_action.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
+import 'package:appmetrica_plugin/appmetrica_plugin.dart';
+import '../../config/telemetry.dart';
 
 class PortfolioScreen extends StatefulWidget {
   const PortfolioScreen({super.key});
@@ -49,6 +52,7 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
       _holdings = holdings;
       _transactions = transactions;
     });
+    debugPrint('[FinControl] PortfolioScreen: загружено — баланс ${balance.toStringAsFixed(2)} $_baseCurrency, ${holdings.length} позиций, ${transactions.length} сделок');
     _loadRates();
   }
 
@@ -197,7 +201,21 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
         ));
       }
       await _load();
+      if (sentryDsn.isNotEmpty) {
+        Sentry.addBreadcrumb(Breadcrumb(
+          message: 'Покупка: $amount $currency',
+          category: 'portfolio',
+          level: SentryLevel.info,
+        ));
+      }
       if (mounted) _showSnack('Куплено $amount $currency');
+      if (appMetricaApiKey.isNotEmpty) {
+        AppMetrica.reportEventWithMap('portfolio_buy', {
+          'currency': currency,
+          'amount': amount.toString(),
+        });
+      }
+      debugPrint('[FinControl] PortfolioScreen: покупка $amount $currency по ${rate.toStringAsFixed(2)} ₽, итого ${costInBase.toStringAsFixed(2)} ₽');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -247,7 +265,15 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
         ));
       }
       await _load();
+      if (sentryDsn.isNotEmpty) {
+        Sentry.addBreadcrumb(Breadcrumb(
+          message: 'Продажа: $amount ${holding.currency}',
+          category: 'portfolio',
+          level: SentryLevel.info,
+        ));
+      }
       if (mounted) _showSnack('Продано $amount ${holding.currency}');
+      debugPrint('[FinControl] PortfolioScreen: продажа $amount ${holding.currency} по ${rate.toStringAsFixed(2)} ₽, итого ${creditInBase.toStringAsFixed(2)} ₽');
     } finally {
       if (mounted) setState(() => _loading = false);
     }

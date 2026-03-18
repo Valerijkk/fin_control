@@ -15,21 +15,31 @@ import 'package:fin_control/core/routes.dart';
 /// Инициализация биндингов, AppMetrica (если ключ задан), локалей ru_RU, Sentry (если DSN задан), запуск приложения.
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  debugPrint('[FinControl] Запуск приложения...');
 
   if (appMetricaApiKey.isNotEmpty) await _initAppMetrica();
   try {
     await initializeDateFormatting('ru_RU');
   } catch (_) {}
 
+  if (sentryDsn.isNotEmpty) debugPrint('[FinControl] Инициализация Sentry...');
   if (sentryDsn.isNotEmpty) {
     await SentryFlutter.init(
       (options) {
         options.dsn = sentryDsn;
         options.tracesSampleRate = 1.0;
         options.environment = 'development';
+        options.sendDefaultPii = false;
+        options.attachScreenshot = false;
+        options.enableAutoNativeBreadcrumbs = true;
       },
       appRunner: () => runApp(const FinControlRoot()),
     );
+    // Анонимный пользователь для учебного проекта
+    Sentry.configureScope((scope) {
+      scope.setUser(SentryUser(id: 'student', username: 'student'));
+      scope.setTag('app_type', 'educational');
+    });
   } else {
     runApp(const FinControlRoot());
   }
@@ -39,6 +49,7 @@ Future<void> main() async {
 Future<void> _initAppMetrica() async {
   try {
     await AppMetrica.activate(AppMetricaConfig(appMetricaApiKey));
+    debugPrint('[FinControl] AppMetrica инициализирована');
   } catch (_) {}
 }
 
@@ -66,6 +77,7 @@ class _FinControlRootState extends State<FinControlRoot> {
   /// Загружает расходы и категории из БД; после загрузки [builder] отдаёт [AppScope] и навигацию.
   Future<void> _init() async {
     await _state.load();
+    debugPrint('[FinControl] Данные загружены: ${_state.items.length} записей, ${_state.categories.length} категорий');
     if (mounted) setState(() => _loaded = true);
   }
 
@@ -77,7 +89,10 @@ class _FinControlRootState extends State<FinControlRoot> {
       themeMode: _mode,
       theme: AppTheme.buildLight(),
       darkTheme: AppTheme.buildDark(),
-      navigatorObservers: [routeObserver],
+      navigatorObservers: [
+        routeObserver,
+        if (sentryDsn.isNotEmpty) SentryNavigatorObserver(),
+      ],
       onGenerateRoute: AppRouter.onGenerateRoute,
       initialRoute: Routes.welcome,
       /// Пока загрузка — показываем индикатор; после — оборачиваем в [AppScope] и [ThemeController].

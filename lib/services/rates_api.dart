@@ -2,6 +2,7 @@
 // Все вызовы асинхронны (Future/async); сеть и SharedPreferences не блокируют UI.
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Коды валют для запроса курсов (база RUB). Используются в обменнике и портфеле.
@@ -73,6 +74,11 @@ class RatesApi {
       await _saveCache(r);
       return r;
     } catch (_) {
+      try { Sentry.addBreadcrumb(Breadcrumb(
+        message: 'exchangerate.host недоступен, переключение на fallback',
+        category: 'api',
+        level: SentryLevel.warning,
+      )); } catch (_) {}
       // Провайдер недоступен или таймаут — пробуем следующий или кэш.
     }
 
@@ -81,6 +87,11 @@ class RatesApi {
       await _saveCache(r);
       return r;
     } catch (_) {
+      try { Sentry.addBreadcrumb(Breadcrumb(
+        message: 'open.er-api.com недоступен, использование кэша',
+        category: 'api',
+        level: SentryLevel.warning,
+      )); } catch (_) {}
       // Fallback-провайдер недоступен — используем кэш при наличии.
     }
 

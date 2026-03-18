@@ -14,6 +14,9 @@ import '../widgets/app_bar_title.dart';
 import '../widgets/section_title.dart';
 import '../widgets/theme_action.dart';
 import '../widgets/settings_action.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
+import 'package:appmetrica_plugin/appmetrica_plugin.dart';
+import '../../config/telemetry.dart';
 
 /// Список валют для выпадающих списков: RUB + все коды из API.
 final _currencies = ['RUB', ...kCurrencyCodes];
@@ -74,9 +77,22 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
       final r = await RatesApi.fetch();
       if (mounted) {
         setState(() => _rates = r);
+        if (sentryDsn.isNotEmpty) {
+          Sentry.addBreadcrumb(Breadcrumb(
+            message: 'Курсы загружены (${r.source})',
+            category: 'api',
+            level: SentryLevel.info,
+            data: {'count': r.rates.length, 'source': r.source},
+          ));
+        }
+        debugPrint('[FinControl] ExchangeScreen: курсы загружены (${r.source}), ${r.rates.length} валют');
+        if (appMetricaApiKey.isNotEmpty) {
+          AppMetrica.reportEvent('rates_loaded');
+        }
         _checkAlertsAndLimitOrders(r);
       }
     } catch (e) {
+      debugPrint('[FinControl] ExchangeScreen: ошибка загрузки курсов — $e');
       if (mounted) setState(() => _ratesError = e is Exception ? e : Exception(e.toString()));
     }
   }
@@ -220,12 +236,27 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
         rateUsed: rate,
       );
       await _repo.add(op);
+      if (sentryDsn.isNotEmpty) {
+        Sentry.addBreadcrumb(Breadcrumb(
+          message: 'Обмен: $amount $_currencyFrom → ${toAmount.toStringAsFixed(2)} $_currencyTo',
+          category: 'exchange',
+          level: SentryLevel.info,
+        ));
+      }
       await _loadHistory();
       if (mounted) {
         final nf = NumberFormat('##0.00', 'ru_RU');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Обмен: ${nf.format(amount)} $_currencyFrom → ${nf.format(toAmount)} $_currencyTo')),
         );
+        debugPrint('[FinControl] ExchangeScreen: обмен ${nf.format(amount)} $_currencyFrom → ${nf.format(toAmount)} $_currencyTo (курс ${nf.format(rate)})');
+        if (appMetricaApiKey.isNotEmpty) {
+          AppMetrica.reportEventWithMap('exchange_completed', {
+            'currency_from': _currencyFrom,
+            'currency_to': _currencyTo,
+            'amount': amount.toString(),
+          });
+        }
       }
     } finally {
       if (mounted) setState(() => _loading = false);
