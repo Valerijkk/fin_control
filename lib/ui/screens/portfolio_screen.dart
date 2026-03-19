@@ -70,7 +70,7 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
     if (_rates == null) return null;
     if (currency == 'RUB') return 1.0;
     final r = _rates!.rates[currency];
-    return r != null && r > 0 ? 1 / r : null;
+    return r != null ? 1 / r : null;
   }
 
   /// Стоимость amount валюты в базовой.

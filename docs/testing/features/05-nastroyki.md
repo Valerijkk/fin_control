@@ -60,7 +60,7 @@ stateDiagram-v2
 ## 9. Связанные практики и критерии приёмки
 
 - **Кнопка «Тест Sentry»:** практика [06-sentry](../../practices/06-sentry.md), критерии [06-sentry](../../acceptance-criteria/06-sentry.md).
-- **Firebase** (Crashlytics, FCM, Analytics, Remote Config, Performance, In-App Messaging): практики [00-firebase-setup](../../practices/00-firebase-setup.md), [10–15](../../practices/README.md); критерии [00-firebase-setup](../../acceptance-criteria/00-firebase-setup.md), [10–15](../../acceptance-criteria/README.md).
+- **Firebase** (Crashlytics, FCM, Analytics, Remote Config, Performance, In-App Messaging): практика [10-firebase.md](../../practices/10-firebase.md); критерии [Firebase](../../acceptance-criteria/README.md).
 
 ## 10. Связанные файлы
 

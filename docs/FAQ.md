@@ -139,7 +139,7 @@ applicationId = "com.yourname.fincontrol.fin_control"
 
 **Что проверить:** (1) качество сети (Wi‑Fi или мобильный интернет); (2) отключить VPN или сменить сеть, если провайдер блокирует или замедляет API; (3) открыть экран с курсами ещё раз — возможно, повторный запрос пройдёт быстрее; (4) после первой успешной загрузки курсы будут доступны офлайн из кэша. Увеличивать таймаут в коде имеет смысл только для отладки на очень медленных каналах; в продакшене длительное ожидание ухудшает UX.
 
-Для разработчиков: архитектура производительности и метрики загрузки курсов — в [technical/architecture.md](technical/architecture.md) (раздел «Производительность») и в практике [14-firebase-performance.md](practices/14-firebase-performance.md).
+Для разработчиков: архитектура производительности и метрики загрузки курсов — в [technical/architecture.md](technical/architecture.md) (раздел «Производительность») и в практике [10-firebase.md](practices/10-firebase.md).
 
 ---
 
@@ -268,7 +268,7 @@ adb install -r build/app/outputs/flutter-apk/app-debug.apk
 
 ### В каком порядке лучше проходить практики?
 
-**Ответ:** Рекомендуемый порядок в [practices/README.md](practices/README.md): сначала инфраструктура (03 Android Studio, 04 Xcode, 05 ADB), потом снифф трафика (01 Charles, 02 Proxyman), затем мониторинг (06 Sentry, 07 AppMetrica), дистрибуция (08, 09). Firebase (10–15) — после выполнения [00-firebase-setup](practices/00-firebase-setup.md): свой проект, конфиги в проекте, `Firebase.initializeApp()`.
+**Ответ:** Рекомендуемый порядок в [practices/README.md](practices/README.md): сначала инфраструктура (03 Android Studio, 04 Xcode, 05 ADB), потом снифф трафика (01 Charles, 02 Proxyman), затем мониторинг (06 Sentry, 07 AppMetrica), дистрибуция (08, 09). Firebase — по [10-firebase.md](practices/10-firebase.md): свой проект, конфиги в проекте, `Firebase.initializeApp()`, затем все модули по порядку.
 
 ---
 

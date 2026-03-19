@@ -1,341 +1,419 @@
-# Практика: ADB — мануал по возможностям на основе FinControl
+# 🔌 Практика 05: ADB — Android Debug Bridge на примере FinControl
 
-**Одно приложение** FinControl. Этот документ — **мануал по возможностям ADB** на его примере: установка/удаление по пакету, logcat по процессу, очистка данных, скриншоты, запуск/остановка, передача файлов, сведения об устройстве. Все команды используют package name из `android/app/build.gradle.kts` (`applicationId`).
-
-## Цель
-
-Освоить основные команды ADB (Android Debug Bridge) на примере FinControl: установка и удаление по пакету, просмотр и фильтрация логов (logcat), очистка данных приложения, скриншоты, запуск/остановка, передача файлов и сведение об устройстве. Все примеры даны для пакета FinControl (значение `applicationId` из `android/app/build.gradle.kts`).
-
-## Ожидаемый результат
-
-- Подключённое устройство или эмулятор отображается в `adb devices`.
-- APK FinControl устанавливается через `adb install -r`; приложение удаляется через `adb uninstall` по пакету.
-- Логи приложения просматриваются через `adb logcat` (в т.ч. по PID пакета); данные приложения сбрасываются через `adb shell pm clear`.
-- Выполнены скриншот на ПК, запуск/остановка приложения по пакету, при необходимости — передача файлов и просмотр свойств устройства.
+> Осваиваем **ADB** (Android Debug Bridge) — главный инструмент командной строки для работы с Android-устройствами. Установка/удаление приложений, логи, скриншоты, видео, управление разрешениями, стресс-тестирование monkey и многое другое — всё на примере FinControl.
 
 ---
 
-## Что понадобится
+## 🎯 Цель
 
-- Установленный Android SDK (папка `platform-tools` с `adb` в PATH) или Android Studio (тогда `adb` обычно уже в PATH).
-- Подключённое по USB устройство с **включённой отладкой по USB** (Настройки → Для разработчиков) или **запущенный эмулятор** (запустите из Android Studio, см. [03-android-studio.md](03-android-studio.md)).
-- Пакет FinControl: смотри в **`android/app/build.gradle.kts`** строку `applicationId` (например `com.yourname.fincontrol.fin_control`). Этот идентификатор используется во всех командах ниже. Подробнее: [FAQ — Где указан package name](../FAQ.md#где-в-проекте-указан-package-name-applicationid-приложения).
+Освоить основные команды ADB на примере FinControl: установка и удаление по пакету, просмотр и фильтрация логов (logcat), очистка данных, скриншоты, запись видео, запуск/остановка приложения, управление разрешениями, стресс-тестирование monkey, беспроводная отладка и работа с базой данных.
 
-## Проверка подключения
+---
+
+## ✅ Ожидаемый результат
+
+- ✔ Подключённое устройство или эмулятор отображается в `adb devices`
+- ✔ APK FinControl устанавливается через `adb install` и удаляется через `adb uninstall`
+- ✔ Логи приложения просматриваются через `adb logcat` с фильтрацией по PID/тегу
+- ✔ Данные приложения сбрасываются через `adb shell pm clear`
+- ✔ Сделан скриншот и записано видео с экрана через ADB
+- ✔ Выполнен monkey-тест без крашей приложения
+- ✔ Освоены команды управления разрешениями, сетью, файлами и информацией об устройстве
+
+---
+
+## 📋 Что понадобится
+
+| Что | Зачем |
+|-----|-------|
+| **Android SDK** (папка `platform-tools` с `adb` в PATH) | Сам инструмент ADB |
+| **Устройство или эмулятор** | Цель для команд ADB |
+| **Собранный APK FinControl** | Приложение для установки |
+| **Package name** из `android/app/build.gradle.kts` | Идентификатор приложения для команд |
+
+> 📌 **Package name** — это `applicationId` из файла `android/app/build.gradle.kts` (например `com.yourname.fincontrol.fin_control`). Этот идентификатор используется во всех командах ниже. Подробнее: [FAQ — Где указан package name](../FAQ.md#где-в-проекте-указан-package-name-applicationid-приложения).
+
+**Подключение устройства:**
+- **Эмулятор** — запусти из Android Studio (см. [03-android-studio.md](03-android-studio.md))
+- **Реальное устройство** — подключи по USB, включи **Настройки → Для разработчиков → Отладка по USB**, подтверди разрешение на экране устройства
+
+---
+
+## 📝 Пошаговая инструкция
+
+### Шаг 1: Проверка подключения
 
 ```bash
+# Проверь, что устройство видно
 adb devices
 ```
 
-Должно отобразиться устройство или эмулятор (например `emulator-5554`).
+Должно отобразиться устройство или эмулятор, например:
+
+```
+List of devices attached
+emulator-5554   device
+```
+
+> ⚠️ Если статус `unauthorized` — на экране устройства нажми «Разрешить отладку по USB». Если список пуст — проверь подключение кабеля и включение отладки.
 
 ---
 
-## 1. Установка приложения
-
-Установка APK (переустановка с сохранением данных по умолчанию не выполняется; `-r` — переустановка с сохранением данных):
+### Шаг 2: Установка приложения
 
 ```bash
+# Собери APK (если ещё не собран)
+flutter build apk --debug
+
+# Установи APK на устройство/эмулятор
+# Флаг -r — переустановка с сохранением данных
 adb install -r build/app/outputs/flutter-apk/app-debug.apk
 ```
 
-Или укажите полный путь к APK. Флаг `-t` разрешает установку тестовых APK.
+> 💡 Флаг `-t` разрешает установку тестовых APK. Можно указать полный путь к APK, если он находится в другом месте.
 
 ---
 
-## 2. Удаление приложения
-
-По имени пакета (из `AndroidManifest.xml` / `android/app/build.gradle.kts`, например `com.yourname.fincontrol.fin_control`):
+### Шаг 3: Удаление приложения
 
 ```bash
+# Удаление по имени пакета
 adb uninstall com.yourname.fincontrol.fin_control
 ```
 
 ---
 
-## 3. Логи (logcat)
-
-Вывод всех логов в реальном времени:
+### Шаг 4: Просмотр логов (logcat)
 
 ```bash
+# Все логи в реальном времени (много текста!)
 adb logcat
-```
 
-Только логи процесса FinControl (подставьте свой package):
-
-```bash
+# Только логи процесса FinControl (подставь свой package)
 adb logcat --pid=$(adb shell pidof -s com.yourname.fincontrol.fin_control)
-```
 
-Фильтр по тегу (если в коде используется тег, например `FinControl`):
-
-```bash
+# Фильтр по тегу (если в коде используется тег FinControl)
 adb logcat -s FinControl
-```
 
-Очистить буфер logcat и затем смотреть логи:
-
-```bash
+# Очистить буфер логов и начать заново
 adb logcat -c
 adb logcat
-```
 
-Сохранение логов в файл:
-
-```bash
+# Сохранить текущий буфер логов в файл
 adb logcat -d > logcat.txt
 ```
 
+> 💡 Для баг-репортов сохраняй логи в файл с таймстампом:
+> ```bash
+> adb logcat -d > logcat_$(date +%Y%m%d_%H%M%S).txt
+> ```
+
 ---
 
-## 4. Очистка данных приложения
-
-Сброс данных и кэша приложения (как «Очистить данные» в настройках):
+### Шаг 5: Очистка данных приложения
 
 ```bash
+# Сброс данных и кэша (как «Очистить данные» в настройках)
 adb shell pm clear com.yourname.fincontrol.fin_control
 ```
 
-После этого приложение при следующем запуске будет как после первой установки (БД, SharedPreferences очищены).
+После этого приложение при следующем запуске будет как после первой установки — БД, SharedPreferences и кэш очищены.
 
 ---
 
-## 5. Скриншоты
-
-Скриншот с устройства/эмулятора в файл на ПК:
+### Шаг 6: Скриншоты
 
 ```bash
+# Быстрый скриншот прямо на ПК
 adb exec-out screencap -p > screenshot.png
 ```
 
-Или сохранение на устройство с последующим pull:
+Альтернативный способ (через устройство):
 
 ```bash
+# Сохранить на устройство, потом скачать
 adb shell screencap -p /sdcard/screen.png
 adb pull /sdcard/screen.png
 ```
 
 ---
 
-## 6. Запуск приложения по пакету и активности
-
-Запуск главной активности (пример; актуальное имя смотрите в манифесте):
+### Шаг 7: Запуск и остановка приложения
 
 ```bash
+# Запуск главной активности
 adb shell am start -n com.yourname.fincontrol.fin_control/.MainActivity
-```
 
-Остановка приложения:
-
-```bash
+# Принудительная остановка приложения
 adb shell am force-stop com.yourname.fincontrol.fin_control
 ```
 
 ---
 
-## 7. Передача файлов
-
-С ПК на устройство:
+### Шаг 8: Передача файлов
 
 ```bash
+# С ПК на устройство
 adb push local_file.json /sdcard/Download/
-```
 
-С устройства на ПК:
-
-```bash
+# С устройства на ПК
 adb pull /sdcard/Download/file.json ./
 ```
 
 ---
 
-## 8. Информация об устройстве
-
-Версия Android, модель и т.д.:
+### Шаг 9: Информация об устройстве
 
 ```bash
+# Версия Android
 adb shell getprop ro.build.version.release
+
+# Модель устройства
 adb shell getprop ro.product.model
+
+# Найти пакет FinControl в списке установленных
+adb shell pm list packages | grep fincontrol
 ```
 
-Список установленных пакетов:
-
-```bash
-adb shell pm list packages | findstr fincontrol
-```
-
-(На macOS/Linux используйте `grep` вместо `findstr`.)
+> 📌 На Windows используй `findstr` вместо `grep`:
+> ```bash
+> adb shell pm list packages | findstr fincontrol
+> ```
 
 ---
 
-## 9. Запись видео с экрана
-
-Запись экрана устройства (до 3 минут по умолчанию):
+### Шаг 10: Запись видео с экрана
 
 ```bash
+# Начать запись (до 3 минут по умолчанию, остановка — Ctrl+C)
 adb shell screenrecord /sdcard/demo.mp4
-```
 
-Остановка — Ctrl+C в терминале. Затем скачай файл:
-
-```bash
+# Скачать видео на ПК
 adb pull /sdcard/demo.mp4
 ```
 
-Параметры: `--time-limit 30` (секунды), `--size 720x1280` (разрешение), `--bit-rate 4000000` (битрейт).
+Полезные параметры:
 
-Полезно для записи воспроизведения бага — прикладывай к баг-репорту.
+| Параметр | Что делает | Пример |
+|----------|-----------|--------|
+| `--time-limit` | Ограничение по времени (сек) | `--time-limit 30` |
+| `--size` | Разрешение видео | `--size 720x1280` |
+| `--bit-rate` | Битрейт (качество) | `--bit-rate 4000000` |
+
+> 💡 Прикладывай видео к баг-репортам — это гораздо нагляднее скриншотов.
 
 ---
 
-## 10. Monkey — стресс-тестирование UI
+### Шаг 11: Monkey — стресс-тестирование UI
 
-Monkey генерирует случайные события (тапы, свайпы, повороты экрана) для проверки устойчивости приложения:
+Monkey генерирует случайные события (тапы, свайпы, повороты экрана) для проверки устойчивости приложения.
 
 ```bash
+# Базовый тест: 500 случайных событий
 adb shell monkey -p com.yourname.fincontrol.fin_control -v 500
 ```
 
-- `-p` — пакет приложения (события только в нём)
-- `-v` — уровень подробности логов
-- `500` — количество случайных событий
+| Параметр | Что делает |
+|----------|-----------|
+| `-p` | Пакет приложения (события только в нём) |
+| `-v` | Уровень подробности логов (можно `-v -v` для максимума) |
+| `500` | Количество случайных событий |
+| `--throttle 100` | Задержка 100 мс между событиями |
 
-Больше событий для серьёзного стресс-теста:
+Серьёзный стресс-тест с сохранением лога:
 
 ```bash
 adb shell monkey -p com.yourname.fincontrol.fin_control --throttle 100 -v -v 5000 2>&1 | tee monkey_log.txt
 ```
 
-- `--throttle 100` — задержка 100 мс между событиями (имитация реального пользователя)
-- `-v -v` — подробный вывод
-- `2>&1 | tee` — сохранение лога
-
-**Что искать:** краши (CRASH), ANR (Application Not Responding), исключения. Если monkey нашёл краш — в логе будет стек-трейс с указанием места падения.
+**Что искать в результатах:** краши (CRASH), ANR (Application Not Responding), исключения. Если monkey нашёл краш — в логе будет стек-трейс с указанием места падения.
 
 ---
 
-## 11. Беспроводная отладка (Wi-Fi)
+### Шаг 12: Беспроводная отладка (Wi-Fi)
 
-Подключение без USB-кабеля (Android 11+):
+#### Android 11+ (без USB)
 
 1. На устройстве: **Настройки → Для разработчиков → Беспроводная отладка** → включить.
 2. Нажми **Сопряжение устройства с помощью кода сопряжения** — появится IP, порт и код.
 3. На ПК:
+   ```bash
+   # Сопряжение (одноразово)
+   adb pair <IP>:<port_сопряжения>
+   # Введи код сопряжения
+
+   # Подключение
+   adb connect <IP>:<port_отладки>
+   ```
+
+#### Android 10 и ниже (нужно первое подключение по USB)
 
 ```bash
-adb pair <IP>:<port_сопряжения>
-```
-
-Введи код сопряжения. Затем подключись:
-
-```bash
-adb connect <IP>:<port_отладки>
-```
-
-Для Android 10 и ниже (нужно первое подключение по USB):
-
-```bash
+# Переключить на TCP/IP режим (по USB)
 adb tcpip 5555
+
+# Отключить USB, подключиться по Wi-Fi
 adb connect <IP_устройства>:5555
 ```
 
 ---
 
-## 12. Управление разрешениями приложения
-
-Выдать разрешение:
+### Шаг 13: Управление разрешениями приложения
 
 ```bash
+# Выдать разрешение
 adb shell pm grant com.yourname.fincontrol.fin_control android.permission.CAMERA
-```
 
-Отозвать разрешение:
-
-```bash
+# Отозвать разрешение
 adb shell pm revoke com.yourname.fincontrol.fin_control android.permission.CAMERA
 ```
 
-Полезно для тестирования: как приложение ведёт себя без разрешения на камеру? Отзови — открой экран добавления расхода с фото — проверь, что нет краша.
+> 💡 Полезно для тестирования: как приложение ведёт себя без разрешения на камеру? Отзови → открой функцию, требующую камеру → проверь, что нет краша.
 
 ---
 
-## 13. Управление сетью и авиарежим
-
-Включение/выключение авиарежима:
+### Шаг 14: Управление сетью и авиарежим
 
 ```bash
+# Включить авиарежим
 adb shell settings put global airplane_mode_on 1
 adb shell am broadcast -a android.intent.action.AIRPLANE_MODE
 
+# Выключить авиарежим
 adb shell settings put global airplane_mode_on 0
 adb shell am broadcast -a android.intent.action.AIRPLANE_MODE
 ```
 
-Полезно для тестирования offline-режима: включи авиарежим → открой экран Обменник → проверь, что показываются кэшированные курсы или сообщение об ошибке.
+> 💡 Полезно для тестирования offline-режима: включи авиарежим → открой экран Обменник → проверь, что показываются кэшированные курсы или сообщение об ошибке.
 
 ---
 
-## 14. Отправка Intent (deep link, действие)
-
-Открыть URL в браузере устройства:
+### Шаг 15: Отправка Intent (deep link, действие)
 
 ```bash
+# Открыть URL в браузере устройства
 adb shell am start -a android.intent.action.VIEW -d "https://example.com"
-```
 
-Отправить текст в приложение (share intent):
-
-```bash
+# Отправить текст (share intent)
 adb shell am start -a android.intent.action.SEND -t text/plain --es android.intent.extra.TEXT "Тестовый текст"
 ```
 
 ---
 
-## 15. Информация о батарее и производительности
-
-Статистика батареи:
+### Шаг 16: Информация о батарее и производительности
 
 ```bash
+# Статистика батареи
 adb shell dumpsys battery
-```
 
-Информация о памяти приложения:
-
-```bash
+# Информация о памяти приложения
 adb shell dumpsys meminfo com.yourname.fincontrol.fin_control
-```
 
-Общая статистика процессора:
-
-```bash
+# Общая статистика процессора
 adb shell dumpsys cpuinfo
 ```
 
 ---
 
-## 16. Работа с базой данных приложения (debug-сборка)
+### Шаг 17: Работа с базой данных приложения (debug-сборка)
 
-В debug-сборке можно вытащить файл БД:
+В debug-сборке можно извлечь файл БД для анализа:
 
 ```bash
+# Вытащить файл базы данных
 adb exec-out run-as com.yourname.fincontrol.fin_control cat databases/fin_control.db > fin_control.db
 ```
 
-Затем открыть в [DB Browser for SQLite](https://sqlitebrowser.org/) и проверить данные: таблицы `expenses`, `exchange_operations`, `portfolio_holdings` и т.д.
-
-Полезно для проверки: добавил расход в приложении → вытащил БД → проверил, что запись корректно сохранена в таблицу `expenses`.
+Затем открой в [DB Browser for SQLite](https://sqlitebrowser.org/) и проверь данные: таблицы `expenses`, `exchange_operations`, `portfolio_holdings`, `portfolio_transactions`, `price_alerts`, `limit_orders`, `savings_goals`.
 
 ---
 
-## Практические сценарии тестирования FinControl через ADB
+## 🔍 Проверка
+
+- [ ] `adb devices` показывает устройство или эмулятор (например `emulator-5554 device`)
+- [ ] APK FinControl установлен через `adb install -r`; приложение открывается на устройстве
+- [ ] Команда `adb logcat --pid=$(adb shell pidof -s <package>)` выводит логи процесса FinControl
+- [ ] После `adb shell pm clear <package>` приложение показывается как после первой установки
+- [ ] Скриншот сохранён на ПК: `adb exec-out screencap -p > screenshot.png`
+- [ ] Запись видео: `adb shell screenrecord /sdcard/demo.mp4` → `adb pull` — файл MP4 сохранён
+- [ ] Monkey-тест: `adb shell monkey -p <package> -v 500` выполнен без крашей
+
+---
+
+## 🎓 Что показать на экзамене
+
+1. Покажи `adb devices` — устройство/эмулятор в списке.
+2. Установи APK через `adb install -r` — приложение открывается.
+3. Покажи логи: `adb logcat --pid=$(adb shell pidof -s <package>)` — фильтр по процессу.
+4. Очисти данные: `adb shell pm clear <package>` — приложение сбрасывается.
+5. Сделай скриншот: `adb exec-out screencap -p > screenshot.png` — файл сохранён.
+6. Запиши видео экрана (5 секунд) и скачай на ПК.
+7. Запусти monkey-тест на 200 событий — покажи, что приложение не упало.
+8. Кратко скажи: «Освоил основные команды ADB: установка, удаление, логирование, скриншоты, видео, monkey-тестирование, управление разрешениями.»
+
+---
+
+## 🛠 Траблшутинг
+
+**`adb devices` пустой или `unauthorized`**
+→ Включи отладку по USB на устройстве (**Настройки → Для разработчиков → Отладка по USB**); на экране устройства подтверди разрешение. Для эмулятора — убедись, что он запущен.
+
+**`pidof` не находит процесс**
+→ Запусти приложение на устройстве и повтори команду. Проверь правильность package name (как в `build.gradle.kts`).
+
+**`adb install` возвращает `INSTALL_FAILED_ALREADY_EXISTS`**
+→ Используй флаг `-r` для переустановки: `adb install -r app.apk`.
+
+**`adb install` возвращает `INSTALL_FAILED_TEST_ONLY`**
+→ Добавь флаг `-t`: `adb install -r -t app.apk`.
+
+**`run-as` не работает (Permission denied)**
+→ Эта команда работает только с debug-сборками. Для release-сборок используй `adb pull` с root-доступом или App Inspection в Android Studio.
+
+**`adb` не найден (command not found)**
+→ Добавь путь к `platform-tools` в переменную PATH. Обычно это `~/Library/Android/sdk/platform-tools` (macOS) или `%LOCALAPPDATA%\Android\Sdk\platform-tools` (Windows).
+
+---
+
+## 🔗 Ссылки
+
+- [Критерии приёмки 05 — ADB](../acceptance-criteria/05-adb.md)
+- [FAQ — Где указан package name](../FAQ.md#где-в-проекте-указан-package-name-applicationid-приложения)
+- [Список практик](README.md)
+
+---
+
+## 🧪 Практические сценарии
 
 ### Сценарий 1: Полный цикл установки и проверки
 
-1. Собери APK: `flutter build apk --debug`
-2. Установи: `adb install -r build/app/outputs/flutter-apk/app-debug.apk`
-3. Запусти: `adb shell am start -n com.yourname.fincontrol.fin_control/.MainActivity`
-4. Проверь логи: `adb logcat | grep "\[FinControl\]"` — должны появиться строки `[FinControl] Запуск приложения...` и `[FinControl] Данные загружены`.
-5. В приложении перейди на Обменник — в логах появится `[FinControl] ExchangeScreen: курсы загружены`.
+1. Собери APK:
+   ```bash
+   flutter build apk --debug
+   ```
+2. Установи:
+   ```bash
+   adb install -r build/app/outputs/flutter-apk/app-debug.apk
+   ```
+3. Запусти:
+   ```bash
+   adb shell am start -n com.yourname.fincontrol.fin_control/.MainActivity
+   ```
+4. Проверь логи:
+   ```bash
+   adb logcat | grep "\[FinControl\]"
+   ```
+   Должны появиться строки:
+   ```
+   [FinControl] Запуск приложения...
+   [FinControl] Данные загружены
+   ```
+5. В приложении перейди на **Обменник** — в логах появится:
+   ```
+   [FinControl] ExchangeScreen: курсы загружены
+   ```
+
+---
 
 ### Сценарий 2: Тестирование offline-режима
 
@@ -344,8 +422,12 @@ adb exec-out run-as com.yourname.fincontrol.fin_control cat databases/fin_contro
    adb shell settings put global airplane_mode_on 1
    adb shell am broadcast -a android.intent.action.AIRPLANE_MODE
    ```
-2. В приложении открой Обменник — курсы должны загрузиться из кэша (или показать ошибку).
-3. В логах проверь: `[FinControl] ExchangeScreen: ошибка загрузки курсов` (или кэш).
+2. В приложении открой **Обменник** — курсы должны загрузиться из кэша (или показать ошибку).
+3. В логах проверь:
+   ```bash
+   adb logcat -s FinControl
+   ```
+   Ожидай: `[FinControl] ExchangeScreen: ошибка загрузки курсов` (или загрузка из кэша).
 4. Выключи авиарежим:
    ```bash
    adb shell settings put global airplane_mode_on 0
@@ -353,18 +435,22 @@ adb exec-out run-as com.yourname.fincontrol.fin_control cat databases/fin_contro
    ```
 5. Обнови курсы — должны загрузиться с API.
 
+---
+
 ### Сценарий 3: Тестирование разрешения камеры
 
 1. Отзови разрешение камеры:
    ```bash
    adb shell pm revoke com.yourname.fincontrol.fin_control android.permission.CAMERA
    ```
-2. В приложении: Добавить запись → нажми **Прикрепить фото**.
-3. **Ожидание:** приложение должно показать запрос разрешения или сообщение об ошибке, не упасть.
+2. В приложении: **Добавить запись** → нажми **Прикрепить фото**.
+3. **Ожидание:** приложение должно показать запрос разрешения или сообщение об ошибке, **не упасть**.
 4. Верни разрешение:
    ```bash
    adb shell pm grant com.yourname.fincontrol.fin_control android.permission.CAMERA
    ```
+
+---
 
 ### Сценарий 4: Стресс-тестирование monkey
 
@@ -372,11 +458,19 @@ adb exec-out run-as com.yourname.fincontrol.fin_control cat databases/fin_contro
    ```bash
    adb shell monkey -p com.yourname.fincontrol.fin_control --throttle 50 -v -v 1000 2>&1 | tee monkey_results.txt
    ```
-2. Дождись завершения (1-2 минуты).
+2. Дождись завершения (1–2 минуты).
 3. Проверь результат:
-   - `grep CRASH monkey_results.txt` — если пусто, крашей нет.
-   - `grep ANR monkey_results.txt` — если пусто, зависаний нет.
-4. **Если нашёл краш:** в файле будет стек-трейс — скопируй его для баг-репорта.
+   ```bash
+   # Поиск крашей
+   grep CRASH monkey_results.txt
+
+   # Поиск зависаний
+   grep ANR monkey_results.txt
+   ```
+4. Если пусто — крашей и зависаний нет.
+5. **Если нашёл краш:** в файле будет стек-трейс — скопируй его для баг-репорта.
+
+---
 
 ### Сценарий 5: Проверка очистки данных
 
@@ -397,11 +491,13 @@ adb exec-out run-as com.yourname.fincontrol.fin_control cat databases/fin_contro
    ```bash
    adb exec-out screencap -p > after_clear.png
    ```
-6. Сравни: после очистки приложение показывает приветственный экран, данных нет.
+6. **Сравни:** после очистки приложение показывает приветственный экран, данных нет.
+
+---
 
 ### Сценарий 6: Запись видео для баг-репорта
 
-1. Начни запись:
+1. Начни запись (15 секунд):
    ```bash
    adb shell screenrecord --time-limit 15 /sdcard/bug_demo.mp4
    ```
@@ -412,9 +508,11 @@ adb exec-out run-as com.yourname.fincontrol.fin_control cat databases/fin_contro
    ```
 4. Прикрепи видео к баг-репорту — гораздо нагляднее скриншота.
 
+---
+
 ### Сценарий 7: Извлечение и проверка базы данных
 
-1. Добавь запись расхода: «Кофе, 350 ₽, категория Еда».
+1. Добавь запись расхода: «Кофе, 350 руб., категория Еда».
 2. Извлеки БД:
    ```bash
    adb exec-out run-as com.yourname.fincontrol.fin_control cat databases/fin_control.db > fin_control.db
@@ -426,37 +524,3 @@ adb exec-out run-as com.yourname.fincontrol.fin_control cat databases/fin_contro
    ```
 5. Проверь: запись «Кофе» с суммой 350 и категорией «Еда» присутствует.
 6. **Для продвинутого тестирования:** проверь другие таблицы — `exchange_operations`, `portfolio_holdings`, `savings_goals`.
-
----
-
-## Проверка
-
-- [ ] `adb devices` показывает устройство или эмулятор (например `emulator-5554 device`).
-- [ ] APK FinControl установлен через `adb install -r build/app/outputs/flutter-apk/app-debug.apk` (путь из корня проекта); приложение открывается на устройстве.
-- [ ] Команда `adb logcat --pid=$(adb shell pidof -s com.yourname.fincontrol.fin_control)` выводит логи процесса FinControl (подставьте свой package name).
-- [ ] После `adb shell pm clear com.yourname.fincontrol.fin_control` при следующем запуске приложение показывается как после первой установки (приветственный экран, данные очищены).
-- [ ] Скриншот сохранён на ПК: `adb exec-out screencap -p > screenshot.png`.
-- [ ] Запись видео: `adb shell screenrecord /sdcard/demo.mp4` → `adb pull /sdcard/demo.mp4` — файл mp4 сохранён.
-- [ ] Monkey-тест: `adb shell monkey -p <package> -v 500` выполнен без крашей приложения.
-
-## Что показать на экзамене / созвоне
-
-1. Покажи `adb devices` — устройство/эмулятор в списке.
-2. Установи APK через `adb install -r` — приложение открывается.
-3. Покажи логи: `adb logcat --pid=$(adb shell pidof -s <package>)` — фильтр по процессу.
-4. Очисти данные: `adb shell pm clear <package>` — приложение сбрасывается.
-5. Сделай скриншот: `adb exec-out screencap -p > screenshot.png` — файл сохранён.
-6. Запиши видео экрана (5 секунд) и скачай на ПК.
-7. Запусти monkey-тест на 200 событий — покажи, что приложение не упало.
-8. Кратко скажи: «Освоил основные команды ADB: установка, удаление, логирование, скриншоты, видео, monkey-тестирование, управление разрешениями.»
-
-## Траблшутинг
-
-- **`adb devices` пустой или unauthorized** — включи отладку по USB на устройстве (Настройки → Для разработчиков → Отладка по USB); на экране устройства подтверди разрешение. Для эмулятора — убедись, что он запущен.
-- **`pidof` не находит процесс** — запусти приложение на устройстве и повтори команду; проверь правильность package name (как в `build.gradle.kts`).
-
-## Ссылки
-
-- [Критерии приёмки 05 — ADB](../acceptance-criteria/05-adb.md)
-- [FAQ — Где указан package name](../FAQ.md#где-в-проекте-указан-package-name-applicationid-приложения)
-- [Список практик](README.md)

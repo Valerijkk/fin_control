@@ -93,7 +93,7 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
       }
     } catch (e) {
       debugPrint('[FinControl] ExchangeScreen: ошибка загрузки курсов — $e');
-      if (mounted) setState(() => _ratesError = e is Exception ? e : Exception(e.toString()));
+      setState(() => _ratesError = e is Exception ? e : Exception(e.toString()));
     }
   }
 

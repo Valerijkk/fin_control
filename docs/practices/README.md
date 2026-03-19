@@ -1,52 +1,106 @@
-# Практики — FinControl
+# 📚 Практики — FinControl
 
-Теория и пошаговые инструкции по технологиям. **Одно приложение** FinControl (мобильное и при необходимости веб) — запускается **из коробки**: клонируй репозиторий, выполни [00-getting-started.md](00-getting-started.md), и приложение уже работает (приветствие → главный экран с навигацией: Список, Обменник, Акции, Портфель, Статистика).
-
-**Метрики и Firebase — только подставить токены/конфиги:**
-- **Sentry и AppMetrica (практики 06–07):** вставить DSN / API Key в один файл — [STUDENT_ENV.md](../STUDENT_ENV.md) → `lib/config/student_env.dart` — сохранить и перезапустить приложение; больше ничего не нужно.
-- **Firebase (практики 10–15):** следовать [00-firebase-setup.md](00-firebase-setup.md) (свой проект, свои `google-services.json` и `GoogleService-Info.plist` в проект), затем практики 10–15 по шагам; конфиги — в проект, остальное из коробки.
-
-В каждой практике: **цель** в начале, **ожидаемый результат** в конце, пошаговые шаги без пропусков (что установить, что открыть, что нажать), блок **Проверка**, при необходимости **Траблшутинг**, ссылки на [STUDENT_ENV.md](../STUDENT_ENV.md) (где нужны ключи), [FAQ.md](../FAQ.md) и [критерии приёмки](../acceptance-criteria/README.md).
-
-- **Пошагово:** [practices-step-by-step.md](../practices-step-by-step.md) — карта и ссылки на каждую практику.
-- **Ключи Sentry/AppMetrica (практики 06–07):** только [STUDENT_ENV.md](../STUDENT_ENV.md) → `lib/config/student_env.dart`; перезапуск — и всё.
-- **Вопросы и ответы:** [FAQ.md](../FAQ.md).
-- **Сдача:** что показать на созвоне, чек-листы — [exam-and-submission.md](../exam-and-submission.md).
-- **Критерии приёмки:** чек-листы для экзаменатора — [acceptance-criteria/README.md](../acceptance-criteria/README.md).
+> **FinControl** — учебное Flutter-приложение для практик по мобильному тестированию. Одно приложение на все 11 практик: клонируй репозиторий, выполни начальную настройку — и вперёд. Каждая практика — пошаговая инструкция от «открой консоль» до «покажи на экзамене».
 
 ---
 
-## Список практик
+## 🚀 Быстрый старт
 
-| № | Файл | Технология | Краткое описание |
-|---|------|------------|-----------------|
-| — | [00-getting-started.md](00-getting-started.md) | **Перед началом** | Клонирование, первый запуск, открытие в Android Studio — выполнить до любых практик |
-| 00 | [00-firebase-setup.md](00-firebase-setup.md) | **Firebase: первый шаг** | Регистрация своего проекта, добавление своих конфигов (google-services.json, GoogleService-Info.plist) — **обязательно перед практиками 10–15** |
-| 01 | [01-charles.md](01-charles.md) | Charles Proxy | Перехват HTTP/HTTPS трафика, Breakpoints, Map Remote/Local, Rewrite, Throttling |
-| 02 | [02-proxyman.md](02-proxyman.md) | Proxyman | Снифф трафика, Breakpoint, Map Local, Scripting, Network Conditions, Diff |
-| 03 | [03-android-studio.md](03-android-studio.md) | Android Studio | Эмулятор, Logcat, Layout Inspector, App Inspection (DB), Memory/CPU/Network Profiler |
-| 04 | [04-xcode.md](04-xcode.md) | Xcode | Симулятор iOS, Console, Instruments, View Debugger, Network Link Conditioner |
-| 05 | [05-adb.md](05-adb.md) | ADB | install, logcat, screencap, screenrecord, monkey, разрешения, авиарежим, Wi-Fi debug, БД |
-| 06 | [06-sentry.md](06-sentry.md) | Sentry | DSN, события, breadcrumbs, контекст пользователя, Performance Monitoring, Alerts |
-| 07 | [07-appmetrica.md](07-appmetrica.md) | AppMetrica | API Key, сессии, устройства, кастомные события, профили, воронки |
-| 08 | [08-testflight.md](08-testflight.md) | TestFlight | Архив, подписание, загрузка в App Store Connect, раздача тестерам, feedback |
-| 09 | [09-android-distribution.md](09-android-distribution.md) | Android-дистрибуция | Keystore, подпись, AAB/APK, Google Play Internal / Firebase App Distribution |
-| 10 | [10-firebase-crashlytics.md](10-firebase-crashlytics.md) | Firebase Crashlytics | Фатальные и нефатальные ошибки, Custom Keys, Crash-Free Users |
-| 11 | [11-firebase-fcm.md](11-firebase-fcm.md) | Firebase FCM | Разрешения, FCM-токен, foreground/background, Data Messages, Topic Messaging |
-| 12 | [12-firebase-analytics.md](12-firebase-analytics.md) | Firebase Analytics | Кастомные события, экраны, DebugView, воронки, рекомендуемые события |
-| 13 | [13-firebase-remote-config.md](13-firebase-remote-config.md) | Firebase Remote Config | Параметры, фичефлаги, Conditions, rollout, A/B тесты |
-| 14 | [14-firebase-performance.md](14-firebase-performance.md) | Firebase Performance | Кастомные трейсы, HTTP Monitoring, Custom Attributes, поиск регрессий |
-| 15 | [15-firebase-in-app-messaging.md](15-firebase-in-app-messaging.md) | Firebase In-App Messaging | Кампании, триггеры, шаблоны (Modal/Banner/Card), Test Mode |
+1. Клонируй репозиторий и запусти приложение → [00-getting-started.md](00-getting-started.md)
+2. Приложение работает **из коробки**: приветствие → главный экран с навигацией (Список, Обменник, Акции, Портфель, Статистика)
+3. Для практик 06–07 (Sentry, AppMetrica) — вставь ключи в [STUDENT_ENV.md](../STUDENT_ENV.md) → `lib/config/student_env.dart`
+4. Для практики 10 (Firebase) — создай свой проект и пройди все модули по [10-firebase.md](10-firebase.md)
 
 ---
 
-## Порядок прохождения
+## 📋 Список всех практик
 
-Рекомендуемый порядок (совпадает с [practices-step-by-step.md](../practices-step-by-step.md)):
+| № | Практика | Технология | Краткое описание | Сложность |
+|:-:|----------|------------|------------------|:---------:|
+| — | [00-getting-started.md](00-getting-started.md) | **Перед началом** | Клонирование, первый запуск, открытие в Android Studio | 🟢 базовая |
 
-1. **Перед началом**: [00-getting-started.md](00-getting-started.md) — клонирование, первый запуск, Android Studio.
-2. **Инфраструктура**: 03 (Android Studio), 04 (Xcode), 05 (ADB) — установка приложения и логи.
-3. **Снифф трафика**: 01 (Charles), 02 (Proxyman) — перехват запросов к API курсов.
-4. **Мониторинг**: 06 (Sentry), 07 (AppMetrica) — краши и аналитика.
-5. **Дистрибуция**: 08 (TestFlight), 09 (Android) — сборки.
-6. **Firebase**: сначала **[00-firebase-setup.md](00-firebase-setup.md)** — каждый регистрирует свой проект и вставляет свои конфиги; затем практики 10–15 по модулям.
+### 🔌 Блок 1: Инструменты и инфраструктура
+
+| № | Практика | Технология | Краткое описание | Сложность |
+|:-:|----------|------------|------------------|:---------:|
+| 01 | [01-charles.md](01-charles.md) | Charles Proxy | Перехват HTTP/HTTPS, Breakpoints, Map Remote/Local, Rewrite, Throttling | 🟡 средняя |
+| 02 | [02-proxyman.md](02-proxyman.md) | Proxyman | Снифф трафика, Breakpoint, Map Local, Scripting, Network Conditions, Diff | 🟡 средняя |
+| 03 | [03-android-studio.md](03-android-studio.md) | Android Studio | Эмулятор, Logcat, Layout Inspector, App Inspection (DB), Profiler | 🟢 базовая |
+| 04 | [04-xcode.md](04-xcode.md) | Xcode | Симулятор iOS, Console, Instruments, View Debugger, Network Link Conditioner | 🟢 базовая |
+| 05 | [05-adb.md](05-adb.md) | ADB | install, logcat, screencap, screenrecord, monkey, разрешения, Wi-Fi debug | 🟡 средняя |
+
+### 📊 Блок 2: Мониторинг и аналитика
+
+| № | Практика | Технология | Краткое описание | Сложность |
+|:-:|----------|------------|------------------|:---------:|
+| 06 | [06-sentry.md](06-sentry.md) | Sentry | DSN, события, breadcrumbs, контекст пользователя, Performance, Alerts | 🟡 средняя |
+| 07 | [07-appmetrica.md](07-appmetrica.md) | AppMetrica | API Key, сессии, устройства, кастомные события, профили, воронки | 🟡 средняя |
+
+### 📦 Блок 3: Дистрибуция
+
+| № | Практика | Технология | Краткое описание | Сложность |
+|:-:|----------|------------|------------------|:---------:|
+| 08 | [08-testflight.md](08-testflight.md) | TestFlight | Архив, подписание, загрузка в App Store Connect, раздача тестерам | 🔴 продвинутая |
+| 09 | [09-android-distribution.md](09-android-distribution.md) | Android-дистрибуция | Keystore, подпись, AAB/APK, Google Play Internal / Firebase App Distribution | 🔴 продвинутая |
+
+### 🔥 Блок 4: Firebase
+
+| № | Практика | Технология | Краткое описание | Сложность |
+|:-:|----------|------------|------------------|:---------:|
+| 10 | [10-firebase.md](10-firebase.md) | Firebase (полный гайд) | Setup, Crashlytics, FCM, Analytics, Remote Config, Performance, In-App Messaging | 🟡 средняя |
+
+---
+
+## 🗺 Рекомендуемый порядок прохождения
+
+```
+Перед началом
+  └── 00-getting-started.md
+
+Блок 1: Инструменты               Блок 2: Мониторинг
+  ├── 03 Android Studio              ├── 06 Sentry
+  ├── 04 Xcode                       └── 07 AppMetrica
+  ├── 05 ADB
+  ├── 01 Charles                   Блок 3: Дистрибуция
+  └── 02 Proxyman                    ├── 08 TestFlight
+                                     └── 09 Android
+Блок 4: Firebase
+  └── 10 Firebase (полный гайд: setup → Crashlytics → FCM → Analytics → Remote Config → Performance → In-App Messaging)
+```
+
+### Подробнее по шагам
+
+| Этап | Практики | Что получишь |
+|------|----------|-------------|
+| **1. Старт** | [00-getting-started.md](00-getting-started.md) | Работающее приложение на эмуляторе |
+| **2. Инфраструктура** | 03 → 04 → 05 | Эмулятор, логи, ADB-команды — базовый инструментарий |
+| **3. Снифф трафика** | 01 → 02 | Перехват и модификация HTTP-запросов к API курсов |
+| **4. Мониторинг** | 06 → 07 | Краши в Sentry, аналитика в AppMetrica |
+| **5. Дистрибуция** | 08 → 09 | Сборка и раздача через TestFlight / Google Play |
+| **6. Firebase** | 10 (полный гайд) | Setup, Crashlytics, пуши, аналитика, Remote Config, Performance, In-App Messaging |
+
+> 💡 **Совет:** блоки 1–3 можно проходить параллельно. Блок 4 (Firebase) — по порядку частей в `10-firebase.md`.
+
+---
+
+## 🔑 Куда вставлять ключи и конфиги
+
+| Что | Куда | Практики |
+|-----|------|----------|
+| **Sentry DSN** | [STUDENT_ENV.md](../STUDENT_ENV.md) → `lib/config/student_env.dart` | 06 |
+| **AppMetrica API Key** | [STUDENT_ENV.md](../STUDENT_ENV.md) → `lib/config/student_env.dart` | 07 |
+| **Firebase конфиги** | `google-services.json` + `GoogleService-Info.plist` в проект | 10 |
+
+> 📌 Для Sentry и AppMetrica достаточно вставить ключ в один файл и перезапустить. Для Firebase — следуй [10-firebase.md](10-firebase.md).
+
+---
+
+## 📖 Полезные ссылки
+
+| Ресурс | Описание |
+|--------|----------|
+| [practices-step-by-step.md](../practices-step-by-step.md) | Пошаговая карта прохождения всех практик |
+| [STUDENT_ENV.md](../STUDENT_ENV.md) | Инструкция по ключам Sentry/AppMetrica |
+| [FAQ.md](../FAQ.md) | Вопросы и ответы по частым проблемам |
+| [exam-and-submission.md](../exam-and-submission.md) | Что показать на созвоне, чек-листы для сдачи |
+| [acceptance-criteria/README.md](../acceptance-criteria/README.md) | Критерии приёмки для экзаменатора |
